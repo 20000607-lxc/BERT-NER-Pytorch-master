@@ -1,6 +1,5 @@
-## Chinese NER using Bert
+## Chinese and English NER using GPT2 and Bert 
 
-GPT2 for Chinese NER. 
 
 ### dataset list
 
@@ -11,6 +10,7 @@ GPT2 for Chinese NER.
 3. conll2003_bio: datasets/conll2003_bio
 
 **note**: it's the BIO version of conll2003 dataset, but the `train.txt` file is too big, so I use `dev.txt` to do training and `test.txt` to do validation. 
+
 4. other datasets:
    
 conll2003: datasets/conll2003
@@ -23,6 +23,7 @@ BTC and GUM: I didn't test them yet.
 ### model list
 
 1. GPT2+Softmax
+
 2. GPT2+CRF
 
 ### transformers
@@ -55,6 +56,9 @@ The cner dataset labels are transferred into BIOS scheme in the DataProcessor.
 跟	O
 他	O
 ```
+### promot format 
+if template = (m,n,0), then the sequence fed into gpt2 is prompt1(length=m) + input + prompt2(length=n)
+
 
 ### run the code
 
@@ -75,7 +79,4 @@ which means only evaluate during training and do not predict.
 |  |  └── vocab.txt
 |  |  └── ......
 ```
-# gpt2_ner
-# gpt2_ner
-# gpt2_ner
 # gpt2_ner
