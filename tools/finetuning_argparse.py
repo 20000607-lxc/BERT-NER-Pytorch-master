@@ -8,7 +8,7 @@ def get_argparse():
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003'] ")
     parser.add_argument("--data_dir", default='datasets/cluener', type=str, #required=True,
                         help="The input data dir. Should contain the training files for the CoNLL-2003 NER task.", )
-    parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
+    parser.add_argument("--model_type", default='chinese_pretrained_gpt2', type=str, #required=True,
                         help="Model type selected in the list:['bert', 'albert', gpt2', 'bart','chinese_pretrained_gpt2'] ")
     parser.add_argument("--model_name_or_path", default='gpt2',
                         type=str, #required=True,
@@ -43,7 +43,6 @@ def get_argparse():
     # - None if you are both providing the configuration and state dictionary (resp. with keyword arguments ``config`` and ``state_dict``)
     parser.add_argument("--template", default='1', type=str, #required=True,
                         help="prompt size, choose from the list:['1','2'] or you can modify the template in run_ner_xxx.py by changing TEMPLATE_CLASSES ")
-
     parser.add_argument("--learning_rate", default=5e-5, type=float,#bert default = 5e-5
                         help="The initial learning rate for Adam.")
     parser.add_argument("--crf_learning_rate", default=5e-5, type=float,#bert default = 5e-5
@@ -52,17 +51,20 @@ def get_argparse():
                         help="Weight decay if we apply some.")
     parser.add_argument("--output_dir", default='outputs/cner_output/gpt2', type=str, #required=True,
                         help="The output directory where the model predictions and checkpoints will be written.", )
-    # Other parameters
+    parser.add_argument("--tokenizer_name", default='', type=str,
+                        help="Pretrained tokenizer name or path if not the same as model_name", )
+    # config name 和 tokenizer name 若为空则默认与 model_name_or_path一致,
+    # I set the tokenizer for chinese as bert-base-chinese in run_ner_xxx.py and cannot be modified by --tokenizer_name.
+
+
+    # Other parameters: always use the default values and haven't changed yet.
     parser.add_argument('--markup', default='bios', type=str,
                         choices=['bios', 'bio'])
     parser.add_argument('--loss_type', default='ce', type=str,
                         choices=['lsr', 'focal', 'ce'])
     parser.add_argument("--config_name", default="", type=str,
                         help="Pretrained config name or path if not the same as model_name")
-    parser.add_argument("--tokenizer_name", default='bert-base-chinese', type=str,
-                        help="Pretrained tokenizer name or path if not the same as model_name", )
-    # config name 和 tokenizer name 若为空则默认与 model_name_or_path一致,
-    # I set the tokenizer for chinese as bert-base-chinese in run_ner_xxx.py and cannot be modified by --tokenizer_name.
+
     parser.add_argument("--cache_dir", default="", type=str,
                         help="Where do you want to store the pre-trained models downloaded from s3", )
     parser.add_argument("--train_max_seq_length", default=32, type=int,#default = 128,
