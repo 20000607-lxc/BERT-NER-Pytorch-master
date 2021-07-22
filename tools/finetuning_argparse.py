@@ -8,7 +8,7 @@ def get_argparse():
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003'] ")
     parser.add_argument("--data_dir", default='datasets/cluener', type=str, #required=True,
                         help="The input data dir. Should contain the training files for the CoNLL-2003 NER task.", )
-    parser.add_argument("--model_type", default='chinese_pretrained_gpt2', type=str, #required=True,
+    parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
                         help="Model type selected in the list:['bert', 'albert', gpt2', 'bart','chinese_pretrained_gpt2'] ")
     parser.add_argument("--model_name_or_path", default='gpt2',
                         type=str, #required=True,
@@ -109,7 +109,7 @@ def get_argparse():
                         help="If > 0: set total number of training steps to perform. Override num_train_epochs.", )
     parser.add_argument("--warmup_proportion", default=0.1, type=float,
                         help="Proportion of training to perform linear learning rate warmup for,E.g., 0.1 = 10% of training.")
-    parser.add_argument("--logging_steps", type=int, default=50,
+    parser.add_argument("--logging_steps", type=int, default=200,
                         help="Log every X updates steps.")
     parser.add_argument("--save_steps", type=int, default=1000, help="Save checkpoint every X updates steps.")
     parser.add_argument("--eval_all_checkpoints", action="store_true", #default = False,

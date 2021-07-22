@@ -85,7 +85,7 @@ def convert_examples_to_features(english, tokenizer_name, examples, label_list, 
     features = []
     if english:
         if tokenizer_name == 'gpt2':
-            print("gpt2_english tokenize")
+            print("gpt2_english tokenizer")
             for (ex_index, example) in enumerate(examples):
                 if ex_index % 10000 == 0:
                     logger.info("Writing example %d of %d", ex_index, len(examples))
