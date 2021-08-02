@@ -71,7 +71,7 @@ tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
 
 
 def convert_examples_to_features(english, tokenizer_name, examples, label_list, max_seq_length,tokenizer,
-                                 cls_token_at_end=False, cls_token="[CLS]",cls_token_segment_id=1,
+                                 cls_token_at_end=False, cls_token="[CLS]", cls_token_segment_id=1,
                                  sep_token="[SEP]", pad_on_left=False, pad_token=0, pad_token_segment_id=0,
                                  sequence_a_segment_id=0, mask_padding_with_zero=True,):
     """ Loads a data file into a list of `InputBatch`s
@@ -84,7 +84,7 @@ def convert_examples_to_features(english, tokenizer_name, examples, label_list, 
     label_map = {label: i for i, label in enumerate(label_list)}
     features = []
     if english:
-        if tokenizer_name == 'gpt2':
+        if 'gpt2' in tokenizer_name:
             print("gpt2_english tokenizer")
             for (ex_index, example) in enumerate(examples):
                 if ex_index % 10000 == 0:
@@ -104,9 +104,11 @@ def convert_examples_to_features(english, tokenizer_name, examples, label_list, 
                         new_label[i] = label_ids[j]
                         j = j+1
                     else:
-                        new_label[i] = new_label[i-1]
+                        new_label[i] = 9
+                        # new_label[i-1]
+                        # todo 改成-100不可 不适用于这里算loss的函数，目前改成"O"（label id=9）remember不同的数据集这里对应的需要修改
 
-                special_tokens_count = 1# <endoftext>
+                special_tokens_count = 0# <endoftext>
                 if len(tokens) > max_seq_length - special_tokens_count:
                     tokens = tokens[: (max_seq_length - special_tokens_count)]
                     new_label = new_label[: (max_seq_length - special_tokens_count)]
@@ -156,6 +158,7 @@ def convert_examples_to_features(english, tokenizer_name, examples, label_list, 
         elif "bert" or 'Bert' in tokenizer_name:
             print('bert english tokenizer')
             for (ex_index, example) in enumerate(examples):
+                pass_this = 0# determine whether to keep this example
                 if ex_index % 10000 == 0:
                     logger.info("Writing example %d of %d", ex_index, len(examples))
 
@@ -168,9 +171,14 @@ def convert_examples_to_features(english, tokenizer_name, examples, label_list, 
                 new_label = [0] * len(tokens)
                 j = 0
                 for i in range(len(tokens)):
+
                     if '##' not in tokens[i]:
                         new_label[i] = label_ids[j]
                         j = j+1
+                        if j == len(label_ids):
+                            # ids that cannot be converted should be passed, such examples include:
+                            # [' 's ', ...]
+                            break# todo 这里到底那个地方出毛病了？？？？
                     else:
                         new_label[i] = new_label[i-1]
 
@@ -216,7 +224,6 @@ def convert_examples_to_features(english, tokenizer_name, examples, label_list, 
                     segment_ids += [pad_token_segment_id] * padding_length
                     new_label += [pad_token] * padding_length
 
-
                 assert len(input_ids) == max_seq_length
                 assert len(input_mask) == max_seq_length
                 assert len(segment_ids) == max_seq_length
@@ -231,8 +238,10 @@ def convert_examples_to_features(english, tokenizer_name, examples, label_list, 
                 #     logger.info("label_ids: %s", " ".join([str(x) for x in new_label]))
 
                 input_len = min(len(new_label), max_seq_length)
-                features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
-                                              segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
+
+                if not pass_this:
+                    features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
+                                                  segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
 
             return features, count
         else:
@@ -275,6 +284,7 @@ def convert_examples_to_features(english, tokenizer_name, examples, label_list, 
             tokens += [sep_token]
             label_ids += [label_map['O']]
             segment_ids = [sequence_a_segment_id] * len(tokens)
+            # todo 这个sep token放的位置对吗？？？？
 
             if cls_token_at_end:
                 tokens += [cls_token]
@@ -415,11 +425,11 @@ class Conll2003Processor(DataProcessor):
 
     def get_train_examples(self, data_dir, limit=None):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "train",limit)
+        return self._create_examples(self._read_text(os.path.join(data_dir, "train.txt")), "train",limit)
 
     def get_dev_examples(self, data_dir, limit=None):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "test.txt")), "dev", limit)
+        return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "dev", limit)
 
     def get_test_examples(self, data_dir,limit=None):
         """See base class."""
@@ -428,7 +438,7 @@ class Conll2003Processor(DataProcessor):
     def get_labels(self):
         """See base class."""
         return ["X",
-                'B-LOC',  'I-LOC', 'B-PER',  'I-PER', 'B-MISC', 'I-MISC', 'B-ORG', 'I-ORG', 'O', "[START]", "[END]"]
+                'B-LOC',  'I-LOC', 'B-PER',  'I-PER', 'B-MISC', 'I-MISC', 'B-ORG', 'I-ORG', 'O',"[START]", "[END]"]
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""

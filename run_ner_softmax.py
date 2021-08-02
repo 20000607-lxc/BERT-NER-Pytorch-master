@@ -28,7 +28,7 @@ from models.transformers_master.models.bert.configuration_bert import BertConfig
 
 from models.transformers_master.models.bart.configuration_bart import BartConfig
 
-from models.gpt_for_ner import GPT2SoftmaxForNer
+from models.gpt_for_ner import GPT2SoftmaxForNer# , GPT2GenerateForNer
 from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer
 from models.albert_for_ner import AlbertSoftmaxForNer
 from processors.utils_ner import CNerTokenizer, get_entities
@@ -54,11 +54,12 @@ MODEL_CLASSES = {
 TEMPLATE_CLASSES = {
     '1': (6, 6, 0),
     '2': (6, 32, 0),
+    '3': (3, 3, 0)
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
 TRAIN_LIMIT = None
-EVAL_LIMIT = 1000
+EVAL_LIMIT = None
 TEST_LIMIT = 500
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
@@ -365,7 +366,7 @@ def predict(args, model, tokenizer, prefix=""):
         json_d['id'] = step
         f = all_tokens[step]
         json_d['token'] = f
-        json_d['true_tag_seq'] = " ".join(true_labels)
+        #json_d['true_tag_seq'] = " ".join(true_labels)
         json_d['tag_seq'] = " ".join(tags)
         json_d['entities'] = label_entities
         json_d['true_entities'] = true_label_entities
@@ -406,7 +407,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
             ENGLISH = True
         # gpt2tokenizer 没有sep_token  pad_token cls_token 因此都是None
         features, count = convert_examples_to_features(english=ENGLISH,
-                                                tokenizer_name=args.model_name_or_path,
+                                                tokenizer_name=args.tokenizer_name if args.tokenizer_name!='' else args.model_name_or_path,
                                                 examples=examples,
                                                 tokenizer=tokenizer,
                                                 label_list=label_list,
@@ -510,10 +511,10 @@ def main():
                                                         cache_dir=args.cache_dir if args.cache_dir else None,)
         else:
             # 英文采用与model一致的tokenizer
-            tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=False)#use_fast=True, add_prefix_space=True
+            tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)#use_fast=True, add_prefix_space=True
 
         model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
-                                            config=config, device=args.device, template=TEMPLATE,  cache_dir=args.cache_dir if args.cache_dir else None,)
+                                            config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path,  cache_dir=args.cache_dir if args.cache_dir else None,)
 
     else:
         if args.task_name in ['cluener', 'cner']:
@@ -524,10 +525,10 @@ def main():
                                                         cache_dir=args.cache_dir if args.cache_dir else None,)
         else:
             # 英文采用与model一致的tokenizer
-            tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=False)
+            tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)
 
         model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
-                                            config=config, device=args.device, template=TEMPLATE, cache_dir=args.cache_dir if args.cache_dir else None,)
+                                            config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path, cache_dir=args.cache_dir if args.cache_dir else None,)
 
     #sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
     if args.local_rank == 0:
@@ -600,7 +601,7 @@ def main():
         logger.info("Predict the following checkpoints: %s", checkpoints)
         for checkpoint in checkpoints:
             prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
-            model = model_class.from_pretrained(checkpoint, device=args.device)
+            model = model_class.from_pretrained(checkpoint, template=TEMPLATE, device=args.device)
             model.to(args.device)
             predict(args, model, tokenizer, prefix=prefix)
 

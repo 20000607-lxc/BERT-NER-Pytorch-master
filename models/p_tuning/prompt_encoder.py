@@ -8,7 +8,7 @@ class PromptEncoder(torch.nn.Module):
         self.spell_length = sum(template)
         self.hidden_size = hidden_size
         # ent embedding
-        self.cloze_length = template
+        self.cloze_length = (6,6,0)
         self.cloze_mask = [
             [1] * self.cloze_length[0]  # first cloze
             + [1] * self.cloze_length[1]  # second cloze
