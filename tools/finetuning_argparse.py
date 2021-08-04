@@ -15,6 +15,8 @@ def get_argparse():
     parser.add_argument("--model_name_or_path", default='gpt2-large',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name , ""I only used: ['gpt2','bert-base-chinese','bert-base-cased' ]" )
+    parser.add_argument("--logging_steps", type=int, default=200,
+                        help="Log every X updates steps.")
     # model_name_or_path can only be selected in the following list:
     # bart: 'facebook/bart-large'
     # 'bert-base-uncased'
@@ -110,8 +112,7 @@ def get_argparse():
                         help="If > 0: set total number of training steps to perform. Override num_train_epochs.", )
     parser.add_argument("--warmup_proportion", default=0.1, type=float,
                         help="Proportion of training to perform linear learning rate warmup for,E.g., 0.1 = 10% of training.")
-    parser.add_argument("--logging_steps", type=int, default=200,
-                        help="Log every X updates steps.")
+
     parser.add_argument("--save_steps", type=int, default=1000, help="Save checkpoint every X updates steps.")
     parser.add_argument("--eval_all_checkpoints", action="store_true", #default = False,
                         help="Evaluate all checkpoints starting with the same prefix as model_name ending and ending with step number", )

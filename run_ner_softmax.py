@@ -256,7 +256,7 @@ def train(args, train_dataset, model, tokenizer):
             torch.cuda.empty_cache()
     return global_step, tr_loss / global_step
 
-def evaluate(args, model, tokenizer, prefix=""):
+def evaluate(args, model, tokenizer, prefix=''):
     metric = SeqEntityScore(args.id2label,markup=args.markup)
     eval_output_dir = args.output_dir
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
@@ -273,6 +273,13 @@ def evaluate(args, model, tokenizer, prefix=""):
     logger.info("  Batch size = %d", args.eval_batch_size)
     eval_loss = 0.0
     nb_eval_steps = 0
+    eval_output_dir = args.output_dir
+    if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
+        os.makedirs(eval_output_dir)
+    results = []
+    labels = []
+    output_submit_file = os.path.join(eval_output_dir, prefix, "gpt2_eval_conll2003.json")
+
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
     for step, batch in enumerate(eval_dataloader):
         model.eval()
@@ -306,7 +313,28 @@ def evaluate(args, model, tokenizer, prefix=""):
                     temp_1.append(args.id2label[out_label_ids[i][j]])
                     temp_2.append(preds[i][j])
 
+        labels.append(batch[3])
+        logits = outputs[1]
+        preds = logits.detach().cpu().numpy()
+        preds = np.argmax(preds, axis=2).tolist()
+        preds = preds[0][1:-1] # [CLS]XXXX[SEP]
+        tags = [args.id2label[x] for x in preds]
+        label_entities = get_entities(preds, args.id2label, args.markup)
+        true_labels = batch[3].detach().cpu().numpy().tolist()[0]
+        true_label_entities = get_entities(true_labels, args.id2label, args.markup)
+        json_d = {}
+        json_d['id'] = step
+        #json_d['true_tag_seq'] = " ".join(true_labels)
+        json_d['tag_seq'] = " ".join(tags)
+        json_d['entities'] = label_entities
+        json_d['true_entities'] = true_label_entities
+        results.append(json_d)
         pbar(step)
+
+    with open(output_submit_file, "w") as writer:
+        for record in results:
+            writer.write(json.dumps(record) + '\n')
+
     logger.info("\n")
     eval_loss = eval_loss / nb_eval_steps
     eval_info, entity_info = metric.result()
@@ -323,7 +351,7 @@ def evaluate(args, model, tokenizer, prefix=""):
     #wandb.log(results)
     return results
 
-def predict(args, model, tokenizer, prefix=""):
+def predict(args, model, tokenizer, prefix = ''):
     pred_output_dir = args.output_dir
     if not os.path.exists(pred_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(pred_output_dir)

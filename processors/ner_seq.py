@@ -180,7 +180,8 @@ def convert_examples_to_features(english, tokenizer_name, examples, label_list, 
                             # [' 's ', ...]
                             break# todo 这里到底那个地方出毛病了？？？？
                     else:
-                        new_label[i] = new_label[i-1]
+                        new_label[i] = 9# new_label[i-1]
+                        # todo 这里也改成9试一下
 
                 # Account for [CLS] and [SEP] with "- 2".
                 special_tokens_count = 2
