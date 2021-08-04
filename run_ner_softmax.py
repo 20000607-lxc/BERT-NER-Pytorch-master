@@ -47,7 +47,7 @@ MODEL_CLASSES = {
     'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
     'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
     'gpt2': (GPT2Config, GPT2SoftmaxForNer, CNerTokenizer),
-    'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer),
+     #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer),
     "chinese_pretrained_gpt2": (GPT2Config, GPT2LMSoftmaxForNer, CNerTokenizer)
 }
 
@@ -278,7 +278,7 @@ def evaluate(args, model, tokenizer, prefix=''):
         os.makedirs(eval_output_dir)
     results = []
     labels = []
-    output_submit_file = os.path.join(eval_output_dir, prefix, "gpt2_eval_conll2003.json")
+    output_submit_file = os.path.join(eval_output_dir, prefix, "gpt2_eval_cluener.json")
 
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
     for step, batch in enumerate(eval_dataloader):
