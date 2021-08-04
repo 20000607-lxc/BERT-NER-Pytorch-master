@@ -278,7 +278,8 @@ def evaluate(args, model, tokenizer, prefix=''):
         os.makedirs(eval_output_dir)
     results = []
     labels = []
-    output_submit_file = os.path.join(eval_output_dir, prefix, "gpt2_eval_cluener.json")
+    # todo remember to change the name each time if want to see the ids, tokens and entities
+    output_submit_file = os.path.join(eval_output_dir, prefix, "gpt2_eval_cluener_with_example.json")
 
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
     for step, batch in enumerate(eval_dataloader):
@@ -292,6 +293,12 @@ def evaluate(args, model, tokenizer, prefix=''):
             outputs = model(**inputs)
 
         tmp_eval_loss, logits = outputs[:2]
+        # convert the example into tokens and add into json_d
+        example = outputs[2]
+        example = example.tolist()
+        example = tokenizer.decode(example)
+        example = ' '.join(example)
+
         if args.n_gpu > 1:
             tmp_eval_loss = tmp_eval_loss.mean()  # mean() to average on multi-gpu parallel evaluating
         eval_loss += tmp_eval_loss.item()
@@ -326,6 +333,7 @@ def evaluate(args, model, tokenizer, prefix=''):
         json_d['id'] = step
         #json_d['true_tag_seq'] = " ".join(true_labels)
         json_d['tag_seq'] = " ".join(tags)
+        json_d['example of the gpt2 output words'] = example
         json_d['entities'] = label_entities
         json_d['true_entities'] = true_label_entities
         results.append(json_d)

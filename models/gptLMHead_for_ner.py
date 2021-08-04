@@ -24,11 +24,12 @@ class GPT2LMSoftmaxForNer(GPT2PreTrainedModel):
     def __init__(self, config, device, template, model_name=None):
         super(GPT2LMSoftmaxForNer, self).__init__(config)
         self.num_labels = config.num_labels
-        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model
-        # self.gpt2 = New_GPT2.from_pretrained('gpt2')
+        # self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model
+        self.gpt2 = New_GPT2.from_pretrained('gpt2')
 
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
+
         self.pseudo_token_id = 21128
         self.dropout = nn.Dropout(config.resid_pdrop)
         self.loss_type = 'ce'
@@ -120,7 +121,10 @@ class GPT2LMSoftmaxForNer(GPT2PreTrainedModel):
         inputs = inputs_embeds.to(self.device)
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
 
-        sequence_output = outputs[0]
+        # sequence_output = outputs[0]## gpt2model
+        sequence_output = outputs.last_hidden_state# gpt2MLMHeadbasemodel
+        # the example of the output words of batch[0]
+        example = torch.argsort(outputs[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
         sequence_output = self.dropout(sequence_output)
         sequence = torch.zeros(bz, bx, self.hidden_size).to(self.device)
 
@@ -130,8 +134,9 @@ class GPT2LMSoftmaxForNer(GPT2PreTrainedModel):
             # todo 只截取没有pad的id对应的input
 
         logits = self.classifier(sequence)#logits：每个词的labels分数
+        outputs = (example,)+outputs[2:]
 
-        outputs = (logits,) + outputs[2:]  # add hidden states and attention if they are here
+        outputs = (logits,) + outputs # add hidden states and attention if they are here
         if labels is not None:
             assert self.loss_type in ['lsr', 'focal', 'ce']
             if self.loss_type == 'lsr':

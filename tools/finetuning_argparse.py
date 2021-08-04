@@ -4,17 +4,17 @@ def get_argparse():
     parser = argparse.ArgumentParser()
     # Required parameters
 
-    parser.add_argument("--task_name", default='conll2003', type=str, #required=True,
+    parser.add_argument("--task_name", default='cluener', type=str, #required=True,
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003'] ")
-    parser.add_argument("--data_dir", default='datasets/conll2003_bio', type=str, #required=True,
+    parser.add_argument("--data_dir", default='datasets/cluener', type=str, #required=True,
                         help="The input data dir, choose from ['cluener','cner','conll2003_bio']", )
-    parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
+    parser.add_argument("--model_type", default='chinese_pretrained_gpt2', type=str, #required=True,
                         help="Model type selected in the list:['bert', 'albert', gpt2', 'bart','chinese_pretrained_gpt2'] ")
     parser.add_argument("--note", default='', type=str,
                         help="the implementation details to remind ")
-    parser.add_argument("--model_name_or_path", default='gpt2-large',
+    parser.add_argument("--model_name_or_path", default='gpt2',
                         type=str, #required=True,
-                        help="Path to pre-trained model or shortcut name , ""I only used: ['gpt2','bert-base-chinese','bert-base-cased' ]" )
+                        help="Path to pre-trained model or shortcut name , ""I only used: ['gpt2','gpt2-large','bert-base-chinese','bert-base-cased' ]" )
     parser.add_argument("--logging_steps", type=int, default=200,
                         help="Log every X updates steps.")
     # model_name_or_path can only be selected in the following list:
@@ -55,7 +55,7 @@ def get_argparse():
                         help="Weight decay if we apply some.")
     parser.add_argument("--output_dir", default='outputs/conll2003_output/gpt2', type=str, #required=True,
                         help="The output directory where the model predictions and checkpoints will be written.", )
-    parser.add_argument("--tokenizer_name", default='gpt2', type=str,
+    parser.add_argument("--tokenizer_name", default='bert-base-chinese', type=str,
                         help="Pretrained tokenizer name or path if not the same as model_name", )
     # config name 和 tokenizer name 若为空则默认与 model_name_or_path一致,
     # I set the tokenizer for chinese as bert-base-chinese in run_ner_xxx.py and cannot be modified by --tokenizer_name.
