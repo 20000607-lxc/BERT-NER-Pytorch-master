@@ -56,7 +56,8 @@ MODEL_CLASSES = {
 TEMPLATE_CLASSES = {
     '1': (6, 6, 0),
     '2': (6, 32, 0),
-    '3': (3, 3, 0)
+    '3': (3, 3, 0),
+    '4': (12, 12, 0)
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 

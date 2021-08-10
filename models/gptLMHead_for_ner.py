@@ -15,14 +15,14 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from .layers.model.lstmcrf import NNCRF
 import copy
 
-class GPT2LMSoftmaxForNer(GPT2PreTrainedModel):
+class GPT2LMSoftmaxForNer(torch.nn.Module):
 
     """
     采用中文预训练gpt2 model的embedding weights, 由于许多参数与gpt2model不一致，因此单独写了该class
     """
 
     def __init__(self, config, device, template, model_name=None):
-        super(GPT2LMSoftmaxForNer, self).__init__(config)
+        super().__init__()
         self.num_labels = config.num_labels
         self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model# 21128 768 donnt use it anymore!!!
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall")
@@ -30,27 +30,26 @@ class GPT2LMSoftmaxForNer(GPT2PreTrainedModel):
         #self.gpt2 = New_GPT2.from_pretrained('gpt2') #50257 768  this model is much better !!!
 
         self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings()# 21128 768
-
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
 
         self.pseudo_token_id = 21128
         self.dropout = nn.Dropout(config.resid_pdrop)
         self.loss_type = 'ce'
+        self.device = device
 
         # embedding是GPT2LMHeadModel的embedding
-        self.embeddings.weight.requires_grad = False
+        # self.embeddings.weight.requires_grad = False
         self.hidden_size =  self.embeddings.embedding_dim
         self.classifier = nn.Linear(self.hidden_size, config.num_labels)
         self.template = template
-        self.init_weights()
 
         self.pad_token_id = 0
         self.spell_length = sum(self.template)
         self.prompt_encoder = PromptEncoder(self.template, self.hidden_size, device)
         self.prompt_encoder = self.prompt_encoder.to(device)
 
-        print('init chinese_pretrained_gpt2 form "uer/gpt2-chinese-cluecorpussmall"')
+        print('******************init chinese_pretrained_gpt2 form "uer/gpt2-chinese-cluecorpussmall"*********************')
 
     def get_query(self, input_id, prompt_tokens):
         input = []
