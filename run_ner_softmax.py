@@ -28,7 +28,7 @@ from models.transformers_master.models.bert.configuration_bert import BertConfig
 
 from models.transformers_master.models.bart.configuration_bart import BartConfig
 
-from models.gpt_for_ner import GPT2SoftmaxForNer# , GPT2GenerateForNer
+from models.gpt_for_ner import GPT2SoftmaxForNer, GPT2SoftmaxForNer_fix# , GPT2GenerateForNer
 from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer
 from models.albert_for_ner import AlbertSoftmaxForNer
 from processors.utils_ner import CNerTokenizer, get_entities
@@ -43,10 +43,12 @@ from models.transformers_master.models.bert.tokenization_bert import BertTokeniz
 
 # import wandb
 
+# todo should test 是否使用英语预训练的gpt2会比随机初始化一个gpt2有用（对于中文数据集 and 英文数据集）
+
 MODEL_CLASSES = {
     'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
     'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
-    'gpt2': (GPT2Config, GPT2SoftmaxForNer, CNerTokenizer),
+    'gpt2': (GPT2Config, GPT2SoftmaxForNer_fix, CNerTokenizer),
      #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer),
     "chinese_pretrained_gpt2": (GPT2Config, GPT2LMSoftmaxForNer, CNerTokenizer)
 }
@@ -279,7 +281,7 @@ def evaluate(args, model, tokenizer, prefix=''):
     results = []
     labels = []
     # todo remember to change the name each time if want to see the ids, tokens and entities
-    output_submit_file = os.path.join(eval_output_dir, prefix, "gpt2_eval_cluener_with_example.json")
+    output_submit_file = os.path.join(eval_output_dir, prefix, args.output_file_name)
 
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
     for step, batch in enumerate(eval_dataloader):
@@ -332,7 +334,7 @@ def evaluate(args, model, tokenizer, prefix=''):
         json_d = {}
         json_d['id'] = step
         #json_d['true_tag_seq'] = " ".join(true_labels)
-        json_d['tag_seq'] = " ".join(tags)
+        json_d['pred_tag_seq'] = " ".join(tags)
         json_d['example of the gpt2 output words'] = example
         json_d['entities'] = label_entities
         json_d['true_entities'] = true_label_entities
@@ -442,7 +444,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
         else:
             ENGLISH = True
         # gpt2tokenizer 没有sep_token  pad_token cls_token 因此都是None
-        features, count = convert_examples_to_features(english=ENGLISH,
+        features, count = convert_examples_to_features(english=ENGLISH, task_name=data_type,
                                                 tokenizer_name=args.tokenizer_name if args.tokenizer_name!='' else args.model_name_or_path,
                                                 examples=examples,
                                                 tokenizer=tokenizer,
@@ -549,8 +551,11 @@ def main():
             # 英文采用与model一致的tokenizer
             tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)#use_fast=True, add_prefix_space=True
 
-        model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
-                                            config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path,  cache_dir=args.cache_dir if args.cache_dir else None,)
+        # model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
+        #                                     config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path,  cache_dir=args.cache_dir if args.cache_dir else None,)
+
+        model = model_class(config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path,  cache_dir=args.cache_dir if args.cache_dir else None,)
+
 
     else:
         if args.task_name in ['cluener', 'cner']:

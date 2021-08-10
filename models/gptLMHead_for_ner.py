@@ -24,8 +24,12 @@ class GPT2LMSoftmaxForNer(GPT2PreTrainedModel):
     def __init__(self, config, device, template, model_name=None):
         super(GPT2LMSoftmaxForNer, self).__init__(config)
         self.num_labels = config.num_labels
-        # self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model
-        self.gpt2 = New_GPT2.from_pretrained('gpt2')
+        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model# 21128 768 donnt use it anymore!!!
+        self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall")
+
+        #self.gpt2 = New_GPT2.from_pretrained('gpt2') #50257 768  this model is much better !!!
+
+        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings()# 21128 768
 
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
@@ -33,7 +37,7 @@ class GPT2LMSoftmaxForNer(GPT2PreTrainedModel):
         self.pseudo_token_id = 21128
         self.dropout = nn.Dropout(config.resid_pdrop)
         self.loss_type = 'ce'
-        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings()
+
         # embedding是GPT2LMHeadModel的embedding
         self.embeddings.weight.requires_grad = False
         self.hidden_size =  self.embeddings.embedding_dim
@@ -122,9 +126,12 @@ class GPT2LMSoftmaxForNer(GPT2PreTrainedModel):
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
 
         # sequence_output = outputs[0]## gpt2model
-        sequence_output = outputs.last_hidden_state# gpt2MLMHeadbasemodel
+        sequence_output = outputs.last_hidden_state# gpt2MLMHeadbasemodel # gpt2model
         # the example of the output words of batch[0]
-        example = torch.argsort(outputs[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
+        outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
+
+        # todo example is computed by GPT2LMhead model
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
         sequence_output = self.dropout(sequence_output)
         sequence = torch.zeros(bz, bx, self.hidden_size).to(self.device)
 

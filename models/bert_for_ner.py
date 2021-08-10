@@ -20,7 +20,8 @@ class BertSoftmaxForNer(BertPreTrainedModel):
         self.num_labels = config.num_labels
         self.bert = BertModel(config)
         self.embeddings = self.bert.get_input_embeddings()
-        self.embeddings.weight.requires_grad = False
+        # self.embeddings.weight.requires_grad = False
+        # todo
 
 
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
