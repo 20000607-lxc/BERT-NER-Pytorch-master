@@ -171,8 +171,8 @@ def convert_examples_to_features(english, tokenizer_name,task_name, examples, la
                 #     logger.info("input_mask: %s", " ".join([str(x) for x in input_mask]))
                 #     logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
                 #     logger.info("label_ids: %s", " ".join([str(x) for x in new_label]))
-                if flag == 0:#todo 2 only use the seqeunce that contains entity
-                    features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
+                # if flag == 0:#todo 2 only use the seqeunce that contains entity
+                features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
                                               segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
 
             return features, count
