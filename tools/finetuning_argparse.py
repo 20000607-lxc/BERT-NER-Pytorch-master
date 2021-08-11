@@ -4,26 +4,28 @@ def get_argparse():
     parser = argparse.ArgumentParser()
     # Required parameters
 
-    parser.add_argument("--task_name", default='cner', type=str, #required=True,
+    parser.add_argument("--task_name", default='ontonote', type=str, #required=True,
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote'] ")
-    parser.add_argument("--data_dir", default='datasets/cner', type=str, #required=True,
+    parser.add_argument("--data_dir", default='datasets/ontonote', type=str, #required=True,
                         help="The input data dir, choose from ['cluener','cner','conll2003_bio', 'ontonote']", )
-    parser.add_argument("--output_dir", default='outputs/cner_output/gpt2', type=str, #required=True,
+    parser.add_argument("--output_dir", default='outputs/ontonote_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written.", )
     parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
                         help="Model type selected in the list:['bert', 'albert', "
-                             "'bare_gpt2', 'gpt2', 'chinese_pretrained_gpt2', 'bare_chinese_gpt2'] ")
+                             "'bare_gpt2', 'gpt2', "
+                             "'chinese_pretrained_gpt2', 'bare_chinese_gpt2'] ")
     parser.add_argument("--note", default='', type=str,
                         help="the implementation details to remind")
     parser.add_argument("--model_name_or_path", default='gpt2',
                         type=str, #required=True,
-                        help="Path to pre-trained model or shortcut name , ""I only used: ['gpt2','gpt2-large',"
+                        help="Path to pre-trained model or shortcut name , ""I only used:"
+                             " ['gpt2','gpt2-large',"
                              "'bert-base-chinese','bert-base-cased' ]" )
     parser.add_argument("--output_file_name", default='.json',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name")
-    parser.add_argument("--logging_steps", type=int, default=300,
+    parser.add_argument("--logging_steps", type=int, default=30,
                         help="Log every X updates steps.")
     # model_name_or_path can only be selected in the following list:
     # bart: 'facebook/bart-large'

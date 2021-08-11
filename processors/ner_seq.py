@@ -120,7 +120,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                     tokens = tokens[: (max_seq_length - special_tokens_count)]
                     new_label = new_label[: (max_seq_length - special_tokens_count)]
 
-                # todo 1 仿照bert在input的前面后面加上特殊 token
+                # todo 1 仿照bert在input的前面后面加上特殊的fix-token（不随continuous prompt变化）
                 new_label += [label_map['O']]
                 segment_ids = [sequence_a_segment_id] * len(tokens)
                 segment_ids += [0]
@@ -176,7 +176,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
                                               segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
 
-            print("the total no entity example number: "+str(the_no_entity_number))
+            print("****************the total no entity example number: "+str(the_no_entity_number)+'******************')
             return features, count
 
         # elif "bert" or 'Bert' in tokenizer_name:
@@ -272,7 +272,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
         #     print("the_no_entity_number: "+str(the_no_entity_number))
         #     return features, count
         else:
-            raise(ValueError("tokenizer not implemented, only support gpt2 model and tokenizer"))
+            raise(ValueError("tokenizer not implemented, English dataset only support gpt2 model and gpt2 tokenizer"))
 
 
     else:# 中文
@@ -407,7 +407,7 @@ class CnerProcessor(DataProcessor):
             for x in line['labels']:
                 # change the labels in cner dataset to BIO style
                 if 'M-' in x:
-                    labels.append(x.replace('M-','I-'))
+                    labels.append(x.replace('M-', 'I-'))
                 elif 'E-' in x:
                     labels.append(x.replace('E-', 'I-'))
                 else:
@@ -502,20 +502,20 @@ class OntonoteProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir, limit=None):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "train.sd.conllx")), "train", limit)
+        return self._create_examples(self._read_text(os.path.join(data_dir, "train.sd.conllx"), 'ontonote'), "train", limit)
 
     def get_dev_examples(self, data_dir, limit=None):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "test.sd.conllx")), "dev", limit)
+        return self._create_examples(self._read_text(os.path.join(data_dir, "test.sd.conllx"), 'ontonote'), "dev", limit)
 
     def get_test_examples(self, data_dir,limit=None):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "test.sd.conllx")), "test", limit)
+        return self._create_examples(self._read_text(os.path.join(data_dir, "test.sd.conllx"), 'ontonote'), "test", limit)
 
     def get_labels(self):
         """See base class."""
         return ["X",
-                'B-NORP',
+                'B-NORP', 'I-NORP',
                 'B-GPE', 'I-GPE',
                 'B-FAC', 'I-FAC',
                 'B-PERSON',  'I-PERSON',
@@ -524,14 +524,16 @@ class OntonoteProcessor(DataProcessor):
                 'B-LOC', 'I-LOC',
                 'B-WORK_OF_ART', 'I-WORK_OF_ART',
                 'B-EVENT', 'I-EVENT',
-                'B-CARDINAL',
-                'B-ORDINAL',
-                'B-PRODUCT',
+                'B-CARDINAL', 'I-CARDINAL',
+                'B-ORDINAL', 'I-ORDINAL',
+                'B-PRODUCT', 'I-PRODUCT',
                 'B-QUANTITY', 'I-QUANTITY',
                 'B-TIME', 'I-TIME',
                 'B-EVENT', 'I-EVENT',
+                'B-PERCENT', 'I-PERCENT',
+                'B-MONEY', 'I-MONEY',
                 'O', "[START]", "[END]"]
-    # todo onenote有一部分不含I-， 只有B-，比如数字（cardinal）
+    # todo 不知道是否所有entity都含有I-
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""

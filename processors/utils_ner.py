@@ -47,9 +47,9 @@ class DataProcessor(object):
             return lines
 
     @classmethod
-    def _read_text(self,input_file):
+    def _read_text(self, input_file, task_name=None):
         lines = []
-        with open(input_file,'r') as f:
+        with open(input_file, 'r') as f:
             words = []
             labels = []
             for line in f:
@@ -59,17 +59,24 @@ class DataProcessor(object):
                         words = []
                         labels = []
                 else:
-                    splits = line.split(" ")
-                    s = splits[0].split("-")# 对于1988-03-06 只取1988
-                    words.append(s[0])
+                    if task_name == 'ontonote':
+                        splits = line.split("\t")# ontonote 数据集的分割符是\t
+                        s = splits[1].split("-")# ontonote 数据集的第一位是index 跳过index
+                    else:
+                        splits = line.split(" ")
+                        s = splits[0].split("-")
+
+                    words.append(s[0])# todo 对于1988-03-06 只取1988
+
                     #words.append(splits[0])
+
                     if len(splits) > 1:
                         labels.append(splits[-1].replace("\n", ""))
                     else:
                         # Examples could have no label for mode = "test"
                         labels.append("O")
             if words:
-                lines.append({"words":words,"labels":labels})
+                lines.append({"words": words, "labels": labels})
         return lines
 
     @classmethod
