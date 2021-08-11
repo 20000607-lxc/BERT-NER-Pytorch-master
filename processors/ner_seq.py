@@ -497,9 +497,69 @@ class Conll2003Processor(DataProcessor):
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
 
+class OntonoteProcessor(DataProcessor):
+    """Processor for an english ner data set."""
+
+    def get_train_examples(self, data_dir, limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text(os.path.join(data_dir, "train.sd.conllx")), "train", limit)
+
+    def get_dev_examples(self, data_dir, limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text(os.path.join(data_dir, "test.sd.conllx")), "dev", limit)
+
+    def get_test_examples(self, data_dir,limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text(os.path.join(data_dir, "test.sd.conllx")), "test", limit)
+
+    def get_labels(self):
+        """See base class."""
+        return ["X",
+                'B-NORP',
+                'B-GPE', 'I-GPE',
+                'B-FAC', 'I-FAC',
+                'B-PERSON',  'I-PERSON',
+                'B-DATE', 'I-DATE',
+                'B-ORG', 'I-ORG',
+                'B-LOC', 'I-LOC',
+                'B-WORK_OF_ART', 'I-WORK_OF_ART',
+                'B-EVENT', 'I-EVENT',
+                'B-CARDINAL',
+                'B-ORDINAL',
+                'B-PRODUCT',
+                'B-QUANTITY', 'I-QUANTITY',
+                'B-TIME', 'I-TIME',
+                'B-EVENT', 'I-EVENT',
+                'O', "[START]", "[END]"]
+    # todo onenote有一部分不含I-， 只有B-，比如数字（cardinal）
+
+    def _create_examples(self, lines, set_type, limit=None):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            if limit != None:
+                if i > limit:
+                    break
+            guid = "%s-%s" % (set_type, i)
+            text_a = line['words']
+            # BIOS
+            labels = []
+            for x in line['labels']:
+                if 'M-' in x:
+                    labels.append(x.replace('M-', 'I-'))
+                elif 'E-' in x:
+                    labels.append(x.replace('E-', 'I-'))
+                else:
+                    labels.append(x)
+            examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
+        return examples
 
 ner_processors = {
     "cner": CnerProcessor,
     'cluener': CluenerProcessor,
-    'conll2003': Conll2003Processor
+    'conll2003': Conll2003Processor,
+    'ontonote': OntonoteProcessor
+
 }

@@ -5,16 +5,21 @@ def get_argparse():
     # Required parameters
 
     parser.add_argument("--task_name", default='cner', type=str, #required=True,
-                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003'] ")
+                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote'] ")
     parser.add_argument("--data_dir", default='datasets/cner', type=str, #required=True,
-                        help="The input data dir, choose from ['cluener','cner','conll2003_bio']", )
+                        help="The input data dir, choose from ['cluener','cner','conll2003_bio', 'ontonote']", )
+    parser.add_argument("--output_dir", default='outputs/cner_output/gpt2', type=str, #required=True,
+                        help="The output directory where "
+                             "the model predictions and checkpoints will be written.", )
     parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
-                        help="Model type selected in the list:['bert', 'albert', gpt2', 'bart','chinese_pretrained_gpt2'] ")
+                        help="Model type selected in the list:['bert', 'albert', "
+                             "'bare_gpt2', 'gpt2', 'chinese_pretrained_gpt2', 'bare_chinese_gpt2'] ")
     parser.add_argument("--note", default='', type=str,
-                        help="the implementation details to remind ")
+                        help="the implementation details to remind")
     parser.add_argument("--model_name_or_path", default='gpt2',
                         type=str, #required=True,
-                        help="Path to pre-trained model or shortcut name , ""I only used: ['gpt2','gpt2-large','bert-base-chinese','bert-base-cased' ]" )
+                        help="Path to pre-trained model or shortcut name , ""I only used: ['gpt2','gpt2-large',"
+                             "'bert-base-chinese','bert-base-cased' ]" )
     parser.add_argument("--output_file_name", default='.json',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name")
@@ -48,17 +53,15 @@ def get_argparse():
     # and a configuration object should be provided as ``config`` argument. This loading path is slower than converting the TensorFlow checkpoint in
     # a PyTorch model using the provided conversion scripts and loading the PyTorch model afterwards.
     # - None if you are both providing the configuration and state dictionary (resp. with keyword arguments ``config`` and ``state_dict``)
+
     parser.add_argument("--template", default='2', type=str, #required=True,
-                        help="prompt size, choose from the list:['1','2', '3'] or you can modify the template in run_ner_xxx.py by changing TEMPLATE_CLASSES ")
+                        help="prompt size, choose from the list:['1','2'] or you can modify the template in run_ner_xxx.py by changing TEMPLATE_CLASSES ")
     parser.add_argument("--learning_rate", default=5e-5, type=float,#bert default = 5e-5
                         help="The initial learning rate for Adam.")
     parser.add_argument("--crf_learning_rate", default=5e-5, type=float,#bert default = 5e-5
                         help="The initial learning rate for crf and linear layer.")
     parser.add_argument("--weight_decay", default=0.01, type=float,#bert default =  0.01
                         help="Weight decay if we apply some.")
-    parser.add_argument("--output_dir", default='outputs/conll2003_output/gpt2', type=str, #required=True,
-                        help="The output directory where "
-                             "the model predictions and checkpoints will be written.", )
     parser.add_argument("--tokenizer_name", default='bert-base-chinese', type=str,
                         help="Pretrained tokenizer name or path if not the same as model_name", )
     # config name 和 tokenizer name 若为空则默认与 model_name_or_path一致,

@@ -257,16 +257,10 @@ class BareChineseGPT2(torch.nn.Module):
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
 
         # todo example is computed by GPT2LMhead model
-        example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[0, :, 0]
         sequence_output = self.dropout(sequence_output)
-        sequence = torch.zeros(bz, bx, self.hidden_size).to(self.device)
 
-        for bdix in range(bz):
-            place = counts[bdix]+1# 45 = 6+6+32+1
-            sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
-            # todo 只截取没有pad的id对应的input
-
-        logits = self.classifier(sequence)#logits：每个词的labels分数
+        logits = self.classifier(sequence_output)#logits：每个词的labels分数
         outputs = (example,)+outputs[2:]
 
         outputs = (logits,) + outputs # add hidden states and attention if they are here

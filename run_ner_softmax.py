@@ -13,21 +13,14 @@ from callback.optimizater.adamw import AdamW
 from callback.lr_scheduler import get_linear_schedule_with_warmup
 from callback.progressbar import ProgressBar
 from callback.adversarial import FGM
-
 from tools.common import seed_everything
 from tools.common import init_logger, logger
-
 from models.transformers import WEIGHTS_NAME,  AlbertConfig
 from models.bert_for_ner import BertSoftmaxForNer
-
 from models.BART_for_ner import BartSoftmaxForNer
-
 from models.transformers_master.models.gpt2.configuration_gpt2 import GPT2Config #new config
-
 from models.transformers_master.models.bert.configuration_bert import BertConfig #new config
-
 from models.transformers_master.models.bart.configuration_bart import BartConfig
-
 from models.gpt_for_ner import GPT2SoftmaxForNer_fix, BareGPT2# , GPT2GenerateForNer
 from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer, BareChineseGPT2
 from models.albert_for_ner import AlbertSoftmaxForNer
@@ -37,13 +30,9 @@ from processors.ner_seq import ner_processors as processors
 from processors.ner_seq import collate_fn
 from metrics.ner_metrics import SeqEntityScore
 from tools.finetuning_argparse import get_argparse
-
 from transformers import BertTokenizer, GPT2Tokenizer, AutoTokenizer
 from models.transformers_master.models.bert.tokenization_bert import BertTokenizer
-
 # import wandb
-
-# todo should test 是否使用英语预训练的gpt2会比随机初始化一个gpt2有用（对于中文数据集 and 英文数据集）
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
@@ -56,10 +45,8 @@ MODEL_CLASSES = {
 }
 
 TEMPLATE_CLASSES = {
-    '1': (6, 6, 0),
-    '2': (6, 32, 0),
-    '3': (3, 3, 0),
-    '4': (12, 12, 0)
+    '1': (6, 6, 0),# use the prompt + input + prompt + input module, and cut the hidden state of the later input to classify
+    '2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
@@ -231,9 +218,7 @@ def train(args, train_dataset, model, tokenizer):
                 else:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
                 scheduler.step()  # Update learning rate schedule
-
                 optimizer.step()
-
                 model.zero_grad()
                 global_step += 1
                 if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
