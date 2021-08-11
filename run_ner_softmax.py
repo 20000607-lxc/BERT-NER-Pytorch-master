@@ -204,7 +204,6 @@ def train(args, train_dataset, model, tokenizer):
                     scaled_loss.backward()
             else:
                 loss.backward()
-
             if args.do_adv:
                 fgm.attack()
                 loss_adv = model(**inputs)[0]
@@ -237,21 +236,25 @@ def train(args, train_dataset, model, tokenizer):
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
                     # Take care of distributed/parallel training
+                    if args.model_name_or_path in ["gpt2", 'gpt2-large']:
+                        checkpoint = {"model_state_dict": model.state_dict(),
+                                      "optimizer_state_dict": optimizer.state_dict(),
+                                      "global_step": global_step,
+                                      "epoch": epoch}
+                        logger.info("Saving model checkpoint to %s", output_dir)
+                        torch.save(checkpoint, os.path.join(output_dir, "model.pkl"))
+                    else:
 
-                    # checkpoint = {"model_state_dict": model.state_dict(),
-                    #               "optimizer_state_dict": optimizer.state_dict(),
-                    #               "global_step": global_step,
-                    #               "epoch": epoch}
-                    # model_to_save = (model.module if hasattr(model, "module") else model)
-                    # model_to_save.save_pretrained(output_dir)
+                        # model_to_save = (model.module if hasattr(model, "module") else model)
+                        # model_to_save.save_pretrained(output_dir)
 
-                    torch.save(args, os.path.join(output_dir, "training_args.bin"))
-                    tokenizer.save_vocabulary(output_dir)
-                    logger.info("Saving model checkpoint to %s", output_dir)
-                    torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
-                    torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
-                    torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
-                    logger.info("Saving optimizer and scheduler states to %s", output_dir)
+                        torch.save(args, os.path.join(output_dir, "training_args.bin"))
+                        tokenizer.save_vocabulary(output_dir)
+                        logger.info("Saving model checkpoint to %s", output_dir)
+                        torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
+                        torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
+                        torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
+                        logger.info("Saving optimizer and scheduler states to %s", output_dir)
         logger.info("\n")
         if 'cuda' in str(args.device):
             torch.cuda.empty_cache()
@@ -280,7 +283,7 @@ def evaluate(args, model, tokenizer, prefix=''):
     results = []
     labels = []
     # todo remember to change the name each time if want to see the ids, tokens and entities
-    output_submit_file = os.path.join(eval_output_dir, prefix,'eval', args.output_file_name)
+    output_submit_file = os.path.join(eval_output_dir, prefix, args.output_file_name)
 
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
     for step, batch in enumerate(eval_dataloader):
@@ -474,9 +477,9 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
     all_lens = torch.tensor([f.input_len for f in features], dtype=torch.long)
     all_tokens = [f.tokens for f in features]
     dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids)
-    if args.do_predict:
-        # predict时将tokens也输出并写入文件，方便与label对应
-        return dataset,  all_tokens
+    # if args.do_predict:
+    #     # predict时将tokens也输出并写入文件，方便与label对应
+    #     return dataset, all_tokens
     return dataset
 
 def main():
@@ -621,6 +624,7 @@ def main():
             tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)
 
         checkpoints = [args.output_dir]
+
         if args.eval_all_checkpoints:
             checkpoints = list(
                 os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + "/**/" + WEIGHTS_NAME, recursive=True))
@@ -632,10 +636,13 @@ def main():
             prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
 
             if args.model_name_or_path in ["gpt2", 'gpt2-large']:
+                checkpoint = os.path.join(checkpoint, "checkpoint-{}".format(10), "model.pkl") # todo should not use 10
+                checkpoint = torch.load(checkpoint)
                 model.load_state_dict(checkpoint['model_state_dict'])
-                # model = model_class.from_pretrained(checkpoint, device=args.device, config=config)
-            else:# bert 可以直接利用from_pretrained函数
+
+            else:# bert 可以直接利用from_pretrained函数按照url/model_name中加载
                 model = model_class.from_pretrained(checkpoint, config=config)
+
             model.to(args.device)
             result = evaluate(args, model, tokenizer, prefix=prefix)
             if global_step:
