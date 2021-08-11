@@ -11,10 +11,11 @@ def get_argparse():
     parser.add_argument("--output_dir", default='outputs/ontonote_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written.", )
-    parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
+    parser.add_argument("--model_type", default='label_embedding', type=str, #required=True,
                         help="Model type selected in the list:['bert', 'albert', "
                              "'bare_gpt2', 'gpt2', "
-                             "'chinese_pretrained_gpt2', 'bare_chinese_gpt2'] ")
+                             "'chinese_pretrained_gpt2', 'bare_chinese_gpt2',"
+                             "'label_embedding'] ")
     parser.add_argument("--note", default='', type=str,
                         help="the implementation details to remind")
     parser.add_argument("--model_name_or_path", default='gpt2',
@@ -25,7 +26,7 @@ def get_argparse():
     parser.add_argument("--output_file_name", default='.json',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name")
-    parser.add_argument("--logging_steps", type=int, default=30,
+    parser.add_argument("--logging_steps", type=int, default=300,
                         help="Log every X updates steps.")
     # model_name_or_path can only be selected in the following list:
     # bart: 'facebook/bart-large'

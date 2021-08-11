@@ -532,6 +532,8 @@ class OntonoteProcessor(DataProcessor):
                 'B-EVENT', 'I-EVENT',
                 'B-PERCENT', 'I-PERCENT',
                 'B-MONEY', 'I-MONEY',
+                'B-LAW', 'I-LAW',
+                'B-LANGUAGE', 'I-LANGUAGE',
                 'O', "[START]", "[END]"]
     # todo 不知道是否所有entity都含有I-
 

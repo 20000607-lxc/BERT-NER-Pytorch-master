@@ -67,7 +67,6 @@ class DataProcessor(object):
                         s = splits[0].split("-")
 
                     words.append(s[0])# todo 对于1988-03-06 只取1988
-
                     #words.append(splits[0])
 
                     if len(splits) > 1:
