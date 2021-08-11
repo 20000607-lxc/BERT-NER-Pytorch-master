@@ -4,11 +4,11 @@ def get_argparse():
     parser = argparse.ArgumentParser()
     # Required parameters
 
-    parser.add_argument("--task_name", default='ontonote', type=str, #required=True,
+    parser.add_argument("--task_name", default='conll2003', type=str, #required=True,
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote'] ")
-    parser.add_argument("--data_dir", default='datasets/ontonote', type=str, #required=True,
+    parser.add_argument("--data_dir", default='datasets/conll2003_bio', type=str, #required=True,
                         help="The input data dir, choose from ['cluener','cner','conll2003_bio', 'ontonote']", )
-    parser.add_argument("--output_dir", default='outputs/ontonote_output/gpt2', type=str, #required=True,
+    parser.add_argument("--output_dir", default='outputs/conll2003_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written.", )
     parser.add_argument("--model_type", default='label_embedding', type=str, #required=True,
@@ -16,6 +16,7 @@ def get_argparse():
                              "'bare_gpt2', 'gpt2', "
                              "'chinese_pretrained_gpt2', 'bare_chinese_gpt2',"
                              "'label_embedding'] ")
+
     parser.add_argument("--note", default='', type=str,
                         help="the implementation details to remind")
     parser.add_argument("--model_name_or_path", default='gpt2',
@@ -65,7 +66,7 @@ def get_argparse():
                         help="The initial learning rate for crf and linear layer.")
     parser.add_argument("--weight_decay", default=0.01, type=float,#bert default =  0.01
                         help="Weight decay if we apply some.")
-    parser.add_argument("--tokenizer_name", default='bert-base-chinese', type=str,
+    parser.add_argument("--tokenizer_name", default='gpt2', type=str,
                         help="Pretrained tokenizer name or path if not the same as model_name", )
     # config name 和 tokenizer name 若为空则默认与 model_name_or_path一致,
     # I set the tokenizer for chinese as bert-base-chinese in run_ner_xxx.py and cannot be modified by --tokenizer_name.

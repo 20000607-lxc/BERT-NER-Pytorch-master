@@ -51,8 +51,10 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         self.prompt_encoder = PromptEncoder(self.template, self.hidden_size, device)
         self.prompt_encoder = self.prompt_encoder.to(device)
 
-        self.label_embedding = LabelEmbeder([5], self.hidden_size, device)# todo for conll2003 初始化一个新的prompt emcoder作为label embedding
+        self.label_embedding = LabelEmbeder([5], self.hidden_size, device)# todo for conll2003 初始化一个label embedding
         self.label_embedding = self.label_embedding.to(self.device)
+        self.attn_linear = nn.Linear(self.hidden_size, self.hidden_size)
+        self.fc = nn.Linear(self.hidden_size, 1, bias=False)
 
         print("***************** init GPT2SoftmaxForNer *********************")
 
@@ -110,8 +112,8 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         Returns:
             output_state:[batch_size, hidden state]
         """
-        input_state = self.attn_linear(input_state)
-        input_state_expanded = input_state.unsqueeze(1).expand(bz, 5, self.hidden_size).contiguous()  # B x 5 x hidden_dim
+        input_state_attn = self.attn_linear(input_state)
+        input_state_expanded = input_state_attn.unsqueeze(1).expand(bz, 5, self.hidden_size).contiguous()  # B x 5 x hidden_dim
         input_state_expanded = input_state_expanded.view(-1, self.hidden_size)     # B*5 x hidden_dim
 
         label_embedding_fea = label_embedding.view(-1, self.hidden_size)
@@ -124,14 +126,13 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         attn_dist = attn_dist_ / normalization_factor
         attn_dist = attn_dist.unsqueeze(1)                        # B x 1 x 5
         output_state = torch.bmm(attn_dist, label_embedding)      # B x 1 x 5  *   5 x hidden_dim
+        output_state = output_state.suqeeze(1)
         output_state += input_state
         return output_state
 
 
-
     def add_label_embedding(self, sequence_output):
         """
-
         Args:
             sequence_output: the output from gpt2 model
 
@@ -141,9 +142,9 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         """
         bz = sequence_output.shape[0]
         label_embedding = torch.empty(bz, 5, self.hidden_size).to(self.device)
-        label_i = self.label_embedding()
+        label_init = self.label_embedding()
         for k in range(bz):
-            label_embedding[k, :, :] = label_i
+            label_embedding[k, :, :] = label_init
 
         for i in range(sequence_output.shape[1]):
             sequence_output[:, i, :] = self.attention(sequence_output[:, i, :], label_embedding, bz)
