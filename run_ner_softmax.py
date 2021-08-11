@@ -28,8 +28,8 @@ from models.transformers_master.models.bert.configuration_bert import BertConfig
 
 from models.transformers_master.models.bart.configuration_bart import BartConfig
 
-from models.gpt_for_ner import GPT2SoftmaxForNer, GPT2SoftmaxForNer_fix# , GPT2GenerateForNer
-from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer
+from models.gpt_for_ner import GPT2SoftmaxForNer_fix, BareGPT2# , GPT2GenerateForNer
+from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer, BareChineseGPT2
 from models.albert_for_ner import AlbertSoftmaxForNer
 from processors.utils_ner import CNerTokenizer, get_entities
 from processors.ner_seq import convert_examples_to_features
@@ -50,7 +50,9 @@ MODEL_CLASSES = {
     'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
     'gpt2': (GPT2Config, GPT2SoftmaxForNer_fix, CNerTokenizer),
      #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer),
-    "chinese_pretrained_gpt2": (GPT2Config, GPT2LMSoftmaxForNer, CNerTokenizer)
+    "chinese_pretrained_gpt2": (GPT2Config, GPT2LMSoftmaxForNer, CNerTokenizer),
+    'bare_gpt2': (GPT2Config, BareGPT2, CNerTokenizer),
+    'bare_chinese_gpt2':  (GPT2Config, BareChineseGPT2, CNerTokenizer)
 }
 
 TEMPLATE_CLASSES = {

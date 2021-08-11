@@ -70,7 +70,7 @@ from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
 
 
-def convert_examples_to_features(english, tokenizer_name,task_name, examples, label_list, max_seq_length, tokenizer,
+def convert_examples_to_features(english, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
                                  cls_token_at_end=False, cls_token="[CLS]", cls_token_segment_id=1,
                                  sep_token="[SEP]", pad_on_left=False, pad_token=0, pad_token_segment_id=0,
                                  sequence_a_segment_id=0, mask_padding_with_zero=True,):
@@ -96,10 +96,11 @@ def convert_examples_to_features(english, tokenizer_name,task_name, examples, la
                     tokens = tokenizer.tokenize(' ' + new_text)
 
                 label_ids = [label_map[x] for x in example.labels]
+
                 flag = 1
                 for i in label_ids:
                     if i != 9:
-                        flag = 0
+                        flag = 0# 表示该example含有entity
                         break
                 the_no_entity_number += flag
 
@@ -111,8 +112,7 @@ def convert_examples_to_features(english, tokenizer_name,task_name, examples, la
                         new_label[i] = label_ids[j]
                         j = j+1
                     else:
-                        new_label[i] = 9
-                        # new_label[i-1]
+                        new_label[i] = new_label[i-1]# 9
                         # todo ，目前改成"O"（label id=9）不同的数据集这里对应的需要修改
 
                 special_tokens_count = 2
@@ -171,106 +171,108 @@ def convert_examples_to_features(english, tokenizer_name,task_name, examples, la
                 #     logger.info("input_mask: %s", " ".join([str(x) for x in input_mask]))
                 #     logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
                 #     logger.info("label_ids: %s", " ".join([str(x) for x in new_label]))
-                # if flag == 0:#todo 2 only use the seqeunce that contains entity
+
+                # if flag == 0:#todo 2 only use the sequence that contains entity
                 features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
                                               segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
 
+            print("the total no entity example number: "+str(the_no_entity_number))
             return features, count
 
-        elif "bert" or 'Bert' in tokenizer_name:
-            print('bert english tokenizer')
-            for (ex_index, example) in enumerate(examples):
-                if ex_index % 10000 == 0:
-                    logger.info("Writing example %d of %d", ex_index, len(examples))
-
-                if type(example.text_a) == list:
-                    new_text = ' '.join(example.text_a)
-                    tokens = tokenizer.tokenize(new_text)
-                label_ids = [label_map[x] for x in example.labels]
-
-                flag = 1
-                for i in label_ids:
-                    if i != 9:
-                        flag = 0
-                the_no_entity_number += flag
-
-                # align the label_ids with tokens
-                new_label = [0] * len(tokens)
-                j = 0
-                for i in range(len(tokens)):
-                    if '##' not in tokens[i]:
-                        new_label[i] = label_ids[j]
-                        j = j+1
-                        if j == len(label_ids):
-                            # ids that cannot be converted should be passed, such examples include:
-                            # [' 's ', ...]
-                            break# todo 这里到底那个地方出毛病了？？？？
-                    else:
-                        new_label[i] = 9# new_label[i-1]
-
-                # Account for [CLS] and [SEP] with "- 2".
-                special_tokens_count = 2
-                if len(tokens) > max_seq_length - special_tokens_count:
-                    tokens = tokens[: (max_seq_length - special_tokens_count)]
-                    new_label = new_label[: (max_seq_length - special_tokens_count)]
-
-                tokens += [sep_token]
-                new_label += [label_map['O']]
-                segment_ids = [sequence_a_segment_id] * len(tokens)
-
-                if cls_token_at_end:
-                    tokens += [cls_token]
-                    new_label += [label_map['O']]
-                    segment_ids += [cls_token_segment_id]
-                else:
-                    tokens = [cls_token] + tokens
-                    new_label = [label_map['O']] + new_label
-                    segment_ids = [cls_token_segment_id] + segment_ids
-
-                if len(tokens) > max_seq_length - special_tokens_count:
-                    tokens = tokens[: (max_seq_length - special_tokens_count)]
-                    new_label = new_label[: (max_seq_length - special_tokens_count)]
-                    segment_ids = segment_ids[: (max_seq_length - special_tokens_count)]
-
-                input_ids = tokenizer.convert_tokens_to_ids(tokens)
-                # The mask has 1 for real tokens and 0 for padding tokens. Only real
-                # tokens are attended to.
-                input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
-
-                # Zero-pad up to the sequence length.
-                padding_length = max_seq_length - len(input_ids)
-                if pad_on_left:
-                    input_ids = ([pad_token] * padding_length) + input_ids
-                    input_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + input_mask
-                    segment_ids = ([pad_token_segment_id] * padding_length) + segment_ids
-                    new_label = ([pad_token] * padding_length) + new_label
-                else:
-                    input_ids += [pad_token] * padding_length
-                    input_mask += [0 if mask_padding_with_zero else 1] * padding_length
-                    segment_ids += [pad_token_segment_id] * padding_length
-                    new_label += [pad_token] * padding_length
-
-                assert len(input_ids) == max_seq_length
-                assert len(input_mask) == max_seq_length
-                assert len(segment_ids) == max_seq_length
-
-                # if ex_index < 5:
-                #     logger.info("*** Example ***")
-                #     logger.info("guid: %s", example.guid)
-                #     logger.info("tokens: %s", " ".join([str(x) for x in tokens]))
-                #     logger.info("input_ids: %s", " ".join([str(x) for x in input_ids]))
-                #     logger.info("input_mask: %s", " ".join([str(x) for x in input_mask]))
-                #     logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
-                #     logger.info("label_ids: %s", " ".join([str(x) for x in new_label]))
-
-                input_len = min(len(new_label), max_seq_length)
-                features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
-                                              segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
-
-            print("the_no_entity_number: "+str(the_no_entity_number))
-            return features, count
+        # elif "bert" or 'Bert' in tokenizer_name:
+        #     print('bert english tokenizer')
+        #     for (ex_index, example) in enumerate(examples):
+        #         if ex_index % 10000 == 0:
+        #             logger.info("Writing example %d of %d", ex_index, len(examples))
+        #
+        #         if type(example.text_a) == list:
+        #             new_text = ' '.join(example.text_a)
+        #             tokens = tokenizer.tokenize(new_text)
+        #         label_ids = [label_map[x] for x in example.labels]
+        #
+        #         flag = 1
+        #         for i in label_ids:
+        #             if i != 9:
+        #                 flag = 0
+        #         the_no_entity_number += flag
+        #
+        #         # align the label_ids with tokens
+        #         new_label = [0] * len(tokens)
+        #         j = 0
+        #         for i in range(len(tokens)):
+        #             if '##' not in tokens[i]:
+        #                 new_label[i] = label_ids[j]
+        #                 j = j+1
+        #                 if j == len(label_ids):
+        #                     # ids that cannot be converted should be passed, such examples include:
+        #                     # [' 's ', ...]
+        #                     break# todo 这里到底那个地方出毛病了？？？？
+        #             else:
+        #                 new_label[i] = 9# new_label[i-1]
+        #
+        #         # Account for [CLS] and [SEP] with "- 2".
+        #         special_tokens_count = 2
+        #         if len(tokens) > max_seq_length - special_tokens_count:
+        #             tokens = tokens[: (max_seq_length - special_tokens_count)]
+        #             new_label = new_label[: (max_seq_length - special_tokens_count)]
+        #
+        #         tokens += [sep_token]
+        #         new_label += [label_map['O']]
+        #         segment_ids = [sequence_a_segment_id] * len(tokens)
+        #
+        #         if cls_token_at_end:
+        #             tokens += [cls_token]
+        #             new_label += [label_map['O']]
+        #             segment_ids += [cls_token_segment_id]
+        #         else:
+        #             tokens = [cls_token] + tokens
+        #             new_label = [label_map['O']] + new_label
+        #             segment_ids = [cls_token_segment_id] + segment_ids
+        #
+        #         if len(tokens) > max_seq_length - special_tokens_count:
+        #             tokens = tokens[: (max_seq_length - special_tokens_count)]
+        #             new_label = new_label[: (max_seq_length - special_tokens_count)]
+        #             segment_ids = segment_ids[: (max_seq_length - special_tokens_count)]
+        #
+        #         input_ids = tokenizer.convert_tokens_to_ids(tokens)
+        #         # The mask has 1 for real tokens and 0 for padding tokens. Only real
+        #         # tokens are attended to.
+        #         input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
+        #
+        #         # Zero-pad up to the sequence length.
+        #         padding_length = max_seq_length - len(input_ids)
+        #         if pad_on_left:
+        #             input_ids = ([pad_token] * padding_length) + input_ids
+        #             input_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + input_mask
+        #             segment_ids = ([pad_token_segment_id] * padding_length) + segment_ids
+        #             new_label = ([pad_token] * padding_length) + new_label
+        #         else:
+        #             input_ids += [pad_token] * padding_length
+        #             input_mask += [0 if mask_padding_with_zero else 1] * padding_length
+        #             segment_ids += [pad_token_segment_id] * padding_length
+        #             new_label += [pad_token] * padding_length
+        #
+        #         assert len(input_ids) == max_seq_length
+        #         assert len(input_mask) == max_seq_length
+        #         assert len(segment_ids) == max_seq_length
+        #
+        #         # if ex_index < 5:
+        #         #     logger.info("*** Example ***")
+        #         #     logger.info("guid: %s", example.guid)
+        #         #     logger.info("tokens: %s", " ".join([str(x) for x in tokens]))
+        #         #     logger.info("input_ids: %s", " ".join([str(x) for x in input_ids]))
+        #         #     logger.info("input_mask: %s", " ".join([str(x) for x in input_mask]))
+        #         #     logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
+        #         #     logger.info("label_ids: %s", " ".join([str(x) for x in new_label]))
+        #
+        #         input_len = min(len(new_label), max_seq_length)
+        #         features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
+        #                                       segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
+        #
+        #     print("the_no_entity_number: "+str(the_no_entity_number))
+        #     return features, count
         else:
-            raise(ValueError("tokenizer not implemented, please choose from bert tokenizer or gpt2 tokenizer"))
+            raise(ValueError("tokenizer not implemented, only support gpt2 model and tokenizer"))
 
 
     else:# 中文
