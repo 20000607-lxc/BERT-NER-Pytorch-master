@@ -87,14 +87,14 @@ def get_argparse():
     parser.add_argument("--eval_max_seq_length", default=32, type=int,#default = 128,
                         help="The maximum total input sequence length after tokenization. Sequences longer "
                              "than this will be truncated, sequences shorter will be padded.", )
-    parser.add_argument('--cuda', type=int, default=2, help='Avaiable GPU ID')
-    parser.add_argument("--do_train", action="store_true", default=True,
+    parser.add_argument('--cuda', type=int, default=1, help='Avaiable GPU ID')
+    parser.add_argument("--do_train", action="store_true", default=False,
                         help="Whether to run training.")
     parser.add_argument("--evaluate_during_training", action="store_true", default=True,
                         help="Whether to run evaluation during training at each logging step.", )
-    parser.add_argument("--do_eval", action="store_true", default=False,
+    parser.add_argument("--do_eval", action="store_true", default=True,
                         help="Whether to run eval on the dev set.")
-    parser.add_argument("--do_predict", action="store_true", default=False,
+    parser.add_argument("--do_predict", action="store_true", default=True,
                         help="Whether to run predictions on the test set.")
 
     # do_predict 在output_dir中加载存储的checkpoints
@@ -124,7 +124,7 @@ def get_argparse():
     parser.add_argument("--warmup_proportion", default=0.1, type=float,
                         help="Proportion of training to perform linear learning rate warmup for,E.g., 0.1 = 10% of training.")
 
-    parser.add_argument("--save_steps", type=int, default=1000, help="Save checkpoint every X updates steps.")
+    parser.add_argument("--save_steps", type=int, default=2000, help="Save checkpoint every X updates steps.")
     parser.add_argument("--eval_all_checkpoints", action="store_true", #default = False,
                         help="Evaluate all checkpoints starting with the same prefix as model_name ending and ending with step number", )
     parser.add_argument("--predict_checkpoints",type=int, default=0,

@@ -3,7 +3,7 @@ import logging
 import os
 import json
 import time
-
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
@@ -20,7 +20,7 @@ from models.transformers import WEIGHTS_NAME, BertConfig, AlbertConfig
 from models.transformers_master.models.gpt2.configuration_gpt2 import GPT2Config #new config
 from transformers import BertTokenizer, GPT2Tokenizer, AutoTokenizer
 from models.bert_for_ner import BertCrfForNer
-from models.gpt_for_ner import GPT2CrfForNer
+from models.gpt_crf_for_ner import GPT2CrfForNer
 from models.albert_for_ner import AlbertCrfForNer
 from processors.utils_ner import CNerTokenizer, get_entities
 from processors.ner_seq import convert_examples_to_features
@@ -35,63 +35,70 @@ MODEL_CLASSES = {
     'bert': (BertConfig, BertCrfForNer, CNerTokenizer),
     'albert': (AlbertConfig, AlbertCrfForNer, CNerTokenizer),
     'gpt2': (GPT2Config, GPT2CrfForNer, CNerTokenizer),
+    # "chinese_pretrained_gpt2": (GPT2Config, GPT2LMCrfForNer, CNerTokenizer),
+    # 'bare_gpt2': (GPT2Config, BareCrfGPT2, CNerTokenizer),
+    # 'bare_chinese_gpt2':  (GPT2Config, BareCrfChineseGPT2, CNerTokenizer),
+    # 'label_embedding': (GPT2Config, GPT2CrfForNer_LE, CNerTokenizer),
 }
 
 TEMPLATE_CLASSES = {
-    '1': (6, 6, 0),
-    '2': (6, 32, 0),
+    '1': (6, 6, 0),# use the prompt + input + prompt + input module, and cut the hidden state of the later input to classify
+    '2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
 TRAIN_LIMIT = None
-EVAL_LIMIT = 1000
-TEST_LIMIT = 500
+EVAL_LIMIT = None
+TEST_LIMIT = None
+
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
-
-sweep_config = {
-    'method': 'random', #grid, random
-    'metric': {
-        'name': 'acc',
-        'goal': 'maximize'
-    },
-    'parameters': {
-        'epochs': {
-            'values': [2, 5, 10]
-        },
-        'batch_size': {
-            'values': [4,8,16,32]
-        },
-        'dropout': {
-            'values': [0.3, 0.4, 0.5]
-        },
-        'weight_decay': {
-            'values': [0.0005, 0.0004, 0.0006]
-        },
-        'learning_rate': {
-            'values': [7e-5,6e-5, 5e-5, 4e-5, 3e-5, 2e-5]
-        },
-        'crf_learning_rate': {
-            'values': [7e-5,6e-5, 5e-5, 4e-5, 3e-5, 2e-5]
-        },
-        'train_max_seq_length': {
-            'values': [64, 128, 256]
-        },
-        'eval_max_seq_length': {
-            'values': [64, 128, 256]
-        },
-        'optimizer': {
-            'values': ['adam', 'nadam', 'sgd', 'rmsprop']
-        }
-    }
-}
+# sweep_config = {
+#     'method': 'random', #grid, random
+#     'metric': {
+#         'name': 'acc',
+#         'goal': 'maximize'
+#     },
+#     'parameters': {
+#         'epochs': {
+#             'values': [2, 5, 10]
+#         },
+#         'batch_size': {
+#             'values': [4,8,16,32]
+#         },
+#         'dropout': {
+#             'values': [0.3, 0.4, 0.5]
+#         },
+#         'weight_decay': {
+#             'values': [0.0005, 0.0004, 0.0006]
+#         },
+#         'learning_rate': {
+#             'values': [7e-5,6e-5, 5e-5, 4e-5, 3e-5, 2e-5]
+#         },
+#         'crf_learning_rate': {
+#             'values': [7e-5,6e-5, 5e-5, 4e-5, 3e-5, 2e-5]
+#         },
+#         'train_max_seq_length': {
+#             'values': [64, 128, 256]
+#         },
+#         'eval_max_seq_length': {
+#             'values': [64, 128, 256]
+#         },
+#         'optimizer': {
+#             'values': ['adam', 'nadam', 'sgd', 'rmsprop']
+#         }
+#     }
+# }
 args = get_argparse().parse_args()
 # wandb.init(config = args, project = 'gpt2_sweep_2_try', entity='li_xuechun')
 # config2 = wandb.config
 
 if args.model_type == "chinese_pretrained_gpt2":
     raise(ValueError("chinese_pretrained_gpt2 not implemented for run_ner_crf"))
+
+if args.model_type == "chinese_pretrained_gpt2":
+    assert args.task_name in ['cluener', 'cner']
 
 
 def train(args, train_dataset, model, tokenizer):
@@ -244,10 +251,11 @@ def train(args, train_dataset, model, tokenizer):
                     output_dir = os.path.join(args.output_dir, "checkpoint-{}".format(global_step))
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
-                    model_to_save = (
-                        model.module if hasattr(model, "module") else model
-                    )  # Take care of distributed/parallel training
-                    model_to_save.save_pretrained(output_dir)
+                    # todo
+                    # model_to_save = (
+                    #     model.module if hasattr(model, "module") else model
+                    # )  # Take care of distributed/parallel training
+                    # model_to_save.save_pretrained(output_dir)
                     torch.save(args, os.path.join(output_dir, "training_args.bin"))
                     logger.info("Saving model checkpoint to %s", output_dir)
                     tokenizer.save_vocabulary(output_dir)
@@ -277,6 +285,12 @@ def evaluate(args, model, tokenizer, prefix=""):
     logger.info("  Batch size = %d", args.eval_batch_size)
     eval_loss = 0.0
     nb_eval_steps = 0
+    eval_output_dir = args.output_dir
+    if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
+        os.makedirs(eval_output_dir)
+    results = []
+    labels = []
+    output_submit_file = os.path.join(eval_output_dir, prefix, args.output_file_name)
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
     if isinstance(model, nn.DataParallel):
         model = model.module
@@ -291,6 +305,10 @@ def evaluate(args, model, tokenizer, prefix=""):
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
             outputs, word_seq_length, sequence_output = model(**inputs)
             tmp_eval_loss, logits = outputs[:2]
+            example = outputs[2]
+            example = example.tolist()
+            example = tokenizer.decode(example)
+            example = ' '.join(example)
             tags = model.crf.decode(logits, inputs['attention_mask'])
             # tags = model.lstmcrf.decode(word_embeds=sequence_output, word_seq_length=word_seq_length, #logits,
             #                             mask=inputs['attention_mask'])
@@ -302,7 +320,6 @@ def evaluate(args, model, tokenizer, prefix=""):
         out_label_ids = inputs['labels'].cpu().numpy().tolist()
         input_lens = inputs['input_lens'].cpu().numpy().tolist()
         tags = tags.squeeze(0).cpu().numpy().tolist()
-        #tags只有17 和 0
         for i, label in enumerate(out_label_ids):
             temp_1 = []
             temp_2 = []
@@ -315,7 +332,30 @@ def evaluate(args, model, tokenizer, prefix=""):
                 else:
                     temp_1.append(args.id2label[out_label_ids[i][j]])
                     temp_2.append(args.id2label[tags[i][j]])
+
+        labels.append(batch[3])
+        logits = outputs[1]
+        preds = logits.detach().cpu().numpy()
+        preds = np.argmax(preds, axis=2).tolist()
+        preds = preds[0][1:-1] # [CLS]XXXX[SEP]
+        tags = [args.id2label[x] for x in preds]
+        label_entities = get_entities(preds, args.id2label, args.markup)
+        true_labels = batch[3].detach().cpu().numpy().tolist()[0]
+        true_label_entities = get_entities(true_labels, args.id2label, args.markup)
+        json_d = {}
+        json_d['id'] = step
+        #json_d['true_tag_seq'] = " ".join(true_labels)
+        json_d['pred_tag_seq'] = " ".join(tags)
+        json_d['example of the gpt2 output words'] = example
+        json_d['entities'] = label_entities
+        json_d['true_entities'] = true_label_entities
+        results.append(json_d)
         pbar(step)
+
+    with open(output_submit_file, "w") as writer:
+        for record in results:
+            writer.write(json.dumps(record) + '\n')
+
     logger.info("\n")
     eval_loss = eval_loss / nb_eval_steps
     eval_info, entity_info = metric.result()
@@ -331,7 +371,6 @@ def evaluate(args, model, tokenizer, prefix=""):
         logger.info(info)
 
     # wandb.log(results)
-
     return results
 
 def predict(args, model, tokenizer, prefix=""):
@@ -435,23 +474,24 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train',limit = Non
             ENGLISH = False
         else:
             ENGLISH = True
-        features, count  = convert_examples_to_features(english=ENGLISH,
-                                                tokenizer_name=args.model_name_or_path,
-                                                examples=examples,
-                                                tokenizer=tokenizer,
-                                                label_list=label_list,
-                                                max_seq_length=args.train_max_seq_length if data_type == 'train' \
-                                                    else args.eval_max_seq_length,
-                                                cls_token_at_end=bool(args.model_type in ["xlnet"]),
-                                                pad_on_left=bool(args.model_type in ['xlnet']),
-                                                cls_token=tokenizer.cls_token,
-                                                cls_token_segment_id=2 if args.model_type in ["xlnet"] else 0,
-                                                sep_token=tokenizer.sep_token,
-                                                # pad on the left for xlnet
-                                                pad_token=tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0],
-                                                pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0,
-                                                )
-        print("number of examples whose labels cannot be aligned "+str(count))
+        features, count = convert_examples_to_features(english=ENGLISH, task_name=data_type,
+                                                       tokenizer_name=args.tokenizer_name if args.tokenizer_name!='' else args.model_name_or_path,
+                                                       examples=examples,
+                                                       tokenizer=tokenizer,
+                                                       label_list=label_list,
+                                                       max_seq_length=args.train_max_seq_length if data_type=='train' \
+                                                           else args.eval_max_seq_length,
+                                                       cls_token_at_end=bool(args.model_type in ["xlnet"]),
+                                                       pad_on_left=bool(args.model_type in ['xlnet']),
+                                                       cls_token = tokenizer.cls_token,
+                                                       cls_token_segment_id=2 if args.model_type in ["xlnet"] else 0,
+                                                       sep_token=tokenizer.sep_token,
+                                                       # pad on the left for xlnet
+                                                       pad_token=tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0],
+                                                       pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0,
+                                                       )
+        print("number of examples whose labels cannot be aligned "+str(count))# 统计所有不能正常tokenize（label与input_id不对应）的examples
+
 
         if args.local_rank in [-1, 0]:
             logger.info("Saving features into cached file %s", cached_features_file)
@@ -530,7 +570,7 @@ def main():
     # sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
     #config = wandb.config
 
-    if args.model_name_or_path == 'gpt2':
+    if args.model_name_or_path in ['gpt2', 'gpt2-large', 'gpt2-medium', "distilgpt2"]:
         if args.task_name in ['cluener', 'cner']:
             # 中文只采用bert-base-chinese
             tokenizer_name = 'bert-base-chinese'
@@ -539,12 +579,15 @@ def main():
                                                         cache_dir=args.cache_dir if args.cache_dir else None,)
         else:
             # 英文采用与model一致的tokenizer
-            tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=False)#use_fast=True, add_prefix_space=True
+            tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)#use_fast=True, add_prefix_space=True
 
-        model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
-                                            config=config, device=args.device, template=TEMPLATE,  cache_dir=args.cache_dir if args.cache_dir else None,)
+        # model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
+        #                                     config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path,  cache_dir=args.cache_dir if args.cache_dir else None,)
 
-    else:
+        model = model_class(config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path)
+
+
+    else: # bert or albert
         if args.task_name in ['cluener', 'cner']:
             # 中文只采用bert-base-chinese
             tokenizer_name = 'bert-base-chinese'
@@ -553,11 +596,10 @@ def main():
                                                         cache_dir=args.cache_dir if args.cache_dir else None,)
         else:
             # 英文采用与model一致的tokenizer
-            tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=False)
-
+            tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)
+        # for bert or albert, load the model in the from_pretrained way!
         model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
-                                            config=config, device=args.device, template=TEMPLATE, cache_dir=args.cache_dir if args.cache_dir else None,)
-
+                                            config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path, cache_dir=args.cache_dir if args.cache_dir else None,)
 
     if args.local_rank == 0:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
@@ -579,10 +621,11 @@ def main():
         logger.info("Saving model checkpoint to %s", args.output_dir)
         # Save a trained model, configuration and tokenizer using `save_pretrained()`.
         # They can then be reloaded using `from_pretrained()`
-        model_to_save = (
-            model.module if hasattr(model, "module") else model
-        )  # Take care of distributed/parallel training
-        model_to_save.save_pretrained(args.output_dir)
+        # todo
+        # model_to_save = (
+        #     model.module if hasattr(model, "module") else model
+        # )  # Take care of distributed/parallel training
+        # model_to_save.save_pretrained(args.output_dir)
         tokenizer.save_vocabulary(args.output_dir)
         # Good practice: save your training arguments together with the trained model
         torch.save(args, os.path.join(args.output_dir, "training_args.bin"))

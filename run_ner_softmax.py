@@ -53,9 +53,10 @@ TEMPLATE_CLASSES = {
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = None
-EVAL_LIMIT = None
-TEST_LIMIT = 500
+TRAIN_LIMIT = 60#None
+EVAL_LIMIT = 20#None
+TEST_LIMIT = 20#None
+
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
@@ -177,7 +178,7 @@ def train(args, train_dataset, model, tokenizer):
         fgm = FGM(model, emb_name=args.adv_name, epsilon=args.adv_epsilon)#fast gradient method
     model.zero_grad()
     seed_everything(args.seed)  # Added here for reproductibility (even between python 2 and 3)
-    for _ in range(int(args.num_train_epochs)):
+    for epoch in range(int(args.num_train_epochs)):
         pbar = ProgressBar(n_total=len(train_dataloader), desc='Training')
 
         for step, batch in enumerate(train_dataloader):
@@ -236,11 +237,18 @@ def train(args, train_dataset, model, tokenizer):
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
                     # Take care of distributed/parallel training
-                    model_to_save = (model.module if hasattr(model, "module") else model)
+
+                    # checkpoint = {"model_state_dict": model.state_dict(),
+                    #               "optimizer_state_dict": optimizer.state_dict(),
+                    #               "global_step": global_step,
+                    #               "epoch": epoch}
+                    # model_to_save = (model.module if hasattr(model, "module") else model)
                     # model_to_save.save_pretrained(output_dir)
+
                     torch.save(args, os.path.join(output_dir, "training_args.bin"))
                     tokenizer.save_vocabulary(output_dir)
                     logger.info("Saving model checkpoint to %s", output_dir)
+                    torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
                     torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
                     torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
                     logger.info("Saving optimizer and scheduler states to %s", output_dir)
@@ -272,7 +280,7 @@ def evaluate(args, model, tokenizer, prefix=''):
     results = []
     labels = []
     # todo remember to change the name each time if want to see the ids, tokens and entities
-    output_submit_file = os.path.join(eval_output_dir, prefix, args.output_file_name)
+    output_submit_file = os.path.join(eval_output_dir, prefix,'eval', args.output_file_name)
 
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
     for step, batch in enumerate(eval_dataloader):
@@ -368,7 +376,7 @@ def predict(args, model, tokenizer, prefix = ''):
 
     results = []
     labels = []
-    output_submit_file = os.path.join(pred_output_dir, prefix, "gpt2_test_prediction.json")
+    output_submit_file = os.path.join(pred_output_dir, prefix, 'test', args.output_file_name)
     pbar = ProgressBar(n_total=len(test_dataloader), desc="Predicting")
     for step, batch in enumerate(test_dataloader):
         model.eval()
@@ -531,7 +539,7 @@ def main():
                                           loss_type=args.loss_type,
                                           cache_dir=args.cache_dir if args.cache_dir else None,)
 
-    if args.model_name_or_path == 'gpt2':
+    if args.model_name_or_path in ['gpt2', 'gpt2-large', 'gpt2-medium', "distilgpt2"]:
         if args.task_name in ['cluener', 'cner']:
             # 中文只采用bert-base-chinese
             tokenizer_name = 'bert-base-chinese'
@@ -548,7 +556,7 @@ def main():
         model = model_class(config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path)
 
 
-    else:
+    else: # bert or albert
         if args.task_name in ['cluener', 'cner']:
             # 中文只采用bert-base-chinese
             tokenizer_name = 'bert-base-chinese'
@@ -558,7 +566,7 @@ def main():
         else:
             # 英文采用与model一致的tokenizer
             tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)
-
+        # for bert or albert, load the model in the from_pretrained way!
         model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
                                             config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path, cache_dir=args.cache_dir if args.cache_dir else None,)
 
@@ -575,7 +583,6 @@ def main():
         global_step, tr_loss = train(args, train_dataset, model, tokenizer)
         logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
 
-
     # Saving best-practices: if you use defaults names for the model, you can reload it using from_pretrained()
     if args.do_train and (args.local_rank == -1 or torch.distributed.get_rank() == 0):
         # Create output directory if needed
@@ -584,19 +591,35 @@ def main():
         logger.info("Saving model checkpoint to %s", args.output_dir)
         # Save a trained model, configuration and tokenizer using `save_pretrained()`.
         # They can then be reloaded using `from_pretrained()`
-        model_to_save = (
-            model.module if hasattr(model, "module") else model
-        )  # Take care of distributed/parallel training
+        # model_to_save = (
+        #     model.module if hasattr(model, "module") else model
+        # )  # Take care of distributed/parallel training
         # model_to_save.save_pretrained(args.output_dir)
         tokenizer.save_vocabulary(args.output_dir)
+        # todo tokenizer 真的训练了吗？？？
+
         # Good practice: save your training arguments together with the trained model
         torch.save(args, os.path.join(args.output_dir, "training_args.bin"))
 
+        logger.info("Saving model checkpoint to %s", args.output_dir)
+        torch.save(model.state_dict(), os.path.join(args.output_dir, "model.pt"))
+        # torch.save(optimizer.state_dict(), os.path.join(args.output_dir, "optimizer.pt"))
+        # torch.save(scheduler.state_dict(), os.path.join(args.output_dir, "scheduler.pt"))
+        # logger.info("Saving optimizer and scheduler states to %s", args.output_dir)
+
     # wandb.agent(sweep_id, train(args, train_dataset, model, tokenizer))#(config2, train_dataset, model, tokenizer)
-    # Evaluation
+
+    # Evaluation（加载保存的模型，单独evaluation）
     results = {}
     if args.do_eval and args.local_rank in [-1, 0]:
-        tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+        if args.task_name in ['cluener', 'cner']:
+            # 中文延用tokenizer_class
+            tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+        else:
+            # 英文采用AutoTokenizer todo assume containing vocabulary files named ['vocab.txt'] but couldn't find such vocabulary files at this path or url, save 的是json
+            #tokenizer = AutoTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+            tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)
+
         checkpoints = [args.output_dir]
         if args.eval_all_checkpoints:
             checkpoints = list(
@@ -608,9 +631,10 @@ def main():
             global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
             prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
 
-            if args.model_name_or_path in ["gpt2",'gpt2-large']:
-                model = model_class.from_pretrained(checkpoint, device=args.device, config=config)
-            else:
+            if args.model_name_or_path in ["gpt2", 'gpt2-large']:
+                model.load_state_dict(checkpoint['model_state_dict'])
+                # model = model_class.from_pretrained(checkpoint, device=args.device, config=config)
+            else:# bert 可以直接利用from_pretrained函数
                 model = model_class.from_pretrained(checkpoint, config=config)
             model.to(args.device)
             result = evaluate(args, model, tokenizer, prefix=prefix)
@@ -623,7 +647,14 @@ def main():
                 writer.write("{} = {}\n".format(key, str(results[key])))
 
     if args.do_predict and args.local_rank in [-1, 0]:
-        tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+        if args.task_name in ['cluener', 'cner']:
+            # 中文延用tokenizer_class
+            tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+        else:
+            # 英文采用AutoTokenizer todo assume containing vocabulary files named ['vocab.txt'] but couldn't find such vocabulary files at this path or url, save 的是json
+            # tokenizer = AutoTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+            tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)
+
         checkpoints = [args.output_dir]
         if args.predict_checkpoints > 0:
             checkpoints = list(

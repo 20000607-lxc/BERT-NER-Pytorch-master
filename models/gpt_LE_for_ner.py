@@ -126,12 +126,12 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         attn_dist = attn_dist_ / normalization_factor
         attn_dist = attn_dist.unsqueeze(1)                        # B x 1 x 5
         output_state = torch.bmm(attn_dist, label_embedding)      # B x 1 x 5  *   5 x hidden_dim
-        output_state = output_state.suqeeze(1)
+        output_state = output_state.squeeze(1)
         output_state += input_state
         return output_state
 
 
-    def add_label_embedding(self, sequence_output):
+    def add_label_embedding(self, sequence_output, label_init):
         """
         Args:
             sequence_output: the output from gpt2 model
@@ -141,15 +141,17 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
 
         """
         bz = sequence_output.shape[0]
+        new_sequence_output = torch.zeros_like(sequence_output)
         label_embedding = torch.empty(bz, 5, self.hidden_size).to(self.device)
-        label_init = self.label_embedding()
+
         for k in range(bz):
             label_embedding[k, :, :] = label_init
 
         for i in range(sequence_output.shape[1]):
-            sequence_output[:, i, :] = self.attention(sequence_output[:, i, :], label_embedding, bz)
+            new_sequence_output[:, i, :] = self.attention(sequence_output[:, i, :], label_embedding, bz)
+            # donot use a = ...a , which will trigger error during loss.backward() cause this assigns value to one variable repeatedly
 
-        return sequence_output
+        return new_sequence_output
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, labels=None):
         """
@@ -167,6 +169,8 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
             outputs
 
         """
+        label_init = self.label_embedding()
+
         bz = len(input_ids)#batch_size
         bx = len(input_ids[0])
         prompt_tokens = [self.pseudo_token_id]
@@ -188,7 +192,6 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
 
         sequence_output = outputs[0]
-        sequence_output = self.add_label_embedding(sequence_output)
 
         sequence_output = self.dropout(sequence_output)
         sequence = torch.zeros(bz, bx, self.hidden_size).to(self.device)
@@ -200,6 +203,8 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
                 place = self.template[0] + counts[bdix] + 1
             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
             # todo 只截取没有pad的id对应的input
+
+        sequence = self.add_label_embedding(sequence, label_init)
 
         logits = self.classifier(sequence)#logits：每个词的labels分数
         outputs = (example,)+outputs[2:]
