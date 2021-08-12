@@ -185,7 +185,7 @@ def get_entity_bio(seq,id2label):
             chunk = [-1, -1, -1]
     return chunks
 
-def get_entities(seq,id2label,markup='bios'):
+def get_entities(seq,id2label, markup='bios'):
     '''
     :param seq:
     :param id2label:
@@ -194,9 +194,9 @@ def get_entities(seq,id2label,markup='bios'):
     '''
     assert markup in ['bio','bios']
     if markup =='bio':
-        return get_entity_bio(seq,id2label)
+        return get_entity_bio(seq, id2label)
     else:
-        return get_entity_bios(seq,id2label)
+        return get_entity_bios(seq, id2label)
 
 def bert_extract_item(start_logits, end_logits):
     S = []

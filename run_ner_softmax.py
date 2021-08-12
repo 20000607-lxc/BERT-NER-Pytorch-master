@@ -297,6 +297,7 @@ def evaluate(args, model, tokenizer, prefix=''):
             outputs = model(**inputs)
 
         tmp_eval_loss, logits = outputs[:2]
+
         # convert the example into tokens and add into json_d
         example = outputs[2]
         example = example.tolist()
@@ -309,7 +310,6 @@ def evaluate(args, model, tokenizer, prefix=''):
         nb_eval_steps += 1
         preds = np.argmax(logits.cpu().numpy(), axis=2).tolist()
         input_lens = batch[4].cpu().numpy().tolist()
-
         out_label_ids = inputs['labels'].cpu().numpy().tolist()
         for i, label in enumerate(out_label_ids):
             temp_1 = []
@@ -363,7 +363,9 @@ def evaluate(args, model, tokenizer, prefix=''):
     #wandb.log(results)
     return results
 
+
 def predict(args, model, tokenizer, prefix = ''):
+    metric = SeqEntityScore(args.id2label,markup=args.markup)
     pred_output_dir = args.output_dir
     if not os.path.exists(pred_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(pred_output_dir)
@@ -392,6 +394,24 @@ def predict(args, model, tokenizer, prefix = ''):
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
 
         outputs = model(**inputs)
+        logits = outputs[0]
+        preds = np.argmax(logits.cpu().numpy(), axis=2).tolist()
+        input_lens = batch[4].cpu().numpy().tolist()
+
+        out_label_ids = inputs['labels'].cpu().numpy().tolist()
+        for i, label in enumerate(out_label_ids):
+            temp_1 = []
+            temp_2 = []
+            for j, m in enumerate(label):
+                if j == 0:
+                    continue
+                elif j == input_lens[i]-1:
+                    metric.update(pred_paths=[temp_2], label_paths=[temp_1])
+                    break
+                else:
+                    temp_1.append(args.id2label[out_label_ids[i][j]])
+                    temp_2.append(preds[i][j])
+
         labels.append(batch[3])
         logits = outputs[1]
         #logits = outputs[0]
@@ -410,10 +430,21 @@ def predict(args, model, tokenizer, prefix = ''):
         json_d['tag_seq'] = " ".join(tags)
         json_d['entities'] = label_entities
         json_d['true_entities'] = true_label_entities
-
         results.append(json_d)
         pbar(step)
+
     logger.info("\n")
+    test_info, entity_info = metric.result()
+    results = {f'{key}': value for key, value in test_info.items()}
+    logger.info("***** Test results %s *****", prefix)
+    info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
+    logger.info(info)
+    logger.info("***** Test Entity results %s *****", prefix)
+    for key in sorted(entity_info.keys()):
+        logger.info("******* %s results ********"%key)
+        info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
+        logger.info(info)
+
     with open(output_submit_file, "w") as writer:
         for record in results:
             writer.write(json.dumps(record) + '\n')
