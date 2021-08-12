@@ -34,6 +34,7 @@ class SeqEntityScore(object):
         found = len(self.founds)
         right = len(self.rights)
         recall, precision, f1 = self.compute(origin, found, right)
+        # todo 计算指标的方式不是example(input sequence)-level ，而是entity-level
         return {'acc': precision, 'recall': recall, 'f1': f1}, class_info
 
     def update(self, label_paths, pred_paths):

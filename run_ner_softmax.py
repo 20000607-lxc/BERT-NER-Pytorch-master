@@ -586,7 +586,6 @@ def main():
 
         model = model_class(config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path)
 
-
     else: # bert or albert
         if args.task_name in ['cluener', 'cner']:
             # 中文只采用bert-base-chinese
