@@ -244,10 +244,8 @@ def train(args, train_dataset, model, tokenizer):
                         logger.info("Saving model checkpoint to %s", output_dir)
                         torch.save(checkpoint, os.path.join(output_dir, "model.pkl"))
                     else:
-
-                        # model_to_save = (model.module if hasattr(model, "module") else model)
-                        # model_to_save.save_pretrained(output_dir)
-
+                        model_to_save = (model.module if hasattr(model, "module") else model)
+                        model_to_save.save_pretrained(output_dir)
                         torch.save(args, os.path.join(output_dir, "training_args.bin"))
                         tokenizer.save_vocabulary(output_dir)
                         logger.info("Saving model checkpoint to %s", output_dir)
@@ -297,7 +295,6 @@ def evaluate(args, model, tokenizer, prefix=''):
             outputs = model(**inputs)
 
         tmp_eval_loss, logits = outputs[:2]
-
         # convert the example into tokens and add into json_d
         example = outputs[2]
         example = example.tolist()
@@ -610,7 +607,6 @@ def main():
     model.to(args.device)
 
     logger.info("Training/evaluation parameters %s", args)
-
     # Training
     if args.do_train:
         train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='train', limit=TRAIN_LIMIT)
@@ -631,6 +627,7 @@ def main():
         # model_to_save.save_pretrained(args.output_dir)
         tokenizer.save_vocabulary(args.output_dir)
         # todo tokenizer 真的训练了吗？？？
+        # todo 咋区分的best perform model？？？
 
         # Good practice: save your training arguments together with the trained model
         torch.save(args, os.path.join(args.output_dir, "training_args.bin"))
@@ -642,6 +639,7 @@ def main():
         # logger.info("Saving optimizer and scheduler states to %s", args.output_dir)
 
     # wandb.agent(sweep_id, train(args, train_dataset, model, tokenizer))#(config2, train_dataset, model, tokenizer)
+
 
     # Evaluation（加载保存的模型，单独evaluation）
     results = {}
@@ -655,7 +653,6 @@ def main():
             tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)
 
         checkpoints = [args.output_dir]
-
         if args.eval_all_checkpoints:
             checkpoints = list(
                 os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + "/**/" + WEIGHTS_NAME, recursive=True))
@@ -702,7 +699,12 @@ def main():
         logger.info("Predict the following checkpoints: %s", checkpoints)
         for checkpoint in checkpoints:
             prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
-            model = model_class.from_pretrained(checkpoint, template=TEMPLATE, device=args.device)
+            if args.model_name_or_path in ["gpt2", 'gpt2-large']:
+                checkpoint = os.path.join(checkpoint, "checkpoint-{}".format(10), "model.pkl") # todo should not use 10
+                checkpoint = torch.load(checkpoint)
+                model.load_state_dict(checkpoint['model_state_dict'])
+            else:
+                model = model_class.from_pretrained(checkpoint, template=TEMPLATE, device=args.device)
             model.to(args.device)
             predict(args, model, tokenizer, prefix=prefix)
 
