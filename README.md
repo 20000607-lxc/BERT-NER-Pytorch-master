@@ -4,18 +4,25 @@
 ### dataset list
 
 1. cner: datasets/cner
+
+
 2. CLUENER: datasets/cluener
 
 **note**: the official link is  https://github.com/CLUEbenchmark/CLUENERBut I didn't find the datset from the above link, instead, I download the cluener dataset from  https://github.com/liuyukid/transformers-ner
+
 3. conll2003_bio: datasets/conll2003_bio
 
-**note**: it's the BIO version of conll2003 dataset, but the `train.txt` file is too big, so I use `dev.txt` to do training and `test.txt` to do validation.
+**note**: it's the BIO version of conll2003 dataset.
+
+4. ontonote: datasets/ontonote
+   
+**note**: the same with dataset used in [NAACL 2021] Better Feature Integration for Named Entity Recognition (In NAACL 2021)
 
 4. other datasets:
 
 conll2003: datasets/conll2003
 
-**note**: it's the BIESO version of conll2003 dataset, use it to test if this model is adaptable to other labeling style. I got low acc with this dataset for now.
+**note**: it's the BIESO version of conll2003 dataset, use it to test if this model is adaptable to other labeling style. 
 
 BTC and GUM: I didn't test them yet.
 
@@ -28,9 +35,9 @@ BTC and GUM: I didn't test them yet.
 
 ### transformers
 
-1.I use  transformers 4.6.0  which is in `models.transformers_master `
+1.I use transformers 4.6.0  which is in `models.transformers_master `
 
-2.The transfomers used in the original project is still in `models.transformers` but it is the lower version and using it causes many bugs.
+2.The transformers used in the original project is still in `models.transformers` but it is the lower version and using it causes bugs.
 
 
 ### requirement
@@ -57,16 +64,15 @@ The cner dataset labels are transferred into BIOS scheme in the DataProcessor.
 他	O
 ```
 ### promot format
-if template = (m,n,0), then the sequence fed into gpt2 is prompt1(length=m) + input + prompt2(length=n)
+there are two prompt style:
+1. (m,m,0) : construct the query as : prompt+input+prompt+input and use the output hidden state of the latter input to do classification 
 
-
+2. (m,length_of_max_sequence_length,0) : construct the query as : prompt+input+prompt and use the output hidden state of the latter prompt to do classification
 ### run the code
 
 1. Modify the configuration information in `run_ner_xxx.py`
 2. Modify the params in ` finetuning_argparse.py`
-3. Notice that in ` finetuning_argparse.py`, I set --do_train = True,  --do-eval = False  --do_predict = False
-   which means only evaluate during training and do not predict.
-4. Modify the prompt template by setting `TEMPLATE_CLASSES` in `run_ner_xxx.py` and you can choose any integers for x and m in template (x,m,0).
+4. Modify the prompt template by setting `TEMPLATE_CLASSES` in `run_ner_xxx.py`.
 5. `BART_for_ner.py` cannot run for now.
 
 **note**: file structure of the model
@@ -83,18 +89,23 @@ if template = (m,n,0), then the sequence fed into gpt2 is prompt1(length=m) + in
 **best results for gpt2**
 1. cner:
 
-evaluation:  acc: 0.8718 - recall: 0.8232 - f1: 0.8468 - loss: 0.1595
-params: learning_rate=5e-5 weight_decay=0.01 template='1' model_type='gpt2'
+evaluation:  acc: 0.94 - recall: 0.93 - f1: 0.93 
+params: learning_rate=5e-5 weight_decay=0.01 template='1' model_type='chinese_pretrained_gpt2'
 
 2. cluener:
    
-evaluation:  acc: 0.6246 - recall: 0.4792 - f1: 0.5423 - loss: 0.4650
-params: learning_rate=2e-4 weight_decay=0.01 template='1' model_type='gpt2'
+evaluation: acc: 0.76 - recall: 0.74 - f1: 0.75
+params: learning_rate=5e-5 weight_decay=0.01 template='1' model_type='chinese_pretrained_gpt2'
 
 
-3. conll2003 (use dev.txt to train and test.txt to eval, fixed the tokenization fault and applied the tokenization method by transformers. )
+3. conll2003: 
    
-evaluation:  acc: 0.2521 - recall: 0.1079 - f1: 0.1511 - loss: 1.0692
+evaluation:  acc: 0.94 - recall: 0.93 - f1: 0.93
+params: learning_rate=5e-5 weight_decay=0.01 template='1' model_type='gpt2'
+
+4. ontonote: 
+
+evaluation:  acc: 0.85 - recall: 0.85 - f1: 0.85
 params: learning_rate=1e-4 weight_decay=0.01 template='1' model_type='gpt2'
 
 the other params are default values. 

@@ -25,13 +25,13 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
         self.num_labels = config.num_labels
-        if model_name == None:
+        if model_name == None:# 用于load gpt2-large
             model_name = 'gpt2'
         self.gpt2 = New_GPT2.from_pretrained(model_name)# 可以接受inputs_embeds和input_ids
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name)
 
         self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings()#embedding是GPT2LMHeadModel的embedding
-        #self.embeddings.weight.requires_grad = False todo
+        # self.embeddings.weight.requires_grad = False todo
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
         # perform fine_tuning
@@ -56,7 +56,7 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         self.attn_linear = nn.Linear(self.hidden_size, self.hidden_size)
         self.fc = nn.Linear(self.hidden_size, 1, bias=False)
 
-        print("***************** init GPT2SoftmaxForNer *********************")
+        print("***************** init GPT2SoftmaxForNer with label embedding *********************")
 
     def get_query(self, input_id, prompt_tokens):
         input = []
@@ -129,7 +129,6 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         output_state = output_state.squeeze(1)
         output_state += input_state
         return output_state
-
 
     def add_label_embedding(self, sequence_output, label_init):
         """

@@ -84,6 +84,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
     the_no_entity_number = 0
     label_map = {label: i for i, label in enumerate(label_list)}
     features = []
+    sum_length_of_example = 0
     if english:
         if 'gpt2' in tokenizer_name:
             print("gpt2_english tokenizer")
@@ -94,6 +95,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 if type(example.text_a) == list:
                     new_text = ' '.join(example.text_a)
                     tokens = tokenizer.tokenize(' ' + new_text)
+                    sum_length_of_example += len(tokens)
 
                 label_ids = [label_map[x] for x in example.labels]
 
@@ -176,7 +178,8 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
                                               segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
 
-            print("****************the total no entity example number: "+str(the_no_entity_number)+'******************')
+            print("****************  the total no entity example number: "+str(the_no_entity_number)+'   ******************')
+            print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index)+ '   ******************')
             return features, count
 
         # elif "bert" or 'Bert' in tokenizer_name:
@@ -284,13 +287,22 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 new_text = ''.join(example.text_a)
 
             tokens = tokenizer.tokenize(new_text)
+            sum_length_of_example += len(tokens)
             label_ids = [label_map[x] for x in example.labels]
 
-            # Account for [CLS] and [SEP] with "- 2".
+            flag = 1
+            for i in label_ids:
+                if i != 9:
+                    flag = 0# 表示该example含有entity
+                    break
+            the_no_entity_number += flag
+
+        # Account for [CLS] and [SEP] with "- 2".
             special_tokens_count = 4 # todo
             if len(tokens) > max_seq_length - special_tokens_count:
                 tokens = tokens[: (max_seq_length - special_tokens_count)]
                 label_ids = label_ids[: (max_seq_length - special_tokens_count)]
+
 
 
             label_ids += [label_map['O']]
@@ -367,7 +379,8 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                                               segment_ids=segment_ids, label_ids=label_ids))# tokens = tokens
             else:
                 count = count + 1
-
+        print("****************   the total no entity example number: "+str(the_no_entity_number)+'  ******************')
+        print("****************   average length of examples(not truncated): "+str(sum_length_of_example/ex_index) + '  ******************')
         return features, count
 
 class CnerProcessor(DataProcessor):
@@ -529,7 +542,6 @@ class OntonoteProcessor(DataProcessor):
                 'B-PRODUCT', 'I-PRODUCT',
                 'B-QUANTITY', 'I-QUANTITY',
                 'B-TIME', 'I-TIME',
-                'B-EVENT', 'I-EVENT',
                 'B-PERCENT', 'I-PERCENT',
                 'B-MONEY', 'I-MONEY',
                 'B-LAW', 'I-LAW',

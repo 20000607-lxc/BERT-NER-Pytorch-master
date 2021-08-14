@@ -50,12 +50,13 @@ MODEL_CLASSES = {
 TEMPLATE_CLASSES = {
     '1': (6, 6, 0),# use the prompt + input + prompt + input module, and cut the hidden state of the later input to classify
     '2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
+    '3': (12, 12, 0)# todo ontonote entity type 多，增长prompt是否有效果？
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = 60#None
-EVAL_LIMIT = 20#None
-TEST_LIMIT = 20#None
+TRAIN_LIMIT = None
+EVAL_LIMIT = None
+TEST_LIMIT = None
 
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
@@ -230,7 +231,14 @@ def train(args, train_dataset, model, tokenizer):
                     if args.local_rank == -1:
                         # Only evaluate when single GPU otherwise metrics may not average well
                         evaluate(args, model, tokenizer)
-                if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
+                if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0 and epoch == args.num_train_epochs-1:
+                    # Log metrics
+                    print(" in the last epoch, do testing  ")
+                    if args.local_rank == -1:
+                        # Only evaluate when single GPU otherwise metrics may not average well
+                        predict(args, model, tokenizer)
+
+                if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0 and args.save_model:
                     # Save model checkpoint
                     output_dir = os.path.join(args.output_dir, "checkpoint-{}".format(global_step))
                     if not os.path.exists(output_dir):
@@ -259,7 +267,7 @@ def train(args, train_dataset, model, tokenizer):
     return global_step, tr_loss / global_step
 
 def evaluate(args, model, tokenizer, prefix=''):
-    metric = SeqEntityScore(args.id2label,markup=args.markup)
+    metric = SeqEntityScore(args.id2label, markup=args.markup)
     eval_output_dir = args.output_dir
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
@@ -288,13 +296,14 @@ def evaluate(args, model, tokenizer, prefix=''):
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
         with torch.no_grad():
-            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3], 'input_lens': batch[4]}
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
             outputs = model(**inputs)
 
         tmp_eval_loss, logits = outputs[:2]
+
         # convert the example into tokens and add into json_d
         example = outputs[2]
         example = example.tolist()
@@ -377,14 +386,13 @@ def predict(args, model, tokenizer, prefix = ''):
     logger.info("  Batch size = %d", 1)
 
     results = []
-    labels = []
     output_submit_file = os.path.join(pred_output_dir, prefix, 'test', args.output_file_name)
     pbar = ProgressBar(n_total=len(test_dataloader), desc="Predicting")
     for step, batch in enumerate(test_dataloader):
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
         with torch.no_grad():
-            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}#labels 应该为none 暂时设为非none
+            inputs = {"input_ids": batch[0], "attention_mask": batch[1]}
         if args.model_name_or_path in ["gpt2"]:
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
@@ -409,7 +417,6 @@ def predict(args, model, tokenizer, prefix = ''):
                     temp_1.append(args.id2label[out_label_ids[i][j]])
                     temp_2.append(preds[i][j])
 
-        labels.append(batch[3])
         logits = outputs[1]
         #logits = outputs[0]
         preds = logits.detach().cpu().numpy()
@@ -613,7 +620,7 @@ def main():
         logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
 
     # Saving best-practices: if you use defaults names for the model, you can reload it using from_pretrained()
-    if args.do_train and (args.local_rank == -1 or torch.distributed.get_rank() == 0):
+    if args.do_train and (args.local_rank == -1 or torch.distributed.get_rank() == 0) and args.save_model:
         # Create output directory if needed
         if not os.path.exists(args.output_dir) and args.local_rank in [-1, 0]:
             os.makedirs(args.output_dir)
@@ -639,10 +646,9 @@ def main():
 
     # wandb.agent(sweep_id, train(args, train_dataset, model, tokenizer))#(config2, train_dataset, model, tokenizer)
 
-
     # Evaluation（加载保存的模型，单独evaluation）
     results = {}
-    if args.do_eval and args.local_rank in [-1, 0]:
+    if args.do_eval_with_saved_model and args.local_rank in [-1, 0]:
         if args.task_name in ['cluener', 'cner']:
             # 中文延用tokenizer_class
             tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
@@ -680,7 +686,8 @@ def main():
             for key in sorted(results.keys()):
                 writer.write("{} = {}\n".format(key, str(results[key])))
 
-    if args.do_predict and args.local_rank in [-1, 0]:
+    # test（加载保存的模型，单独test）
+    if args.do_predict_with_saved_model and args.local_rank in [-1, 0]:
         if args.task_name in ['cluener', 'cner']:
             # 中文延用tokenizer_class
             tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)

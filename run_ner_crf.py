@@ -141,7 +141,7 @@ def train(args, train_dataset, model, tokenizer):
 
     args.warmup_steps = int(t_total * args.warmup_proportion)
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
-    #optimizer = AdamW(optimizer_grouped_parameters, lr=config2.learning_rate, eps=args.adam_epsilon)
+    # optimizer = AdamW(optimizer_grouped_parameters, lr=config2.learning_rate, eps=args.adam_epsilon)
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.warmup_steps,
                                                 num_training_steps=t_total)
     # Check if saved optimizer or scheduler states exist
@@ -196,7 +196,7 @@ def train(args, train_dataset, model, tokenizer):
 
     model.zero_grad()
     seed_everything(args.seed)  # Added here for reproductibility (even between python 2 and 3)
-    for _ in range(int(args.num_train_epochs)):
+    for epoch in range(int(args.num_train_epochs)):
         pbar = ProgressBar(n_total=len(train_dataloader), desc='Training')
         for step, batch in enumerate(train_dataloader):
             # Skip past any already trained steps if resuming training
@@ -209,7 +209,7 @@ def train(args, train_dataset, model, tokenizer):
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
-            outputs, _, _ = model(**inputs)
+            outputs = model(**inputs)
             loss = outputs[0]  # model outputs are always tuple in pytorch-transformers (see doc)
             if args.n_gpu > 1:
                 loss = loss.mean()  # mean() to average on multi-gpu parallel training
@@ -246,22 +246,37 @@ def train(args, train_dataset, model, tokenizer):
                     if args.local_rank == -1:
                         # Only evaluate when single GPU otherwise metrics may not average well
                         evaluate(args, model, tokenizer)
-                if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
+
+                if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0 and epoch == args.num_train_epochs-1:
+                    # Log metrics
+                    print(" in the last epoch, do testing ")
+                    if args.local_rank == -1:
+                        # Only evaluate when single GPU otherwise metrics may not average well
+                        predict(args, model, tokenizer)
+
+                if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0 and args.save_model:
                     # Save model checkpoint
                     output_dir = os.path.join(args.output_dir, "checkpoint-{}".format(global_step))
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
-                    # todo
-                    # model_to_save = (
-                    #     model.module if hasattr(model, "module") else model
-                    # )  # Take care of distributed/parallel training
-                    # model_to_save.save_pretrained(output_dir)
-                    torch.save(args, os.path.join(output_dir, "training_args.bin"))
-                    logger.info("Saving model checkpoint to %s", output_dir)
-                    tokenizer.save_vocabulary(output_dir)
-                    torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
-                    torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
-                    logger.info("Saving optimizer and scheduler states to %s", output_dir)
+                    if args.model_name_or_path in ["gpt2", 'gpt2-large']:
+                        checkpoint = {"model_state_dict": model.state_dict(),
+                                      "optimizer_state_dict": optimizer.state_dict(),
+                                      "global_step": global_step,
+                                      "epoch": epoch}
+                        logger.info("Saving model checkpoint to %s", output_dir)
+                        torch.save(checkpoint, os.path.join(output_dir, "model.pkl"))
+                    else:
+                        model_to_save = (
+                            model.module if hasattr(model, "module") else model
+                        )  # Take care of distributed/parallel training
+                        model_to_save.save_pretrained(output_dir)
+                        torch.save(args, os.path.join(output_dir, "training_args.bin"))
+                        logger.info("Saving model checkpoint to %s", output_dir)
+                        tokenizer.save_vocabulary(output_dir)
+                        torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
+                        torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
+                        logger.info("Saving optimizer and scheduler states to %s", output_dir)
         logger.info("\n")
         if 'cuda' in str(args.device):
             torch.cuda.empty_cache()
@@ -269,6 +284,7 @@ def train(args, train_dataset, model, tokenizer):
 
 
 def evaluate(args, model, tokenizer, prefix=""):
+    print('***************** evaluation *******************')
     metric = SeqEntityScore(args.id2label, markup=args.markup)
     eval_output_dir = args.output_dir
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
@@ -303,7 +319,7 @@ def evaluate(args, model, tokenizer, prefix=""):
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
-            outputs, word_seq_length, sequence_output = model(**inputs)
+            outputs = model(**inputs)
             tmp_eval_loss, logits = outputs[:2]
             example = outputs[2]
             example = example.tolist()
@@ -374,6 +390,8 @@ def evaluate(args, model, tokenizer, prefix=""):
     return results
 
 def predict(args, model, tokenizer, prefix=""):
+    print('***************** test *******************')
+    metric = SeqEntityScore(args.id2label,markup=args.markup)
     pred_output_dir = args.output_dir
     if not os.path.exists(pred_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(pred_output_dir)
@@ -386,6 +404,7 @@ def predict(args, model, tokenizer, prefix=""):
     logger.info("  Num examples = %d", len(test_dataset))
     logger.info("  Batch size = %d", 1)
     results = []
+    labels = []
     output_predict_file = os.path.join(pred_output_dir, prefix, "gpt2_test_prediction.json")
     pbar = ProgressBar(n_total=len(test_dataloader), desc="Predicting")
 
@@ -395,12 +414,12 @@ def predict(args, model, tokenizer, prefix=""):
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
         with torch.no_grad():
-            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": None, 'input_lens': batch[4]}
+            inputs = {"input_ids": batch[0], "attention_mask": batch[1], 'input_lens': batch[4]}
 
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
-            outputs, word_seq_length, sequence_output = model(**inputs)
+            outputs = model(**inputs)
             logits = outputs[0]
             tags = model.crf.decode(logits, inputs['attention_mask'])
             # tags = model.lstmcrf.decode(word_embeds=sequence_output, word_seq_length=word_seq_length, #logits,
@@ -415,13 +434,25 @@ def predict(args, model, tokenizer, prefix=""):
         results.append(json_d)
         pbar(step)
     logger.info("\n")
+    test_info, entity_info = metric.result()
+    results = {f'{key}': value for key, value in test_info.items()}
+    logger.info("***** Test results %s *****", prefix)
+    info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
+    logger.info(info)
+    logger.info("***** Test Entity results %s *****", prefix)
+    for key in sorted(entity_info.keys()):
+        logger.info("******* %s results ********"%key)
+        info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
+        logger.info(info)
+
     with open(output_predict_file, "w") as writer:
         for record in results:
             writer.write(json.dumps(record) + '\n')
+
     if args.task_name == 'cluener':
-        output_submit_file = os.path.join(pred_output_dir, prefix, "test_submit.json")
+        output_submit_file = os.path.join(pred_output_dir, prefix, 'test', args.output_file_name)
         test_text = []
-        with open(os.path.join(args.data_dir,"test.json"), 'r') as fr:
+        with open(os.path.join(args.data_dir, "test.json"), 'r') as fr:
             for line in fr:
                 test_text.append(json.loads(line))
         test_submit = []
@@ -506,9 +537,9 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train',limit = Non
     all_lens = torch.tensor([f.input_len for f in features], dtype=torch.long)
     all_tokens = [f.tokens for f in features]
     dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids)
-    if args.do_predict:
-        # predict时将tokens也输出并写入文件，方便与label对应
-        return dataset,  all_tokens
+    # if args.do_predict:
+    #     # predict时将tokens也输出并写入文件，方便与label对应
+    #     return dataset,  all_tokens
     return dataset
 
 def main():
@@ -621,18 +652,35 @@ def main():
         logger.info("Saving model checkpoint to %s", args.output_dir)
         # Save a trained model, configuration and tokenizer using `save_pretrained()`.
         # They can then be reloaded using `from_pretrained()`
-        # todo
         # model_to_save = (
         #     model.module if hasattr(model, "module") else model
         # )  # Take care of distributed/parallel training
         # model_to_save.save_pretrained(args.output_dir)
         tokenizer.save_vocabulary(args.output_dir)
+        # todo tokenizer 真的训练了吗？？？
+        # todo 咋区分的best perform model？？？
+
         # Good practice: save your training arguments together with the trained model
         torch.save(args, os.path.join(args.output_dir, "training_args.bin"))
-    # Evaluation
+
+        logger.info("Saving model checkpoint to %s", args.output_dir)
+        torch.save(model.state_dict(), os.path.join(args.output_dir, "model.pt"))
+        # torch.save(optimizer.state_dict(), os.path.join(args.output_dir, "optimizer.pt"))
+        # torch.save(scheduler.state_dict(), os.path.join(args.output_dir, "scheduler.pt"))
+        # logger.info("Saving optimizer and scheduler states to %s", args.output_dir)
+
+    # Evaluation（加载保存的模型，单独evaluation）
     results = {}
+
     if args.do_eval and args.local_rank in [-1, 0]:
-        tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+        if args.task_name in ['cluener', 'cner']:
+            # 中文延用tokenizer_class
+            tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+        else:
+            # 英文采用AutoTokenizer todo assume containing vocabulary files named ['vocab.txt'] but couldn't find such vocabulary files at this path or url, save 的是json
+            #tokenizer = AutoTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+            tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)
+
         checkpoints = [args.output_dir]
         if args.eval_all_checkpoints:
             checkpoints = list(
@@ -643,10 +691,15 @@ def main():
         for checkpoint in checkpoints:
             global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
             prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
-            if args.model_name_or_path in ["gpt2",'gpt2-large']:
-                model = model_class.from_pretrained(checkpoint, config=config, device=args.device)
-            else:
+
+            if args.model_name_or_path in ["gpt2", 'gpt2-large']:
+                checkpoint = os.path.join(checkpoint, "checkpoint-{}".format(10), "model.pkl") # todo should not use 10
+                checkpoint = torch.load(checkpoint)
+                model.load_state_dict(checkpoint['model_state_dict'])
+
+            else:# bert 可以直接利用from_pretrained函数按照url/model_name中加载
                 model = model_class.from_pretrained(checkpoint, config=config)
+
             model.to(args.device)
             result = evaluate(args, model, tokenizer, prefix=prefix)
             if global_step:
@@ -657,8 +710,16 @@ def main():
             for key in sorted(results.keys()):
                 writer.write("{} = {}\n".format(key, str(results[key])))
 
+    # test (加载保存的模型，单独test）
     if args.do_predict and args.local_rank in [-1, 0]:
-        tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+        if args.task_name in ['cluener', 'cner']:
+            # 中文延用tokenizer_class
+            tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+        else:
+            # 英文采用AutoTokenizer todo assume containing vocabulary files named ['vocab.txt'] but couldn't find such vocabulary files at this path or url, save 的是json
+            # tokenizer = AutoTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+            tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)
+
         checkpoints = [args.output_dir]
         if args.predict_checkpoints > 0:
             checkpoints = list(
@@ -668,9 +729,15 @@ def main():
         logger.info("Predict the following checkpoints: %s", checkpoints)
         for checkpoint in checkpoints:
             prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
-            model = model_class.from_pretrained(checkpoint, config=config)
+            if args.model_name_or_path in ["gpt2", 'gpt2-large']:
+                checkpoint = os.path.join(checkpoint, "checkpoint-{}".format(10), "model.pkl") # todo should not use 10
+                checkpoint = torch.load(checkpoint)
+                model.load_state_dict(checkpoint['model_state_dict'])
+            else:
+                model = model_class.from_pretrained(checkpoint, template=TEMPLATE, device=args.device)
             model.to(args.device)
             predict(args, model, tokenizer, prefix=prefix)
+
 
 if __name__ == "__main__":
 

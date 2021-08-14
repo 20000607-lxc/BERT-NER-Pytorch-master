@@ -170,7 +170,7 @@ import copy
 class GPT2SoftmaxForNer_fix(torch.nn.Module):
     """
     输出input[1:] + prompt3 对应的hidden state
-    tokenizer: bert-base-chinese
+    tokenizer: bert-base-chinese or gpt2 tokenizer
     """
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
@@ -181,7 +181,7 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name)
 
         self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings()#embedding是GPT2LMHeadModel的embedding
-        #self.embeddings.weight.requires_grad = False todo
+        # self.embeddings.weight.requires_grad = False todo
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
         # perform fine_tuning

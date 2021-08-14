@@ -17,23 +17,27 @@ from .layers.model.lstmcrf import NNCRF
 import copy
 
 
-
-class GPT2CrfForNer(GPT2PreTrainedModel):
-    def __init__(self, config, device, template):
-        super(GPT2CrfForNer, self).__init__(config)
+class GPT2CrfForNer(torch.nn.Module):
+    """
+    输出input[1:] + prompt3 对应的hidden state
+    tokenizer: bert-base-chinese or gpt2 tokenizer
+    """
+    def __init__(self, config, device, template, model_name=None):
+        super().__init__()
         self.num_labels = config.num_labels
-        self.gpt2 = New_GPT2.from_pretrained('gpt2')
-        # for param in self.gpt2.parameters():
-        #     param.requires_grad = False
+        if model_name == None:
+            model_name = 'gpt2'
+        self.gpt2 = New_GPT2.from_pretrained(model_name)# 可以接受inputs_embeds和input_ids
+        self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name)
 
         self.dropout = nn.Dropout(config.resid_pdrop)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
         self.loss_type = 'ce'
+        self.device = device
         self.embeddings = GPT2LMHeadModel.from_pretrained('gpt2').base_model.get_input_embeddings()
-        self.embeddings.weight.requires_grad = False
+
         self.crf = CRF(num_tags=config.num_labels, batch_first=True)
         self.lstmcrf = NNCRF(config=config, device=device, num_tags=config.num_labels, batch_first=True)
-        self.init_weights()
 
         self.pseudo_token_id = 50257# prompt word的id
 
@@ -53,7 +57,6 @@ class GPT2CrfForNer(GPT2PreTrainedModel):
         print("init GPT2CrfForNer ")
 
     def get_query(self, input_id, prompt_tokens, Bi_lstm=False, lstm=False):
-
         # reversed = False
         # if reversed:
         #     reversed_sequence = [input_id[len(input_id)-1-i] for i in range(len(input_id))]
@@ -77,20 +80,26 @@ class GPT2CrfForNer(GPT2PreTrainedModel):
         # else:
         input = []
         prompt1 = []
-        prompt2 =[]
+        prompt2 = []
+        prompt3 = []
         count = 0
         for i in range(self.template[0]):
             prompt1.append(prompt_tokens[0])
         for i in range(self.template[1]):
             prompt2.append(prompt_tokens[0])
 
+        prompt3.append(prompt_tokens[0])
         for i in range(len(input_id)):
             if input_id[i] != 0:
                 count += 1
                 input.append(input_id[i].item())
+        if self.template[0] == self.template[1]:
+            query = prompt1 + input + prompt2 + input + prompt3# prompt3 一位
+        else:
+            query = prompt1 + input + prompt2 + prompt3
 
-        query = prompt1 + input + prompt2 + input
         return query, count
+
 
     def embed_input(self, queries, input_embeds, Bi_lstm=False, lstm=False, counts=None):
         """
@@ -143,18 +152,30 @@ class GPT2CrfForNer(GPT2PreTrainedModel):
                 raw_embeds[bidx, i, :] = replace_embeds[i, :]
             for i in range(self.template[1]):
                 raw_embeds[bidx, i+counts[bidx]+self.template[0], :] = replace_embeds[i+self.template[0], :]
-
+            # 加入最后一位
+            raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
         return raw_embeds
 
     def forward(self, input_ids, attention_mask=None, labels=None, token_type_ids=None, input_lens=None):
+        """
+        Args:
+            input_ids: padded seuqence:[batch_size, max_length]
+            if Chinese: input_ids = [101,...,102, 0,...,0]
+            attention_mask: [batch_size, max_length]
+            token_type_ids: [batch_size, max_length]
+            position_ids: [batch_size, max_length]
+            head_mask: [batch_size, max_length]
+            labels: [batch_size, max_length]
 
-        bz = len(input_ids)#batch_size
+        Returns:
+            outputs
+        """
+        bz = len(input_ids)
         bx = len(input_ids[0])
         prompt_tokens = [self.pseudo_token_id]
 
         Bi_lstm = False
         lstm = False
-
 
         counts = []
         queries = []
@@ -169,19 +190,30 @@ class GPT2CrfForNer(GPT2PreTrainedModel):
         inputs_embeds = self.embed_input(queries, input_ids, Bi_lstm, lstm, counts)
         inputs = inputs_embeds.to(self.device)
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
+        # decode the output ids to see if there is some patterns
+        outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
 
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
-        sequence = torch.empty(input_ids.shape[0], input_ids.shape[1], self.hidden_size).to(self.device)
-        for bdix in range(bz):
-            sequence[bdix] = sequence_output[bdix, sum(self.template)+counts[bdix]:sum(self.template)+counts[bdix]+bx, :]
-        logits = self.classifier(sequence)#logits：每个词的labels分数
+        sequence = torch.zeros(bz, bx, self.hidden_size).to(self.device)
 
+        for bdix in range(bz):
+            if self.template[0] == self.template[1]:
+                place = sum(self.template)+counts[bdix]+1# 45 = 6+6+32+1
+            else:
+                place = self.template[0] + counts[bdix] + 1
+            sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
+            # todo 只截取没有pad的id对应的input
+
+        logits = self.classifier(sequence)
+        outputs = (example,)+outputs[2:]
+        outputs = (logits,) + outputs # add hidden states and attention if they are here
         if labels is not None:
-            word_seq_length = torch.LongTensor([sum(attention_mask[i]).item() for i in range(len(attention_mask))])
-            word_seq_length = word_seq_length.unsqueeze(dim=0)
-            word_seq_length = word_seq_length.transpose(0, 1)
-            word_seq_length = word_seq_length.squeeze(dim=1)#shape = batch_size, 没有1
+            # word_seq_length = torch.LongTensor([sum(attention_mask[i]).item() for i in range(len(attention_mask))])
+            # word_seq_length = word_seq_length.unsqueeze(dim=0)
+            # word_seq_length = word_seq_length.transpose(0, 1)
+            # word_seq_length = word_seq_length.squeeze(dim=1)#shape = batch_size, 没有1
 
             loss = self.crf(emissions=logits, tags=labels, mask=attention_mask)#crf的作用即为计算loss
             # loss = self.lstmcrf(word_embeds=sequence_output, word_seq_length=word_seq_length,
@@ -192,7 +224,5 @@ class GPT2CrfForNer(GPT2PreTrainedModel):
             # mask:Optional[torch.ByteTensor] = None, reduction: str = 'mean') #mask是optional的,
             # -> torch.Tensor:loss
             # mask的作用：在CRF中做了分母
-
-            outputs = (logits,) + outputs[2:]  # add hidden states and attention if they are here
             outputs = (-1*loss,)+outputs
-        return outputs, word_seq_length, sequence_output # (loss), scores
+        return outputs # (loss), scores
