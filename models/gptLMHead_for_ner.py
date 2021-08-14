@@ -94,7 +94,7 @@ class GPT2LMSoftmaxForNer(torch.nn.Module):
             raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
         return raw_embeds
 
-    def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, labels=None):
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None,input_lens=None, labels=None):
         """
         Args:
             input_ids: padded seuqence:[batch_size, max_length]
@@ -221,7 +221,7 @@ class BareChineseGPT2(torch.nn.Module):
         raw_embeds = self.embeddings(queries_for_embedding)
         return raw_embeds
 
-    def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, labels=None):
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, input_lens=None, labels=None):
         """
         Args:
             input_ids: padded seuqence:[batch_size, max_length]

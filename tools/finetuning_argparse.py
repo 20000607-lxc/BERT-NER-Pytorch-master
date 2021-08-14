@@ -16,7 +16,6 @@ def get_argparse():
                              "'bare_gpt2', 'gpt2', "
                              "'chinese_pretrained_gpt2', 'bare_chinese_gpt2',"
                              "'label_embedding'] ")
-
     parser.add_argument("--note", default='', type=str,
                         help="the implementation details to remind")
     parser.add_argument("--model_name_or_path", default='gpt2',
@@ -50,6 +49,7 @@ def get_argparse():
     # "gpt2-large"
     # "distilgpt2"
     # "gpt2"
+
     # pretrained_model_name_or_path: either:
     # - a string with the `shortcut name` of a pre-trained model to load from cache or download, e.g.: ``bert-base-uncased``.
     # - a path to a `directory` containing model weights saved using :func:`~transformers.PreTrainedModel.save_pretrained`, e.g.: ``./my_model_directory/``.
@@ -78,7 +78,6 @@ def get_argparse():
                         choices=['lsr', 'focal', 'ce'])
     parser.add_argument("--config_name", default="", type=str,
                         help="Pretrained config name or path if not the same as model_name")
-
     parser.add_argument("--cache_dir", default="", type=str,
                         help="Where do you want to store the pre-trained models downloaded from s3", )
     parser.add_argument("--train_max_seq_length", default=32, type=int,#default = 128,

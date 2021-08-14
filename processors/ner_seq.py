@@ -298,17 +298,16 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
             the_no_entity_number += flag
 
         # Account for [CLS] and [SEP] with "- 2".
-            special_tokens_count = 4 # todo
+            special_tokens_count = 2 # todo
             if len(tokens) > max_seq_length - special_tokens_count:
                 tokens = tokens[: (max_seq_length - special_tokens_count)]
                 label_ids = label_ids[: (max_seq_length - special_tokens_count)]
 
 
-
-            label_ids += [label_map['O']]
-            label_ids = [label_map['O']] + label_ids
-            tokens = ['*']+tokens
-            tokens = tokens + ['*']  # todo
+            # label_ids += [label_map['O']]
+            # label_ids = [label_map['O']] + label_ids
+            # tokens = ['*']+tokens
+            # tokens = tokens + ['*']  # todo
 
         # The convention in BERT is:
             # (a) For sequence pairs:
