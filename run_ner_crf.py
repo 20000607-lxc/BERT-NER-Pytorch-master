@@ -515,13 +515,14 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train',limit = Non
                                                            else args.eval_max_seq_length,
                                                        cls_token_at_end=bool(args.model_type in ["xlnet"]),
                                                        pad_on_left=bool(args.model_type in ['xlnet']),
-                                                       cls_token = tokenizer.cls_token,
+                                                       cls_token="[CLS]",
                                                        cls_token_segment_id=2 if args.model_type in ["xlnet"] else 0,
-                                                       sep_token=tokenizer.sep_token,
+                                                       sep_token="[SEP]",
                                                        # pad on the left for xlnet
-                                                       pad_token=tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0],
+                                                       pad_token=0,
                                                        pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0,
                                                        )
+        # note: for gpt2 tokenizer, cls sep tokens are not used.
         print("number of examples whose labels cannot be aligned "+str(count))# 统计所有不能正常tokenize（label与input_id不对应）的examples
 
 

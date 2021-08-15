@@ -54,9 +54,9 @@ TEMPLATE_CLASSES = {
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = 60#None
-EVAL_LIMIT = 20#None
-TEST_LIMIT = 20#None
+TRAIN_LIMIT = None
+EVAL_LIMIT = None
+TEST_LIMIT = None
 
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
@@ -491,11 +491,11 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
                                                                else args.eval_max_seq_length,
                                                 cls_token_at_end=bool(args.model_type in ["xlnet"]),
                                                 pad_on_left=bool(args.model_type in ['xlnet']),
-                                                cls_token = tokenizer.cls_token,
+                                                cls_token ="[CLS]",
                                                 cls_token_segment_id=2 if args.model_type in ["xlnet"] else 0,
-                                                sep_token=tokenizer.sep_token,
+                                                sep_token="[SEP]",
                                                 # pad on the left for xlnet
-                                                pad_token=tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0],
+                                                pad_token=0,
                                                 pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0,
                                                 )
         print("number of examples whose labels cannot be aligned "+str(count))# 统计所有不能正常tokenize（label与input_id不对应）的examples
@@ -633,7 +633,7 @@ def main():
         # )  # Take care of distributed/parallel training
         # model_to_save.save_pretrained(args.output_dir)
         tokenizer.save_vocabulary(args.output_dir)
-        # todo tokenizer 真的训练了吗？？？
+        # todo tokenizer 训练了吗？？？
         # todo 咋区分的best perform model？？？
 
         # Good practice: save your training arguments together with the trained model
