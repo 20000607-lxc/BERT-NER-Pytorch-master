@@ -18,6 +18,8 @@ def get_argparse():
                              "'label_embedding'] ")
     parser.add_argument("--note", default='', type=str,
                         help="the implementation details to remind")
+    parser.add_argument("--save_model", default=False, action="store_true",
+                        help="Whether to save the model checkpoints, currently, there is no need to save the checkpoints.")
     parser.add_argument("--model_name_or_path", default='gpt2',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name , ""I only used:"
@@ -26,7 +28,7 @@ def get_argparse():
     parser.add_argument("--output_file_name", default='.json',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name")
-    parser.add_argument("--logging_steps", type=int, default=300,
+    parser.add_argument("--logging_steps", type=int, default=20,
                         help="Log every X updates steps.")
     # model_name_or_path can only be selected in the following list:
     # bart: 'facebook/bart-large'

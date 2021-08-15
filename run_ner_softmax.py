@@ -54,9 +54,9 @@ TEMPLATE_CLASSES = {
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = None
-EVAL_LIMIT = None
-TEST_LIMIT = None
+TRAIN_LIMIT = 60#None
+EVAL_LIMIT = 20#None
+TEST_LIMIT = 20#None
 
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
@@ -331,11 +331,12 @@ def evaluate(args, model, tokenizer, prefix=''):
                     temp_2.append(preds[i][j])
 
         labels.append(batch[3])
-        logits = outputs[1]
-        preds = logits.detach().cpu().numpy()
-        preds = np.argmax(preds, axis=2).tolist()
-        preds = preds[0][1:-1] # [CLS]XXXX[SEP]
+        if args.task_name in ['cluener','cner']:
+            preds = preds[0][1:-1]# [CLS]XXXX[SEP]
+        else:
+            pass# 对于英文没有用[cls]和[sep] 因此不截取
         tags = [args.id2label[x] for x in preds]
+
         label_entities = get_entities(preds, args.id2label, args.markup)
         true_labels = batch[3].detach().cpu().numpy().tolist()[0]
         true_label_entities = get_entities(true_labels, args.id2label, args.markup)
@@ -417,11 +418,11 @@ def predict(args, model, tokenizer, prefix = ''):
                     temp_1.append(args.id2label[out_label_ids[i][j]])
                     temp_2.append(preds[i][j])
 
-        logits = outputs[1]
-        #logits = outputs[0]
-        preds = logits.detach().cpu().numpy()
-        preds = np.argmax(preds, axis=2).tolist()
-        preds = preds[0][1:-1] # [CLS]XXXX[SEP]
+        if args.task_name in ['cluener','cner']:
+            preds = preds[0][1:-1]# [CLS]XXXX[SEP]
+        else:
+            pass# 对于英文没有用[cls]和[sep] 因此不截取
+
         tags = [args.id2label[x] for x in preds]
         label_entities = get_entities(preds, args.id2label, args.markup)
         true_labels = batch[3].detach().cpu().numpy().tolist()[0]
