@@ -193,6 +193,7 @@ def train(args, train_dataset, model, tokenizer):
     tr_loss, logging_loss = 0.0, 0.0
     if args.do_adv:
         fgm = FGM(model, emb_name=args.adv_name, epsilon=args.adv_epsilon)#fast gradient method 对抗训练
+        # todo how to choose adv_name?
 
     model.zero_grad()
     seed_everything(args.seed)  # Added here for reproductibility (even between python 2 and 3)

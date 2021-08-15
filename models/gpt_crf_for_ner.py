@@ -225,4 +225,5 @@ class GPT2CrfForNer(torch.nn.Module):
             # -> torch.Tensor:loss
             # mask的作用：在CRF中做了分母
             outputs = (-1*loss,)+outputs
+
         return outputs # (loss), scores

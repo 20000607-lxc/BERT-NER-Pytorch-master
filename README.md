@@ -39,6 +39,7 @@ BTC and GUM: I didn't test them yet.
 
 2.The transformers used in the original project is still in `models.transformers` but it is the lower version and using it causes bugs.
 
+3. for the chinese pretrained gpt2, I use the published model from "uer/gpt2-chinese-cluecorpussmall" 
 
 ### requirement
 
