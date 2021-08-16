@@ -47,9 +47,9 @@ TEMPLATE_CLASSES = {
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = None
-EVAL_LIMIT = None
-TEST_LIMIT = None
+TRAIN_LIMIT = 60#None
+EVAL_LIMIT = 20#None
+TEST_LIMIT = 20#None
 
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
@@ -392,7 +392,7 @@ def evaluate(args, model, tokenizer, prefix=""):
 
 def predict(args, model, tokenizer, prefix=""):
     print('***************** test *******************')
-    metric = SeqEntityScore(args.id2label,markup=args.markup)
+    metric = SeqEntityScore(args.id2label, markup=args.markup)
     pred_output_dir = args.output_dir
     if not os.path.exists(pred_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(pred_output_dir)
@@ -426,7 +426,26 @@ def predict(args, model, tokenizer, prefix=""):
             # tags = model.lstmcrf.decode(word_embeds=sequence_output, word_seq_length=word_seq_length, #logits,
             #                             mask=inputs['attention_mask'])
             tags = tags.squeeze(0).cpu().numpy().tolist()
-        preds = tags[0][1:-1]  # [CLS]XXXX[SEP]
+        out_label_ids = batch[3].cpu().numpy().tolist()
+        input_lens = inputs['input_lens'].cpu().numpy().tolist()
+        for i, label in enumerate(out_label_ids):
+            temp_1 = []
+            temp_2 = []
+            for j, m in enumerate(label):
+                if j == 0:
+                    continue
+                elif j == input_lens[i] - 1:
+                    metric.update(pred_paths=[temp_2], label_paths=[temp_1])
+                    break
+                else:
+                    temp_1.append(args.id2label[out_label_ids[i][j]])
+                    temp_2.append(args.id2label[tags[i][j]])
+
+        if args.task_name in ['cluener', 'cner']:
+            preds = tags[0][1:-1]# [CLS]XXXX[SEP]
+        else:
+            preds = tags[0]# 对于英文没有用[cls]和[sep] 因此不截取
+
         label_entities = get_entities(preds, args.id2label, args.markup)
         json_d = {}
         json_d['id'] = step
@@ -674,7 +693,7 @@ def main():
     # Evaluation（加载保存的模型，单独evaluation）
     results = {}
 
-    if args.do_eval and args.local_rank in [-1, 0]:
+    if args.do_eval_with_saved_model and args.local_rank in [-1, 0]:
         if args.task_name in ['cluener', 'cner']:
             # 中文延用tokenizer_class
             tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
@@ -713,7 +732,7 @@ def main():
                 writer.write("{} = {}\n".format(key, str(results[key])))
 
     # test (加载保存的模型，单独test）
-    if args.do_predict and args.local_rank in [-1, 0]:
+    if args.do_predict_with_saved_model and args.local_rank in [-1, 0]:
         if args.task_name in ['cluener', 'cner']:
             # 中文延用tokenizer_class
             tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)

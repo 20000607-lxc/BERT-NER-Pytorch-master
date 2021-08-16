@@ -40,11 +40,11 @@ MODEL_CLASSES = {
     'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
     'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
     'gpt2': (GPT2Config, GPT2SoftmaxForNer_fix, CNerTokenizer),
-     #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer),
     "chinese_pretrained_gpt2": (GPT2Config, GPT2LMSoftmaxForNer, CNerTokenizer),
     'bare_gpt2': (GPT2Config, BareGPT2, CNerTokenizer),
     'bare_chinese_gpt2':  (GPT2Config, BareChineseGPT2, CNerTokenizer),
     'label_embedding': (GPT2Config, GPT2SoftmaxForNer_LE, CNerTokenizer),
+    #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer)
 }
 
 TEMPLATE_CLASSES = {
@@ -372,12 +372,12 @@ def evaluate(args, model, tokenizer, prefix=''):
 
 
 def predict(args, model, tokenizer, prefix = ''):
-    metric = SeqEntityScore(args.id2label,markup=args.markup)
+    metric = SeqEntityScore(args.id2label, markup=args.markup)
     pred_output_dir = args.output_dir
     if not os.path.exists(pred_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(pred_output_dir)
 
-    test_dataset, all_tokens = load_and_cache_examples(args, args.task_name, tokenizer, data_type='test', limit = TEST_LIMIT)
+    test_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='test', limit = TEST_LIMIT)
     # Note that DistributedSampler samples randomly
     test_sampler = SequentialSampler(test_dataset) if args.local_rank == -1 else DistributedSampler(test_dataset)
     test_dataloader = DataLoader(test_dataset, sampler=test_sampler, batch_size=1,collate_fn=collate_fn)
@@ -429,8 +429,8 @@ def predict(args, model, tokenizer, prefix = ''):
         true_label_entities = get_entities(true_labels, args.id2label, args.markup)
         json_d = {}
         json_d['id'] = step
-        f = all_tokens[step]
-        json_d['token'] = f
+        #f = all_tokens[step]
+        #json_d['token'] = f
         #json_d['true_tag_seq'] = " ".join(true_labels)
         json_d['tag_seq'] = " ".join(tags)
         json_d['entities'] = label_entities
@@ -580,13 +580,13 @@ def main():
 
     if args.model_name_or_path in ['gpt2', 'gpt2-large', 'gpt2-medium', "distilgpt2"]:
         if args.task_name in ['cluener', 'cner']:
-            # 中文只采用bert-base-chinese
+            # 中文只采用bert-base-chinese 并且采用 Cner-tokenizer
             tokenizer_name = 'bert-base-chinese'
             tokenizer = tokenizer_class.from_pretrained(tokenizer_name,
                                                         do_lower_case=args.do_lower_case,
                                                         cache_dir=args.cache_dir if args.cache_dir else None,)
         else:
-            # 英文采用与model一致的tokenizer
+            # 英文采用与model一致的tokenizer， 不采用cner tokenizer
             tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)#use_fast=True, add_prefix_space=True
 
         # model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
