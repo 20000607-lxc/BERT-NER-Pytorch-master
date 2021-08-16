@@ -201,6 +201,7 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
         self.prompt_encoder = PromptEncoder(self.template, self.hidden_size, device)
         self.prompt_encoder = self.prompt_encoder.to(device)
         print("***************** init GPT2SoftmaxForNer *********************")
+        print("***************** "+str(model_name) + " *********************")
 
     def get_query(self, input_id, prompt_tokens):
         input = []

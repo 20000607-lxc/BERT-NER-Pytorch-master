@@ -96,6 +96,8 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                     new_text = ' '.join(example.text_a)
                     tokens = tokenizer.tokenize(' ' + new_text)
                     sum_length_of_example += len(tokens)
+                else:
+                    raise(NotImplementedError)
 
                 label_ids = [label_map[x] for x in example.labels]
 
@@ -114,8 +116,8 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                         new_label[i] = label_ids[j]
                         j = j+1
                     else:
-                        new_label[i] = new_label[i-1]# 9
-                        # todo ，目前改成"O"（label id=9）不同的数据集这里对应的需要修改
+                        new_label[i] = new_label[i-1]
+                        # todo 9 means "O"（label id=9）
 
                 special_tokens_count = 2
                 if len(tokens) > max_seq_length - special_tokens_count:
@@ -209,7 +211,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
         #                 if j == len(label_ids):
         #                     # ids that cannot be converted should be passed, such examples include:
         #                     # [' 's ', ...]
-        #                     break# todo 这里到底那个地方出毛病了？？？？
+        #                     break# todo 这里到底那个地方出问题了？？？
         #             else:
         #                 new_label[i] = 9# new_label[i-1]
         #
@@ -277,7 +279,6 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
         else:
             raise(ValueError("tokenizer not implemented, English dataset only support gpt2 model and gpt2 tokenizer"))
 
-
     else:# 中文
         print("chinese:only use bert-base-chinese tokenizer")
         for (ex_index, example) in enumerate(examples):
@@ -285,6 +286,8 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 logger.info("Writing example %d of %d", ex_index, len(examples))
             if type(example.text_a) == list:
                 new_text = ''.join(example.text_a)
+            else:
+                raise(NotImplementedError)
 
             tokens = tokenizer.tokenize(new_text)
             sum_length_of_example += len(tokens)
@@ -298,7 +301,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
             the_no_entity_number += flag
 
         # Account for [CLS] and [SEP] with "- 2".
-            special_tokens_count = 2 # todo
+            special_tokens_count = 2
             if len(tokens) > max_seq_length - special_tokens_count:
                 tokens = tokens[: (max_seq_length - special_tokens_count)]
                 label_ids = label_ids[: (max_seq_length - special_tokens_count)]
@@ -307,7 +310,9 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
             # label_ids += [label_map['O']]
             # label_ids = [label_map['O']] + label_ids
             # tokens = ['*']+tokens
-            # tokens = tokens + ['*']  # todo
+            # tokens = tokens + ['*']
+            # todo can add more fixed token to tell model to distiguash between input and prompt
+            #  note: segment id is only used for computing loss
 
         # The convention in BERT is:
             # (a) For sequence pairs:
