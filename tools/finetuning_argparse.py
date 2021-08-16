@@ -4,11 +4,11 @@ def get_argparse():
     parser = argparse.ArgumentParser()
     # Required parameters
 
-    parser.add_argument("--task_name", default='conll2003', type=str, #required=True,
+    parser.add_argument("--task_name", default='cluener', type=str, #required=True,
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote'] ")
-    parser.add_argument("--data_dir", default='datasets/conll2003_bio', type=str, #required=True,
+    parser.add_argument("--data_dir", default='datasets/cluener', type=str, #required=True,
                         help="The input data dir, choose from ['cluener','cner','conll2003_bio', 'ontonote']", )
-    parser.add_argument("--output_dir", default='outputs/conll2003_output/gpt2', type=str, #required=True,
+    parser.add_argument("--output_dir", default='outputs/cluener_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written.", )
     parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
@@ -61,7 +61,7 @@ def get_argparse():
     # - None if you are both providing the configuration and state dictionary (resp. with keyword arguments ``config`` and ``state_dict``)
 
     parser.add_argument("--template", default='2', type=str, #required=True,
-                        help="prompt size, choose from the list:['1','2'] or you can modify the template in run_ner_xxx.py by changing TEMPLATE_CLASSES ")
+                        help="prompt size, choose from the list:['1','2','3','4'] or you can modify the template in run_ner_xxx.py by changing TEMPLATE_CLASSES ")
     parser.add_argument("--learning_rate", default=5e-5, type=float,#bert default = 5e-5
                         help="The initial learning rate for Adam.")
     parser.add_argument("--crf_learning_rate", default=5e-5, type=float,#bert default = 5e-5

@@ -50,7 +50,8 @@ MODEL_CLASSES = {
 TEMPLATE_CLASSES = {
     '1': (6, 6, 0),# use the prompt + input + prompt + input module, and cut the hidden state of the later input to classify
     '2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
-    '3': (12, 12, 0)# todo ontonote entity type 多，增长prompt是否有效果？
+    '3': (12, 12, 0),# todo ontonote entity type 多，增长prompt是否有效果？
+    '4': (24, 24, 0) # note '4 for cluener'= (12, 24, 0)  因为gpt for ner 与 gptlm for ner 不一样
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
@@ -238,7 +239,8 @@ def train(args, train_dataset, model, tokenizer):
                         # Only evaluate when single GPU otherwise metrics may not average well
                         predict(args, model, tokenizer)
 
-                if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0 and args.save_model:
+                if args.local_rank in [-1, 0] and args.save_steps > 0 \
+                        and global_step % args.save_steps == 0 and args.save_model and epoch == args.num_train_epochs-1:
                     # Save model checkpoint
                     output_dir = os.path.join(args.output_dir, "checkpoint-{}".format(global_step))
                     if not os.path.exists(output_dir):
@@ -334,7 +336,8 @@ def evaluate(args, model, tokenizer, prefix=''):
         if args.task_name in ['cluener','cner']:
             preds = preds[0][1:-1]# [CLS]XXXX[SEP]
         else:
-            pass# 对于英文没有用[cls]和[sep] 因此不截取
+            preds = preds[0]# 对于英文没有用[cls]和[sep] 因此不截取
+
         tags = [args.id2label[x] for x in preds]
 
         label_entities = get_entities(preds, args.id2label, args.markup)
@@ -394,17 +397,16 @@ def predict(args, model, tokenizer, prefix = ''):
         batch = tuple(t.to(args.device) for t in batch)
         with torch.no_grad():
             inputs = {"input_ids": batch[0], "attention_mask": batch[1]}
-        if args.model_name_or_path in ["gpt2"]:
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
+            outputs = model(**inputs)
 
-        outputs = model(**inputs)
-        logits = outputs[0]
-        preds = np.argmax(logits.cpu().numpy(), axis=2).tolist()
-        input_lens = batch[4].cpu().numpy().tolist()
+            logits = outputs[0]
+            preds = np.argmax(logits.cpu().numpy(), axis=2).tolist()
+            input_lens = batch[4].cpu().numpy().tolist()
+            out_label_ids = batch[3].cpu().numpy().tolist()
 
-        out_label_ids = inputs['labels'].cpu().numpy().tolist()
         for i, label in enumerate(out_label_ids):
             temp_1 = []
             temp_2 = []

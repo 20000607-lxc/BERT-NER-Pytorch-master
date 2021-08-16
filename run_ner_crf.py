@@ -255,7 +255,9 @@ def train(args, train_dataset, model, tokenizer):
                         # Only evaluate when single GPU otherwise metrics may not average well
                         predict(args, model, tokenizer)
 
-                if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0 and args.save_model:
+                if args.local_rank in [-1, 0] and args.save_steps > 0 \
+                        and global_step % args.save_steps == 0 and args.save_model and epoch == args.num_train_epochs-1:
+
                     # Save model checkpoint
                     output_dir = os.path.join(args.output_dir, "checkpoint-{}".format(global_step))
                     if not os.path.exists(output_dir):
@@ -306,7 +308,6 @@ def evaluate(args, model, tokenizer, prefix=""):
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
     results = []
-    labels = []
     output_submit_file = os.path.join(eval_output_dir, prefix, args.output_file_name)
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
     if isinstance(model, nn.DataParallel):
@@ -350,11 +351,11 @@ def evaluate(args, model, tokenizer, prefix=""):
                     temp_1.append(args.id2label[out_label_ids[i][j]])
                     temp_2.append(args.id2label[tags[i][j]])
 
-        labels.append(batch[3])
-        logits = outputs[1]
-        preds = logits.detach().cpu().numpy()
-        preds = np.argmax(preds, axis=2).tolist()
-        preds = preds[0][1:-1] # [CLS]XXXX[SEP]
+        # write results in file
+        if args.task_name in ['cluener', 'cner']:
+            preds = tags[0][1:-1]# [CLS]XXXX[SEP]
+        else:
+            preds = tags[0]# 对于英文没有用[cls]和[sep] 因此不截取
         tags = [args.id2label[x] for x in preds]
         label_entities = get_entities(preds, args.id2label, args.markup)
         true_labels = batch[3].detach().cpu().numpy().tolist()[0]
@@ -367,8 +368,11 @@ def evaluate(args, model, tokenizer, prefix=""):
         json_d['entities'] = label_entities
         json_d['true_entities'] = true_label_entities
         results.append(json_d)
+
+
         pbar(step)
 
+    # write results in file
     with open(output_submit_file, "w") as writer:
         for record in results:
             writer.write(json.dumps(record) + '\n')
@@ -416,7 +420,6 @@ def predict(args, model, tokenizer, prefix=""):
         batch = tuple(t.to(args.device) for t in batch)
         with torch.no_grad():
             inputs = {"input_ids": batch[0], "attention_mask": batch[1], 'input_lens': batch[4]}
-
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
@@ -426,6 +429,7 @@ def predict(args, model, tokenizer, prefix=""):
             # tags = model.lstmcrf.decode(word_embeds=sequence_output, word_seq_length=word_seq_length, #logits,
             #                             mask=inputs['attention_mask'])
             tags = tags.squeeze(0).cpu().numpy().tolist()
+
         out_label_ids = batch[3].cpu().numpy().tolist()
         input_lens = inputs['input_lens'].cpu().numpy().tolist()
         for i, label in enumerate(out_label_ids):
@@ -453,6 +457,7 @@ def predict(args, model, tokenizer, prefix=""):
         json_d['entities'] = label_entities
         results.append(json_d)
         pbar(step)
+
     logger.info("\n")
     test_info, entity_info = metric.result()
     results = {f'{key}': value for key, value in test_info.items()}
@@ -468,6 +473,8 @@ def predict(args, model, tokenizer, prefix=""):
     with open(output_predict_file, "w") as writer:
         for record in results:
             writer.write(json.dumps(record) + '\n')
+
+
 
     if args.task_name == 'cluener':
         output_submit_file = os.path.join(pred_output_dir, prefix, 'test', args.output_file_name)
