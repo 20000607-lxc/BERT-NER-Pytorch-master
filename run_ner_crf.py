@@ -45,12 +45,14 @@ MODEL_CLASSES = {
 TEMPLATE_CLASSES = {
     '1': (6, 6, 0),# use the prompt + input + prompt + input module, and cut the hidden state of the later input to classify
     '2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
+    '3': (12, 12, 0),
+    '4': (24, 24, 0)# note '4 for cluener'= (12, 24, 0)  因为gpt for ner 与 gptlm for ner 不一样
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = 60#None
-EVAL_LIMIT = 20#None
-TEST_LIMIT = 20#None
+TRAIN_LIMIT = None
+EVAL_LIMIT = None
+TEST_LIMIT = None
 
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.

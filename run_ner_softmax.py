@@ -423,7 +423,7 @@ def predict(args, model, tokenizer, prefix = ''):
         if args.task_name in ['cluener','cner']:
             preds = preds[0][1:-1]# [CLS]XXXX[SEP]
         else:
-            pass# 对于英文没有用[cls]和[sep] 因此不截取
+            preds = preds[0]# 对于英文没有用[cls]和[sep] 因此不截取
 
         tags = [args.id2label[x] for x in preds]
         label_entities = get_entities(preds, args.id2label, args.markup)
