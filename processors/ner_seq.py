@@ -301,7 +301,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
             the_no_entity_number += flag
 
         # Account for [CLS] and [SEP] with "- 2".
-            special_tokens_count = 2
+            special_tokens_count = 2# todo test remove all special tokens (但是预训练的gpt2的vocabulary也是和bert一样的 可能没什么用）
             if len(tokens) > max_seq_length - special_tokens_count:
                 tokens = tokens[: (max_seq_length - special_tokens_count)]
                 label_ids = label_ids[: (max_seq_length - special_tokens_count)]
@@ -332,10 +332,11 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
             # For classification tasks, the first vector (corresponding to [CLS]) is
             # used as as the "sentence vector". Note that this only makes sense because
             # the entire model is fine-tuned.
-            # tokens += [sep_token]
-            # label_ids += [label_map['O']]
-            segment_ids = [sequence_a_segment_id] * len(tokens)
 
+
+            tokens += [sep_token]
+            label_ids += [label_map['O']]
+            segment_ids = [sequence_a_segment_id] * len(tokens)
             if cls_token_at_end:
                 tokens += [cls_token]
                 label_ids += [label_map['O']]
@@ -445,7 +446,8 @@ class CluenerProcessor(DataProcessor):
 
     def get_test_examples(self, data_dir, limit):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "test", limit)# todo 文件中没有test.txt
+        return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "test", limit)
+        # todo 文件中没有test.txt
 
     def get_labels(self):
         """See base class."""

@@ -97,7 +97,6 @@ class GPT2CrfForNer(torch.nn.Module):
             query = prompt1 + input + prompt2 + input + prompt3# prompt3 一位
         else:
             query = prompt1 + input + prompt2 + prompt3
-
         return query, count
 
 

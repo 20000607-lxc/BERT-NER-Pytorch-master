@@ -11,7 +11,7 @@ def get_argparse():
     parser.add_argument("--output_dir", default='outputs/cluener_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written.", )
-    parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
+    parser.add_argument("--model_type", default='chinese_pretrained_gpt2', type=str, #required=True,
                         help="Model type selected in the list:['bert', 'albert', "
                              "'bare_gpt2', 'gpt2', "
                              "'chinese_pretrained_gpt2', 'bare_chinese_gpt2',"
@@ -23,7 +23,7 @@ def get_argparse():
     parser.add_argument("--model_name_or_path", default='gpt2',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name , ""I only used:"
-                             " ['gpt2','gpt2-large',"
+                             " ['gpt2','gpt2-large','gpt2-medium'"
                              "'bert-base-chinese','bert-base-cased' ]" )
     parser.add_argument("--output_file_name", default='.json',
                         type=str, #required=True,

@@ -390,7 +390,7 @@ def predict(args, model, tokenizer, prefix = ''):
     logger.info("  Batch size = %d", 1)
 
     results = []
-    output_submit_file = os.path.join(pred_output_dir, prefix, 'test', args.output_file_name)
+    output_submit_file = os.path.join(pred_output_dir, prefix, args.output_file_name)
     pbar = ProgressBar(n_total=len(test_dataloader), desc="Predicting")
     for step, batch in enumerate(test_dataloader):
         model.eval()
