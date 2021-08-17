@@ -4,14 +4,14 @@ def get_argparse():
     parser = argparse.ArgumentParser()
     # Required parameters
 
-    parser.add_argument("--task_name", default='cluener', type=str, #required=True,
+    parser.add_argument("--task_name", default='ontonote', type=str, #required=True,
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote'] ")
-    parser.add_argument("--data_dir", default='datasets/cluener', type=str, #required=True,
+    parser.add_argument("--data_dir", default='datasets/ontonote', type=str, #required=True,
                         help="The input data dir, choose from ['cluener','cner','conll2003_bio', 'ontonote']", )
-    parser.add_argument("--output_dir", default='outputs/cluener_output/gpt2', type=str, #required=True,
+    parser.add_argument("--output_dir", default='outputs/ontonote_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written.", )
-    parser.add_argument("--model_type", default='chinese_pretrained_gpt2', type=str, #required=True,
+    parser.add_argument("--model_type", default='label_embedding', type=str, #required=True,
                         help="Model type selected in the list:['bert', 'albert', "
                              "'bare_gpt2', 'gpt2', "
                              "'chinese_pretrained_gpt2', 'bare_chinese_gpt2',"
@@ -88,7 +88,7 @@ def get_argparse():
     parser.add_argument("--eval_max_seq_length", default=32, type=int,#default = 128,
                         help="The maximum total input sequence length after tokenization. Sequences longer "
                              "than this will be truncated, sequences shorter will be padded.", )
-    parser.add_argument('--cuda', type=int, default=1, help='Avaiable GPU ID')
+    parser.add_argument('--cuda', type=int, default=2, help='Avaiable GPU ID')
     parser.add_argument("--do_train", action="store_true", default=True,
                         help="Whether to run training.")
     parser.add_argument("--evaluate_and_test_during_training", action="store_true", default=True,

@@ -51,7 +51,9 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         self.prompt_encoder = PromptEncoder(self.template, self.hidden_size, device)
         self.prompt_encoder = self.prompt_encoder.to(device)
 
-        self.label_embedding = LabelEmbeder([5], self.hidden_size, device)# todo for conll2003 初始化一个label embedding
+        self.num_entities = 19 # todo for ontonote
+
+        self.label_embedding = LabelEmbeder([self.num_entities], self.hidden_size, device)
         self.label_embedding = self.label_embedding.to(self.device)
         self.attn_linear = nn.Linear(self.hidden_size, self.hidden_size)
         self.fc = nn.Linear(self.hidden_size, 1, bias=False)
@@ -113,35 +115,36 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
             output_state:[batch_size, hidden state]
         """
         input_state_attn = self.attn_linear(input_state)
-        input_state_expanded = input_state_attn.unsqueeze(1).expand(bz, 5, self.hidden_size).contiguous()  # B x 5 x hidden_dim
+        input_state_expanded = input_state_attn.unsqueeze(1).expand(bz, self.num_entities, self.hidden_size).contiguous()  # B x 5 x hidden_dim
         input_state_expanded = input_state_expanded.view(-1, self.hidden_size)     # B*5 x hidden_dim
 
         label_embedding_fea = label_embedding.view(-1, self.hidden_size)
         att_features = label_embedding_fea + input_state_expanded    # B*5 x hidden_dim
         e = torch.tanh(att_features)
         scores = self.fc(e)                                      # B*5 x 1
-        scores = scores.view(-1, 5)                              # B x 5
+        scores = scores.view(-1, self.num_entities)                              # B x 5
         attn_dist_ = F.softmax(scores, dim=1)                    # B x 5
         normalization_factor = attn_dist_.sum(1, keepdim=True)
         attn_dist = attn_dist_ / normalization_factor
         attn_dist = attn_dist.unsqueeze(1)                        # B x 1 x 5
         output_state = torch.bmm(attn_dist, label_embedding)      # B x 1 x 5  *   5 x hidden_dim
+
         output_state = output_state.squeeze(1)
         output_state += input_state
         return output_state
 
-    def add_label_embedding(self, sequence_output, label_init):
+    def add_label_embedding(self, sequence_output, label_init, counts=None):
         """
         Args:
-            sequence_output: the output from gpt2 model
+            sequence_output: the input embeds or the gpt2 output logits
 
         Returns:
-            output: add label embedding to sequence_output
+            output: add label embedding to input embeds
 
         """
         bz = sequence_output.shape[0]
         new_sequence_output = torch.zeros_like(sequence_output)
-        label_embedding = torch.empty(bz, 5, self.hidden_size).to(self.device)
+        label_embedding = torch.empty(bz, self.num_entities, self.hidden_size).to(self.device)
 
         for k in range(bz):
             label_embedding[k, :, :] = label_init
@@ -149,6 +152,11 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         for i in range(sequence_output.shape[1]):
             new_sequence_output[:, i, :] = self.attention(sequence_output[:, i, :], label_embedding, bz)
             # donot use a = ...a , which will trigger error during loss.backward() cause this assigns value to one variable repeatedly
+
+        for bidx in range(bz):
+            # input ids 对应的embedding不变
+            new_sequence_output[bidx, self.template[0]:counts[bidx]+self.template[0], :] =\
+                sequence_output[bidx, self.template[0]:counts[bidx]+self.template[0], :]
 
         return new_sequence_output
 
@@ -184,6 +192,10 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         attention_mask1 = queries != self.pad_token_id
 
         inputs_embeds = self.embed_input(queries, counts)
+        # todo 2 直接在query上加LE 这样感觉起来不是很对 inputid是很多样的 并且有语意 如果强行加了别的东西可能不太对
+
+        # todo 3 只在prompt上加LE
+        inputs_embeds = self.add_label_embedding(inputs_embeds, label_init, counts)
         inputs = inputs_embeds.to(self.device)
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
         # decode the output ids to see if there is some patterns
@@ -203,7 +215,9 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
             # todo 只截取没有pad的id对应的input
 
-        sequence = self.add_label_embedding(sequence, label_init)
+
+        # todo 1之前测试的LE是在generate之后加LE
+        #sequence = self.add_label_embedding(sequence, label_init)
 
         logits = self.classifier(sequence)#logits：每个词的labels分数
         outputs = (example,)+outputs[2:]
