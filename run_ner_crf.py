@@ -20,6 +20,7 @@ from models.transformers import WEIGHTS_NAME, BertConfig, AlbertConfig
 from models.transformers_master.models.gpt2.configuration_gpt2 import GPT2Config #new config
 from transformers import BertTokenizer, GPT2Tokenizer, AutoTokenizer
 from models.bert_for_ner import BertCrfForNer
+from models.gptLMHead_crf_for_ner import GPT2LMcrfForNer
 from models.gpt_crf_for_ner import GPT2CrfForNer
 from models.albert_for_ner import AlbertCrfForNer
 from processors.utils_ner import CNerTokenizer, get_entities
@@ -35,7 +36,7 @@ MODEL_CLASSES = {
     'bert': (BertConfig, BertCrfForNer, CNerTokenizer),
     'albert': (AlbertConfig, AlbertCrfForNer, CNerTokenizer),
     'gpt2': (GPT2Config, GPT2CrfForNer, CNerTokenizer),
-    # "chinese_pretrained_gpt2": (GPT2Config, GPT2LMCrfForNer, CNerTokenizer),
+    "chinese_pretrained_gpt2": (GPT2Config, GPT2LMcrfForNer, CNerTokenizer),
     # 'bare_gpt2': (GPT2Config, BareCrfGPT2, CNerTokenizer),
     # 'bare_chinese_gpt2':  (GPT2Config, BareCrfChineseGPT2, CNerTokenizer),
     # 'label_embedding': (GPT2Config, GPT2CrfForNer_LE, CNerTokenizer),
@@ -94,8 +95,6 @@ args = get_argparse().parse_args()
 # wandb.init(config = args, project = 'gpt2_sweep_2_try', entity='li_xuechun')
 # config2 = wandb.config
 
-if args.model_type == "chinese_pretrained_gpt2":
-    raise(ValueError("chinese_pretrained_gpt2 not implemented for run_ner_crf"))
 
 if args.model_type == "chinese_pretrained_gpt2":
     assert args.task_name in ['cluener', 'cner']
@@ -369,13 +368,7 @@ def evaluate(args, model, tokenizer, prefix=""):
         json_d['true_entities'] = true_label_entities
         results.append(json_d)
 
-
         pbar(step)
-
-    # write results in file
-    with open(output_submit_file, "w") as writer:
-        for record in results:
-            writer.write(json.dumps(record) + '\n')
 
     logger.info("\n")
     eval_loss = eval_loss / nb_eval_steps
@@ -390,6 +383,11 @@ def evaluate(args, model, tokenizer, prefix=""):
         logger.info("******* %s results ********" % key)
         info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
         logger.info(info)
+
+    # write results in file
+    with open(output_submit_file, "w") as writer:
+        for record in results:
+            writer.write(json.dumps(record) + '\n')
 
     # wandb.log(results)
     return results
@@ -450,6 +448,7 @@ def predict(args, model, tokenizer, prefix=""):
         else:
             preds = tags[0]# 对于英文没有用[cls]和[sep] 因此不截取
 
+        # write results in file
         label_entities = get_entities(preds, args.id2label, args.markup)
         json_d = {}
         json_d['id'] = step
@@ -470,41 +469,40 @@ def predict(args, model, tokenizer, prefix=""):
         info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
         logger.info(info)
 
+    # write results in file
     with open(output_predict_file, "w") as writer:
         for record in results:
             writer.write(json.dumps(record) + '\n')
 
-
-
-    if args.task_name == 'cluener':
-        output_submit_file = os.path.join(pred_output_dir, prefix, 'test', args.output_file_name)
-        test_text = []
-        with open(os.path.join(args.data_dir, "test.json"), 'r') as fr:
-            for line in fr:
-                test_text.append(json.loads(line))
-        test_submit = []
-        for x, y in zip(test_text, results):
-            json_d = {}
-            json_d['id'] = x['id']
-            json_d['label'] = {}
-            entities = y['entities']
-            words = list(x['text'])
-            if len(entities) != 0:
-                for subject in entities:
-                    tag = subject[0]
-                    start = subject[1]
-                    end = subject[2]
-                    word = "".join(words[start:end + 1])
-                    if tag in json_d['label']:
-                        if word in json_d['label'][tag]:
-                            json_d['label'][tag][word].append([start, end])
-                        else:
-                            json_d['label'][tag][word] = [[start, end]]
-                    else:
-                        json_d['label'][tag] = {}
-                        json_d['label'][tag][word] = [[start, end]]
-            test_submit.append(json_d)
-        json_to_text(output_submit_file, test_submit)
+    # if args.task_name == 'cluener':
+    #     output_submit_file = os.path.join(pred_output_dir, prefix, 'test', args.output_file_name)
+    #     test_text = []
+    #     with open(os.path.join(args.data_dir, "test.json"), 'r') as fr:
+    #         for line in fr:
+    #             test_text.append(json.loads(line))
+    #     test_submit = []
+    #     for x, y in zip(test_text, results):
+    #         json_d = {}
+    #         json_d['id'] = x['id']
+    #         json_d['label'] = {}
+    #         entities = y['entities']
+    #         words = list(x['text'])
+    #         if len(entities) != 0:
+    #             for subject in entities:
+    #                 tag = subject[0]
+    #                 start = subject[1]
+    #                 end = subject[2]
+    #                 word = "".join(words[start:end + 1])
+    #                 if tag in json_d['label']:
+    #                     if word in json_d['label'][tag]:
+    #                         json_d['label'][tag][word].append([start, end])
+    #                     else:
+    #                         json_d['label'][tag][word] = [[start, end]]
+    #                 else:
+    #                     json_d['label'][tag] = {}
+    #                     json_d['label'][tag][word] = [[start, end]]
+    #         test_submit.append(json_d)
+    #     json_to_text(output_submit_file, test_submit)
 
 def load_and_cache_examples(args, task, tokenizer, data_type='train',limit = None):
     if args.local_rank not in [-1, 0] and not evaluate:
@@ -550,7 +548,6 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train',limit = Non
                                                        )
         # note: for gpt2 tokenizer, cls sep tokens are not used.
         print("number of examples whose labels cannot be aligned "+str(count))# 统计所有不能正常tokenize（label与input_id不对应）的examples
-
 
         if args.local_rank in [-1, 0]:
             logger.info("Saving features into cached file %s", cached_features_file)
