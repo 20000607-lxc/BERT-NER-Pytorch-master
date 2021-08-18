@@ -119,30 +119,27 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                         new_label[i] = new_label[i-1]
                         # todo 9 means "O"（label id=9）
 
-                special_tokens_count = 2
+                special_tokens_count = 0
                 if len(tokens) > max_seq_length - special_tokens_count:
                     tokens = tokens[: (max_seq_length - special_tokens_count)]
                     new_label = new_label[: (max_seq_length - special_tokens_count)]
-
-                # todo 1 仿照bert在input的前面后面加上特殊的fix-token（不随continuous prompt变化）
-                new_label += [label_map['O']]
                 segment_ids = [sequence_a_segment_id] * len(tokens)
-                segment_ids += [0]
 
-                if cls_token_at_end:
-                    new_label += [label_map['O']]
-                    segment_ids += [0]
-                else:
-                    new_label = [label_map['O']] + new_label
-                    segment_ids = [0] + segment_ids
-
+                # # todo 1 仿照bert在input的前面后面加上特殊的fix-token（不随continuous prompt变化）目前看结果没什么变化 那就去掉吧
+                # new_label += [label_map['O']]
+                # segment_ids += [0]
+                # if cls_token_at_end:
+                #     new_label += [label_map['O']]
+                #     segment_ids += [0]
+                # else:
+                #     new_label = [label_map['O']] + new_label
+                #     segment_ids = [0] + segment_ids
                 # gpt2 tokenizer 不添加cls和sep 且special_tokens_count=0
+
                 pad_token = 0
-
                 input_ids = tokenizer.convert_tokens_to_ids(tokens)
-
-                input_ids += [102]
-                input_ids = [101]+input_ids
+                # input_ids += [102]
+                # input_ids = [101]+input_ids
 
                 # The mask has 1 for real tokens and 0 for padding tokens. Only real
                 # tokens are attended to.
@@ -181,7 +178,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                                               segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
 
             print("****************  the total no entity example number: "+str(the_no_entity_number)+'   ******************')
-            print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index)+ '   ******************')
+            print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index) + '   ******************')
             return features, count
 
         # elif "bert" or 'Bert' in tokenizer_name:
@@ -525,7 +522,7 @@ class OntonoteProcessor(DataProcessor):
 
     def get_dev_examples(self, data_dir, limit=None):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "test.sd.conllx"), 'ontonote'), "dev", limit)
+        return self._create_examples(self._read_text(os.path.join(data_dir, "dev.sd.conllx"), 'ontonote'), "dev", limit)
 
     def get_test_examples(self, data_dir,limit=None):
         """See base class."""

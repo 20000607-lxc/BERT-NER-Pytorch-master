@@ -34,7 +34,8 @@ from metrics.ner_metrics import SeqEntityScore
 from tools.finetuning_argparse import get_argparse
 from transformers import BertTokenizer, GPT2Tokenizer, AutoTokenizer
 from models.transformers_master.models.bert.tokenization_bert import BertTokenizer
-# import wandb
+import wandb
+import pprint
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
@@ -50,8 +51,9 @@ MODEL_CLASSES = {
 TEMPLATE_CLASSES = {
     '1': (6, 6, 0),# use the prompt + input + prompt + input module, and cut the hidden state of the later input to classify
     '2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
-    '3': (12, 12, 0),# todo ontonote entity type 多，增长prompt是否有效果？
-    '4': (24, 24, 0) # note '4 for cluener'= (12, 24, 0)  因为gpt for ner 与 gptlm for ner 不一样
+    '3': (12, 12, 0),
+    '4': (24, 24, 0),# note '4 for cluener'= (12, 24, 0)  因为gpt for ner 与 gptlm for ner 不一样
+    '5': (24, 88, 0)# todo 88 = 24+64 是不是可能好一点？ ontonote ontonote!
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
@@ -63,41 +65,33 @@ TEST_LIMIT = None
 # the default is None, meaning use all the data from files.
 
 # sweep_config = {
-#     'method': 'random', #grid, random
+#     'method': 'random',# grid, random
 #     'metric': {
-#         'name': 'acc',
+#         'name': 'f1',
 #         'goal': 'maximize'
 #     },
 #     'parameters': {
-#         'epochs': {
-#             'values': [2, 5, 10]
-#         },
-#         'batch_size': {
-#             'values': [4,8,16,32]
-#         },
-#         'dropout': {
-#             'values': [0.3, 0.4, 0.5]
-#         },
 #         'weight_decay': {
-#             'values': [0.005, 0.004, 0.006, 0.008 ]
+#             'values': [0.004, 0.005, 0.006, 0.008, 0.01, 0.012]
 #         },
 #         'learning_rate': {
-#             'values': [1e-4, 2e-4, 3e-4 ]#7e-5, 6e-5, 5e-5, 4e-5, 3e-5
+#             'values': [2e-4, 1e-4, 7e-5, 6e-5, 5e-5, 4e-5, 3e-5]
 #         },
-#         'crf_learning_rate': {
-#             'values': [7e-5,6e-5, 5e-5, 4e-5, 3e-5, 2e-5]
-#         },
+#
+#         'epochs': {
+#             'values': [3]
+#         }, # fix
 #         'train_max_seq_length': {
-#             'values': [64, 128, 256]
+#             'values':[64]
 #         },
 #         'eval_max_seq_length': {
-#             'values': [64, 128, 256]
-#         },
-#         'optimizer': {
-#             'values': ['adam', 'nadam', 'sgd', 'rmsprop']
+#             'values': [64]
 #         }
 #     }
 # }
+# pprint.pprint(sweep_config)
+# sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
+#
 
 args = get_argparse().parse_args()
 
@@ -106,7 +100,7 @@ if args.model_type == "chinese_pretrained_gpt2":
 
 def train(args, train_dataset, model, tokenizer):
     """ Train the model """
-    # wandb.init(config = args, project = 'gpt2_sweep_2_try', entity='li_xuechun')
+    # wandb.init(config=args, project = 'gpt2_sweep_2_try', entity='li_xuechun')
     # config2 = wandb.config
 
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
@@ -370,7 +364,7 @@ def evaluate(args, model, tokenizer, prefix=''):
         logger.info("******* %s results ********"%key)
         info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
         logger.info(info)
-    #wandb.log(results)
+    # wandb.log(results)
     return results
 
 
@@ -610,7 +604,6 @@ def main():
         model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
                                             config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path, cache_dir=args.cache_dir if args.cache_dir else None,)
 
-    #sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
     if args.local_rank == 0:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
     model.to(args.device)
@@ -647,7 +640,7 @@ def main():
         # torch.save(scheduler.state_dict(), os.path.join(args.output_dir, "scheduler.pt"))
         # logger.info("Saving optimizer and scheduler states to %s", args.output_dir)
 
-    # wandb.agent(sweep_id, train(args, train_dataset, model, tokenizer))#(config2, train_dataset, model, tokenizer)
+    # wandb.agent(sweep_id, train(args, train_dataset, model, tokenizer))#(config2, train_dataset, model, tokenizer) (args, train_dataset, model, tokenizer)
 
     # Evaluation（加载保存的模型，单独evaluation）
     results = {}
