@@ -45,7 +45,7 @@ MODEL_CLASSES = {
     'bare_gpt2': (GPT2Config, BareGPT2, CNerTokenizer),
     'bare_chinese_gpt2':  (GPT2Config, BareChineseGPT2, CNerTokenizer),
     'label_embedding': (GPT2Config, GPT2SoftmaxForNer_LE, CNerTokenizer),
-    #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer)
+     #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer)
 }
 
 TEMPLATE_CLASSES = {
@@ -58,52 +58,42 @@ TEMPLATE_CLASSES = {
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = None
-EVAL_LIMIT = None
-TEST_LIMIT = None
-
+TRAIN_LIMIT = 60#None
+EVAL_LIMIT = 20#None
+TEST_LIMIT = 20#None
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
-# sweep_config = {
-#     'method': 'random',# grid, random
-#     'metric': {
-#         'name': 'f1',
-#         'goal': 'maximize'
-#     },
-#     'parameters': {
-#         'weight_decay': {
-#             'values': [0.004, 0.005, 0.006, 0.008, 0.01, 0.012]
-#         },
-#         'learning_rate': {
-#             'values': [2e-4, 1e-4, 7e-5, 6e-5, 5e-5, 4e-5, 3e-5]
-#         },
-#
-#         'epochs': {
-#             'values': [3]
-#         }, # fix
-#         'train_max_seq_length': {
-#             'values':[64]
-#         },
-#         'eval_max_seq_length': {
-#             'values': [64]
-#         }
-#     }
-# }
-# pprint.pprint(sweep_config)
-# sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
-#
+sweep_config = {
+    'method': 'random',# grid, random
+    'metric': {
+        'name': 'f1',
+        'goal': 'maximize'
+    },
+    'parameters': {
+        'weight_decay': {
+            'values': [0.004, 0.005, 0.006, 0.008, 0.01, 0.012]
+        },
+        'learning_rate': {
+            'values': [2e-4, 1e-4, 7e-5, 6e-5, 5e-5, 4e-5, 3e-5]
+        },
 
-args = get_argparse().parse_args()
+        'epochs': {
+            'values': [3]
+        }, # fix
+        'train_max_seq_length': {
+            'values':[64]
+        },
+        'eval_max_seq_length': {
+            'values': [64]
+        }
+    }
+}
+pprint.pprint(sweep_config)
 
-if args.model_type == "chinese_pretrained_gpt2":
-    assert args.task_name in ['cluener', 'cner']
 
 def train(args, train_dataset, model, tokenizer):
     """ Train the model """
-    # wandb.init(config=args, project = 'gpt2_sweep_2_try', entity='li_xuechun')
-    # config2 = wandb.config
-
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
     train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
     train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size,
@@ -283,7 +273,7 @@ def evaluate(args, model, tokenizer, prefix=''):
     eval_output_dir = args.output_dir
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
-    results = []
+    output_results = []
     labels = []
     # todo remember to change the name each time if want to see the ids, tokens and entities
     output_submit_file = os.path.join(eval_output_dir, prefix, args.output_file_name)
@@ -345,11 +335,11 @@ def evaluate(args, model, tokenizer, prefix=''):
         json_d['example of the gpt2 output words'] = example
         json_d['entities'] = label_entities
         json_d['true_entities'] = true_label_entities
-        results.append(json_d)
+        output_results.append(json_d)
         pbar(step)
 
     with open(output_submit_file, "w") as writer:
-        for record in results:
+        for record in output_results:
             writer.write(json.dumps(record) + '\n')
 
     logger.info("\n")
@@ -365,9 +355,8 @@ def evaluate(args, model, tokenizer, prefix=''):
         logger.info("******* %s results ********"%key)
         info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
         logger.info(info)
-    # wandb.log(results)
+    wandb.log(results)
     return results
-
 
 def predict(args, model, tokenizer, prefix = ''):
     metric = SeqEntityScore(args.id2label, markup=args.markup)
@@ -384,7 +373,7 @@ def predict(args, model, tokenizer, prefix = ''):
     logger.info("  Num examples = %d", len(test_dataset))
     logger.info("  Batch size = %d", 1)
 
-    results = []
+    output_results = []
     output_submit_file = os.path.join(pred_output_dir, prefix, args.output_file_name)
     pbar = ProgressBar(n_total=len(test_dataloader), desc="Predicting")
     for step, batch in enumerate(test_dataloader):
@@ -432,12 +421,13 @@ def predict(args, model, tokenizer, prefix = ''):
         json_d['tag_seq'] = " ".join(tags)
         json_d['entities'] = label_entities
         json_d['true_entities'] = true_label_entities
-        results.append(json_d)
+        output_results.append(json_d)
         pbar(step)
 
     logger.info("\n")
     test_info, entity_info = metric.result()
     results = {f'{key}': value for key, value in test_info.items()}
+    wandb.log(results)
     logger.info("***** Test results %s *****", prefix)
     info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
     logger.info(info)
@@ -448,7 +438,7 @@ def predict(args, model, tokenizer, prefix = ''):
         logger.info(info)
 
     with open(output_submit_file, "w") as writer:
-        for record in results:
+        for record in output_results:
             writer.write(json.dumps(record) + '\n')
 
 def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = None):
@@ -516,6 +506,10 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
     return dataset
 
 def main():
+    args = get_argparse().parse_args()
+    if args.model_type == "chinese_pretrained_gpt2":
+        assert args.task_name in ['cluener', 'cner']
+    wandb.init(config=args, project='gpt2_sweep_2_try', entity='li_xuechun')
     args = get_argparse().parse_args()
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
@@ -641,7 +635,6 @@ def main():
         # torch.save(scheduler.state_dict(), os.path.join(args.output_dir, "scheduler.pt"))
         # logger.info("Saving optimizer and scheduler states to %s", args.output_dir)
 
-    # wandb.agent(sweep_id, train(args, train_dataset, model, tokenizer))#(config2, train_dataset, model, tokenizer) (args, train_dataset, model, tokenizer)
 
     # Evaluation（加载保存的模型，单独evaluation）
     results = {}
@@ -710,6 +703,10 @@ def main():
                 model = model_class.from_pretrained(checkpoint, template=TEMPLATE, device=args.device)
             model.to(args.device)
             predict(args, model, tokenizer, prefix=prefix)
+
+
+sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
+wandb.agent(sweep_id, function=main)
 
 if __name__ == "__main__":
     main()

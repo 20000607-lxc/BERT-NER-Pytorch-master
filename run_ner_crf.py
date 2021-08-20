@@ -29,8 +29,8 @@ from processors.ner_seq import ner_processors as processors
 from processors.ner_seq import collate_fn
 from metrics.ner_metrics import SeqEntityScore
 from tools.finetuning_argparse import get_argparse
-
 import wandb
+import pprint
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertCrfForNer, CNerTokenizer),
@@ -57,50 +57,43 @@ TEST_LIMIT = None
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
-# sweep_config = {
-#     'method': 'random', #grid, random
-#     'metric': {
-#         'name': 'acc',
-#         'goal': 'maximize'
-#     },
-#     'parameters': {
-#         'epochs': {
-#             'values': [2, 5, 10]
-#         },
-#         'batch_size': {
-#             'values': [4,8,16,32]
-#         },
-#         'dropout': {
-#             'values': [0.3, 0.4, 0.5]
-#         },
-#         'weight_decay': {
-#             'values': [0.0005, 0.0004, 0.0006]
-#         },
-#         'learning_rate': {
-#             'values': [7e-5,6e-5, 5e-5, 4e-5, 3e-5, 2e-5]
-#         },
-#         'crf_learning_rate': {
-#             'values': [7e-5,6e-5, 5e-5, 4e-5, 3e-5, 2e-5]
-#         },
-#         'train_max_seq_length': {
-#             'values': [64, 128, 256]
-#         },
-#         'eval_max_seq_length': {
-#             'values': [64, 128, 256]
-#         },
-#         'optimizer': {
-#             'values': ['adam', 'nadam', 'sgd', 'rmsprop']
-#         }
-#     }
-# }
-args = get_argparse().parse_args()
-# wandb.init(config = args, project = 'gpt2_sweep_2_try', entity='li_xuechun')
-# config2 = wandb.config
-
-
-if args.model_type == "chinese_pretrained_gpt2":
-    assert args.task_name in ['cluener', 'cner']
-
+sweep_config = {
+    'method': 'random', #grid, random
+    'metric': {
+        'name': 'f1',
+        'goal': 'maximize'
+    },
+    'parameters': {
+        'epochs': {
+            'values': [3]
+        },
+        'batch_size': {
+            'values': [8]
+        },
+        'dropout': {
+            'values': [0.3, 0.4, 0.5]
+        },
+        'weight_decay': {
+            'values': [0.0005, 0.0004, 0.0006]
+        },
+        'learning_rate': {
+            'values': [7e-5, 6e-5,  4e-5, 3e-5, 2e-5]
+        },
+        'crf_learning_rate': {
+            'values': [7e-5, 6e-5, 4e-5, 3e-5, 2e-5]
+        },
+        'train_max_seq_length': {
+            'values': [32, 64, 128]
+        },
+        'eval_max_seq_length': {
+            'values': [32, 64, 128]
+        },
+        'optimizer': {
+            'values': ['adam', 'nadam', 'sgd', 'rmsprop']
+        }
+    }
+}
+pprint.pprint(sweep_config)
 
 def train(args, train_dataset, model, tokenizer):
     """ Train the model """
@@ -385,13 +378,11 @@ def evaluate(args, model, tokenizer, prefix=""):
         logger.info("******* %s results ********" % key)
         info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
         logger.info(info)
-
     # write results in file
     with open(output_submit_file, "w") as writer:
         for record in results:
             writer.write(json.dumps(record) + '\n')
-
-    # wandb.log(results)
+    wandb.log(results)
     return results
 
 def predict(args, model, tokenizer, prefix=""):
@@ -462,6 +453,7 @@ def predict(args, model, tokenizer, prefix=""):
     logger.info("\n")
     test_info, entity_info = metric.result()
     results = {f'{key}': value for key, value in test_info.items()}
+    wandb.log(results)
     logger.info("***** Test results %s *****", prefix)
     info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
     logger.info(info)
@@ -570,7 +562,10 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train',limit = Non
     return dataset
 
 def main():
-    #args = get_argparse().parse_args()
+    args = get_argparse().parse_args()
+    wandb.init(config=args, project='gpt2_sweep_2_try', entity='li_xuechun')
+    if args.model_type == "chinese_pretrained_gpt2":
+        assert args.task_name in ['cluener', 'cner']
 
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
@@ -625,8 +620,6 @@ def main():
     config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path,
                                           num_labels=num_labels, cache_dir=args.cache_dir if args.cache_dir else None, )
     TEMPLATE = TEMPLATE_CLASSES[args.template]
-    # sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
-    #config = wandb.config
 
     if args.model_name_or_path in ['gpt2', 'gpt2-large', 'gpt2-medium', "distilgpt2"]:
         if args.task_name in ['cluener', 'cner']:
@@ -669,7 +662,6 @@ def main():
         train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='train', limit=TRAIN_LIMIT)
         global_step, tr_loss = train(args, train_dataset, model, tokenizer)
         logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
-        # wandb.agent(sweep_id, train)
 
     # Saving best-practices: if you use defaults names for the model, you can reload it using from_pretrained()
     if args.do_train and (args.local_rank == -1 or torch.distributed.get_rank() == 0):
@@ -765,6 +757,8 @@ def main():
             model.to(args.device)
             predict(args, model, tokenizer, prefix=prefix)
 
+sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
+wandb.agent(sweep_id, function=main)
 
 if __name__ == "__main__":
 

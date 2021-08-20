@@ -1,6 +1,7 @@
 get entity的方式：只有b-不算是一个entity 必须要B-和I-都有的才能算一个entity
 看一下
 
+
 {"id": 0, "pred_tag_seq": "O O O O O O O B-NORP O O O O O O O O O O O O O O O O B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT", "example of the gpt2 output words": "  T o   t h e   d e t e r m i n a t i o n .   t h e   C h i n e s e   s e c u r i t i e s   r e g u l a t o r y   d e p a r t m e n t   i s   t h i s   s t o c k   r e f o r m   t o   a   d i e   t h a t   h a s   b e e n   c a s t . \n \n T h e \n \n \n \n \n \n \n \n \n \n \n \n \n \n", "entities": [], "true_entities": []}
 {"id": 1, "pred_tag_seq": "O O O B-ORG I-ORG O O B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT", "example of the gpt2 output words": "  t o   t h e   T o d a y . \n \n T h e \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n", "entities": [["ORG", 3, 4]], "true_entities": [["ORG", 3, 4]]}
 {"id": 2, "pred_tag_seq": "O O O O O O B-CARDINAL O O O O O B-DATE O O O O O O O O B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT B-EVENT", "example of the gpt2 output words": ",   w e   h a v e   i n v i t e d   t h e   h o n o r a b l e   g u e s t s   t o   t h e   s t u d i o   t o d a y   t o   f o l l o w   t h i s   t o p i c   w i t h   u s . \n \n T h e \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n", "entities": [], "true_entities": []}

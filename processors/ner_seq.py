@@ -382,6 +382,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
             assert len(input_mask) == max_seq_length
             assert len(segment_ids) == max_seq_length
             # assert len(label_ids) == max_seq_length
+
             # if ex_index < 5:
             #     logger.info("*** Example ***")
             #     logger.info("guid: %s", example.guid)
@@ -490,7 +491,7 @@ class Conll2003Processor(DataProcessor):
 
     def get_train_examples(self, data_dir, limit=None):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "train.txt")), "train",limit)
+        return self._create_examples(self._read_text(os.path.join(data_dir, "train.txt")), "train", limit)
 
     def get_dev_examples(self, data_dir, limit=None):
         """See base class."""
