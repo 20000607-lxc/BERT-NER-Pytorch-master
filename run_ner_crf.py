@@ -53,11 +53,12 @@ TEMPLATE_CLASSES = {
 TRAIN_LIMIT = None
 EVAL_LIMIT = None
 TEST_LIMIT = None
-
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
-sweep_config = {
+use_wandb = False
+if use_wandb:
+    sweep_config = {
     'method': 'random', #grid, random
     'metric': {
         'name': 'f1',
@@ -93,7 +94,7 @@ sweep_config = {
         }
     }
 }
-pprint.pprint(sweep_config)
+    pprint.pprint(sweep_config)
 
 def train(args, train_dataset, model, tokenizer):
     """ Train the model """
@@ -382,7 +383,8 @@ def evaluate(args, model, tokenizer, prefix=""):
     with open(output_submit_file, "w") as writer:
         for record in results:
             writer.write(json.dumps(record) + '\n')
-    wandb.log(results)
+    if use_wandb:
+        wandb.log(results)
     return results
 
 def predict(args, model, tokenizer, prefix=""):
@@ -453,7 +455,8 @@ def predict(args, model, tokenizer, prefix=""):
     logger.info("\n")
     test_info, entity_info = metric.result()
     results = {f'{key}': value for key, value in test_info.items()}
-    wandb.log(results)
+    if use_wandb:
+        wandb.log(results)
     logger.info("***** Test results %s *****", prefix)
     info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
     logger.info(info)
@@ -563,7 +566,8 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train',limit = Non
 
 def main():
     args = get_argparse().parse_args()
-    wandb.init(config=args, project='gpt2_sweep_2_try', entity='li_xuechun')
+    if use_wandb:
+        wandb.init(config=args, project='gpt2_sweep_2_try', entity='li_xuechun')
     if args.model_type == "chinese_pretrained_gpt2":
         assert args.task_name in ['cluener', 'cner']
 
@@ -757,8 +761,10 @@ def main():
             model.to(args.device)
             predict(args, model, tokenizer, prefix=prefix)
 
-sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
-wandb.agent(sweep_id, function=main)
+
+if use_wandb:
+    sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
+    wandb.agent(sweep_id, function=main)
 
 if __name__ == "__main__":
 

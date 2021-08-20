@@ -64,32 +64,34 @@ TEST_LIMIT = 20#None
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
-sweep_config = {
-    'method': 'random',# grid, random
-    'metric': {
-        'name': 'f1',
-        'goal': 'maximize'
-    },
-    'parameters': {
-        'weight_decay': {
-            'values': [0.004, 0.005, 0.006, 0.008, 0.01, 0.012]
+use_wandb = False
+if use_wandb:
+    sweep_config = {
+        'method': 'random',# grid, random
+        'metric': {
+            'name': 'f1',
+            'goal': 'maximize'
         },
-        'learning_rate': {
-            'values': [2e-4, 1e-4, 7e-5, 6e-5, 5e-5, 4e-5, 3e-5]
-        },
+        'parameters': {
+            'weight_decay': {
+                'values': [0.004, 0.005, 0.006, 0.008, 0.01, 0.012]
+            },
+            'learning_rate': {
+                'values': [2e-4, 1e-4, 7e-5, 6e-5, 5e-5, 4e-5, 3e-5]
+            },
 
-        'epochs': {
-            'values': [3]
-        }, # fix
-        'train_max_seq_length': {
-            'values':[64]
-        },
-        'eval_max_seq_length': {
-            'values': [64]
+            'epochs': {
+                'values': [3]
+            }, # fix
+            'train_max_seq_length': {
+                'values':[64]
+            },
+            'eval_max_seq_length': {
+                'values': [64]
+            }
         }
     }
-}
-pprint.pprint(sweep_config)
+    pprint.pprint(sweep_config)
 
 
 def train(args, train_dataset, model, tokenizer):
@@ -355,7 +357,8 @@ def evaluate(args, model, tokenizer, prefix=''):
         logger.info("******* %s results ********"%key)
         info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
         logger.info(info)
-    wandb.log(results)
+    if use_wandb:
+        wandb.log(results)
     return results
 
 def predict(args, model, tokenizer, prefix = ''):
@@ -427,7 +430,8 @@ def predict(args, model, tokenizer, prefix = ''):
     logger.info("\n")
     test_info, entity_info = metric.result()
     results = {f'{key}': value for key, value in test_info.items()}
-    wandb.log(results)
+    if use_wandb:
+        wandb.log(results)
     logger.info("***** Test results %s *****", prefix)
     info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
     logger.info(info)
@@ -509,7 +513,8 @@ def main():
     args = get_argparse().parse_args()
     if args.model_type == "chinese_pretrained_gpt2":
         assert args.task_name in ['cluener', 'cner']
-    wandb.init(config=args, project='gpt2_sweep_2_try', entity='li_xuechun')
+    if use_wandb:
+        wandb.init(config=args, project='gpt2_sweep_2_try', entity='li_xuechun')
     args = get_argparse().parse_args()
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
@@ -704,9 +709,9 @@ def main():
             model.to(args.device)
             predict(args, model, tokenizer, prefix=prefix)
 
-
-sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
-wandb.agent(sweep_id, function=main)
+if use_wandb:
+    sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
+    wandb.agent(sweep_id, function=main)
 
 if __name__ == "__main__":
     main()
