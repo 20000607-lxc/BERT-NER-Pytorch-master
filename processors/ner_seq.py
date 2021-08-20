@@ -87,7 +87,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
     sum_length_of_example = 0
     if english:
         if 'gpt2' in tokenizer_name:
-            print("gpt2_english tokenizer")
+            print("gpt2_english tokenizer， use biso s for the lonely entity which contains one ****token***** ")
             for (ex_index, example) in enumerate(examples):
                 if ex_index % 10000 == 0:
                     logger.info("Writing example %d of %d", ex_index, len(examples))
@@ -402,7 +402,7 @@ class CnerProcessor(DataProcessor):
 
     def get_labels(self):
         """See base class."""
-        return ["X", 'B-CONT','B-EDU', 'B-LOC', 'B-NAME', 'B-ORG', 'B-PRO', 'B-RACE', 'B-TITLE',
+        return ["X", 'B-CONT', 'B-EDU', 'B-LOC', 'B-NAME', 'B-ORG', 'B-PRO', 'B-RACE', 'B-TITLE',
                 'I-CONT', 'I-EDU', 'I-LOC', 'I-NAME', 'I-ORG', 'I-PRO', 'I-RACE', 'I-TITLE',
                 'O', 'S-NAME', 'S-ORG', 'S-RACE', "[START]", "[END]"]
 
@@ -488,7 +488,11 @@ class Conll2003Processor(DataProcessor):
     def get_labels(self):
         """See base class."""
         return ["X",
-                'B-LOC',  'I-LOC', 'B-PER',  'I-PER', 'B-MISC', 'I-MISC', 'B-ORG', 'I-ORG', 'O', "[START]", "[END]"]
+                'S-LOC', 'B-LOC',  'I-LOC',
+                'S-PER', 'B-PER',  'I-PER',
+                'S-MISC', 'B-MISC', 'I-MISC',
+                'S-ORG', 'B-ORG', 'I-ORG',
+                'O', "[START]", "[END]"]
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""
@@ -531,25 +535,26 @@ class OntonoteProcessor(DataProcessor):
     def get_labels(self):
         """See base class."""
         return ["X",
-                'B-NORP', 'I-NORP',
-                'B-GPE', 'I-GPE',
-                'B-FAC', 'I-FAC',
-                'B-PERSON',  'I-PERSON',
-                'B-DATE', 'I-DATE',
-                'B-ORG', 'I-ORG',
-                'B-LOC', 'I-LOC',
-                'B-WORK_OF_ART', 'I-WORK_OF_ART',
-                'B-EVENT', 'I-EVENT',
-                'B-CARDINAL', 'I-CARDINAL',
-                'B-ORDINAL', 'I-ORDINAL',
-                'B-PRODUCT', 'I-PRODUCT',
-                'B-QUANTITY', 'I-QUANTITY',
-                'B-TIME', 'I-TIME',
-                'B-PERCENT', 'I-PERCENT',
-                'B-MONEY', 'I-MONEY',
-                'B-LAW', 'I-LAW',
-                'B-LANGUAGE', 'I-LANGUAGE',
+                'S-NORP', 'B-NORP', 'I-NORP',
+                'S-GPE', 'B-GPE', 'I-GPE',
+                'S-FAC', 'B-FAC', 'I-FAC',
+                'S-PERSON', 'B-PERSON',  'I-PERSON',
+                'S-DATE', 'B-DATE', 'I-DATE',
+                'S-ORG', 'B-ORG', 'I-ORG',
+                'S-LOC', 'B-LOC', 'I-LOC',
+                'S-WORK_OF_ART', 'B-WORK_OF_ART', 'I-WORK_OF_ART',
+                'S-EVENT', 'B-EVENT', 'I-EVENT',
+                'S-CARDINAL', 'B-CARDINAL', 'I-CARDINAL',
+                'S-ORDINAL', 'B-ORDINAL', 'I-ORDINAL',
+                'S-PRODUCT', 'B-PRODUCT', 'I-PRODUCT',
+                'S-QUANTITY', 'B-QUANTITY', 'I-QUANTITY',
+                'S-TIME', 'B-TIME', 'I-TIME',
+                'S-PERCENT', 'B-PERCENT', 'I-PERCENT',
+                'S-MONEY', 'B-MONEY', 'I-MONEY',
+                'S-LAW', 'B-LAW', 'I-LAW',
+                'S-LANGUAGE', 'B-LANGUAGE', 'I-LANGUAGE',
                 'O', "[START]", "[END]"]
+
     # todo 不知道是否所有entity都含有I-
 
     def _create_examples(self, lines, set_type, limit=None):
