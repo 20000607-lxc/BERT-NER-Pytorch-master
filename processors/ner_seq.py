@@ -91,19 +91,20 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
             for (ex_index, example) in enumerate(examples):
                 if ex_index % 10000 == 0:
                     logger.info("Writing example %d of %d", ex_index, len(examples))
-
                 if type(example.text_a) == list:
                     if example.text_a == []:# if list == []: pass!
                         continue
-
                     new_text = ' '.join(example.text_a)
                     tokens = tokenizer.tokenize(' ' + new_text)
                     sum_length_of_example += len(tokens)
                 else:
                     raise(NotImplementedError)
 
-                label_ids = [label_map[x] for x in example.labels]
+                if len(tokens) == 0:# for the empty tokens list: pass!
+                    count += 1# count such abnormal tokens
+                    continue
 
+                label_ids = [label_map[x] for x in example.labels]
                 flag = 1
                 for i in label_ids:
                     if i != 0:
@@ -113,11 +114,6 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
 
                 # align the label_ids with tokens
                 new_label = [0] * len(tokens)
-
-                if len(tokens) == 0:# for the empty tokens list: pass!
-                    count += 1# count such abnormal tokens
-                    continue
-
                 j = 0
                 for i in range(len(tokens)):
                     if 'Ġ' in tokens[i]:
@@ -128,10 +124,11 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                             new_label[i] = new_label[i-1]+1# new_label[i] should be I-
                         else:
                             new_label[i] = new_label[i-1]
-                           # should not use O(0 means "O") anymore!
+                            # should not use O(0 means "O") anymore!
 
+                # replace B- with S-
                 for i in range(len(new_label)-1):
-                    # for all the lonely token(donot count the split words), replace B- with S-
+                    # for all the lonely token(do not count the split words), replace B- with S-
                     if new_label[i] % 3 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
                         new_label[i] = new_label[i]-1# replace B- with S-
 
@@ -139,6 +136,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 if new_label[k] % 3 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
                     new_label[k] = new_label[k]-1# replace B- with S-
 
+                # truncate
                 special_tokens_count = 0
                 if len(tokens) > max_seq_length - special_tokens_count:
                     tokens = tokens[: (max_seq_length - special_tokens_count)]
@@ -161,10 +159,8 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 # input_ids += [102]
                 # input_ids = [101]+input_ids
 
-                # The mask has 1 for real tokens and 0 for padding tokens. Only real
-                # tokens are attended to.
+                # The mask has 1 for real tokens and 0 for padding tokens. Only real tokens are attended to.
                 input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
-
                 input_len = min(len(new_label), max_seq_length)
 
                 # Zero-pad up to the sequence length.
@@ -193,7 +189,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 #     logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
                 #     logger.info("label_ids: %s", " ".join([str(x) for x in new_label]))
 
-                # if flag == 0:#todo 2 only use the sequence that contains entity
+                # if flag == 0:# todo 2 only use the sequence that contains entity
                 features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
                                               segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
 

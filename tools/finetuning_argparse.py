@@ -124,7 +124,6 @@ def get_argparse():
                         help="If > 0: set total number of training steps to perform. Override num_train_epochs.", )
     parser.add_argument("--warmup_proportion", default=0.1, type=float,
                         help="Proportion of training to perform linear learning rate warmup for,E.g., 0.1 = 10% of training.")
-
     parser.add_argument("--save_steps", type=int, default=2000, help="Save checkpoint every X updates steps.")
     parser.add_argument("--eval_all_checkpoints", action="store_true", #default = False,
                         help="Evaluate all checkpoints starting with the same prefix as model_name ending and ending with step number", )
