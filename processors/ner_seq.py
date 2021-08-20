@@ -115,7 +115,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 new_label = [0] * len(tokens)
 
                 if len(tokens) == 0:# for the empty tokens list: pass!
-                    count += 1 # count such abnormal tokens
+                    count += 1# count such abnormal tokens
                     continue
 
                 j = 0
