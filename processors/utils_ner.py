@@ -36,17 +36,18 @@ class DataProcessor(object):
         """Gets the list of labels for this data set."""
         raise NotImplementedError()
 
-    @classmethod
-    def _read_tsv(cls, input_file, quotechar=None):
-        """Reads a tab separated value file."""
-        with open(input_file, "r", encoding="utf-8-sig") as f:
-            reader = csv.reader(f, delimiter="\t", quotechar=quotechar)
-            lines = []
-            for line in reader:
-                lines.append(line)
-            return lines
+    # @classmethod
+    # def _read_tsv(cls, input_file, quotechar=None):
+    #     """Reads a tab separated value file."""
+    #     with open(input_file, "r", encoding="utf-8-sig") as f:
+    #         reader = csv.reader(f, delimiter="\t", quotechar=quotechar)
+    #         lines = []
+    #         for line in reader:
+    #             lines.append(line)
+    #         return lines
 
     @classmethod
+    # 中文的entities 都是长度>=2的， 因此不需要S- token (始终为空）
     def _read_text(self, input_file, task_name=None):
         lines = []
         with open(input_file, 'r') as f:
@@ -69,8 +70,9 @@ class DataProcessor(object):
                     words.append(s[0])# todo 对于1988-03-06 只取1988
                     #words.append(splits[0])
 
-                    if len(splits) > 1:
+                    if len(splits) > 1: #有label
                         labels.append(splits[-1].replace("\n", ""))
+
                     else:
                         # Examples could have no label for mode = "test"
                         labels.append("O")
@@ -78,28 +80,29 @@ class DataProcessor(object):
                 lines.append({"words": words, "labels": labels})
         return lines
 
-    @classmethod
-    def _read_json(self, input_file):
-        lines = []
-        with open(input_file, 'r') as f:
-            for line in f:
-                line = json.loads(line.strip())
-                text = line['text']
-                label_entities = line.get('label', None)
-                words = list(text)
-                labels = ['O'] * len(words)
-                if label_entities is not None:
-                    for key,value in label_entities.items():
-                        for sub_name,sub_index in value.items():
-                            for start_index,end_index in sub_index:
-                                assert  ''.join(words[start_index:end_index+1]) == sub_name
-                                if start_index == end_index:
-                                    labels[start_index] = 'S-'+key
-                                else:
-                                    labels[start_index] = 'B-'+key
-                                    labels[start_index+1:end_index+1] = ['I-'+key]*(len(sub_name)-1)
-                lines.append({"words": words, "labels": labels})
-        return lines
+    # @classmethod
+    # def _read_json(self, input_file):
+    #     lines = []
+    #     with open(input_file, 'r') as f:
+    #         for line in f:
+    #             line = json.loads(line.strip())
+    #             text = line['text']
+    #             label_entities = line.get('label', None)
+    #             words = list(text)
+    #             labels = ['O'] * len(words)
+    #             if label_entities is not None:
+    #                 for key, value in label_entities.items():
+    #                     for sub_name, sub_index in value.items():
+    #                         for start_index, end_index in sub_index:
+    #                             assert ''.join(words[start_index:end_index+1]) == sub_name
+    #                             if start_index == end_index:
+    #                                 labels[start_index] = 'S-'+key
+    #                             else:
+    #                                 labels[start_index] = 'B-'+key
+    #                                 labels[start_index+1:end_index+1] = ['I-'+key]*(len(sub_name)-1)
+    #             lines.append({"words": words, "labels": labels})
+    #     return lines
+
 
 def get_entity_bios(seq,id2label):
     """Gets entities from sequence.

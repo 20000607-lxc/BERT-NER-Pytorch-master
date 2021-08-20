@@ -116,8 +116,14 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                         new_label[i] = label_ids[j]
                         j = j+1
                     else:
-                        new_label[i] = new_label[i-1]
-                        # todo 9 means "O"（label id=9）
+                        new_label[i] = 0 #new_label[i-1]
+                        # todo 0 means "O"（label id=0 ）
+
+                for i in range(len(new_label)):
+                    # for all the lonely token(donot count the split words), replace B- with S-
+                    if new_label[i] % 3 == 2 and new_label[i+1] == 0: # new_label[i] == B- and new_label[i+1] == O
+                        new_label[i] = new_label[i+1]-1# replace B- with S-
+
 
                 special_tokens_count = 0
                 if len(tokens) > max_seq_length - special_tokens_count:
@@ -298,7 +304,8 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
             the_no_entity_number += flag
 
         # Account for [CLS] and [SEP] with "- 2".
-            special_tokens_count = 2# todo test remove all special tokens (但是预训练的gpt2的vocabulary也是和bert一样的 可能没什么用）
+            special_tokens_count = 2
+            # todo test remove all special tokens (但是预训练的gpt2的vocabulary也是和bert一样的 可能没什么用）
             if len(tokens) > max_seq_length - special_tokens_count:
                 tokens = tokens[: (max_seq_length - special_tokens_count)]
                 label_ids = label_ids[: (max_seq_length - special_tokens_count)]
@@ -487,12 +494,13 @@ class Conll2003Processor(DataProcessor):
 
     def get_labels(self):
         """See base class."""
-        return ["X",
+        return ['O',
                 'S-LOC', 'B-LOC',  'I-LOC',
                 'S-PER', 'B-PER',  'I-PER',
                 'S-MISC', 'B-MISC', 'I-MISC',
                 'S-ORG', 'B-ORG', 'I-ORG',
-                'O', "[START]", "[END]"]
+                'X', "[START]", "[END]"]
+        # note: should be in this order!
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""
@@ -509,7 +517,7 @@ class Conll2003Processor(DataProcessor):
             labels = []
             for x in line['labels']:
                 if 'M-' in x:
-                    labels.append(x.replace('M-','I-'))
+                    labels.append(x.replace('M-', 'I-'))
                 elif 'E-' in x:
                     labels.append(x.replace('E-', 'I-'))
                 else:
@@ -534,7 +542,7 @@ class OntonoteProcessor(DataProcessor):
 
     def get_labels(self):
         """See base class."""
-        return ["X",
+        return ["O",
                 'S-NORP', 'B-NORP', 'I-NORP',
                 'S-GPE', 'B-GPE', 'I-GPE',
                 'S-FAC', 'B-FAC', 'I-FAC',
@@ -553,9 +561,8 @@ class OntonoteProcessor(DataProcessor):
                 'S-MONEY', 'B-MONEY', 'I-MONEY',
                 'S-LAW', 'B-LAW', 'I-LAW',
                 'S-LANGUAGE', 'B-LANGUAGE', 'I-LANGUAGE',
-                'O', "[START]", "[END]"]
-
-    # todo 不知道是否所有entity都含有I-
+                'X', "[START]", "[END]"]
+    # note: should be in this order!
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""
