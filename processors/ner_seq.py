@@ -93,6 +93,9 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                     logger.info("Writing example %d of %d", ex_index, len(examples))
 
                 if type(example.text_a) == list:
+                    if example.text_a == []:# if list == []: pass!
+                        continue
+
                     new_text = ' '.join(example.text_a)
                     tokens = tokenizer.tokenize(' ' + new_text)
                     sum_length_of_example += len(tokens)
@@ -103,7 +106,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
 
                 flag = 1
                 for i in label_ids:
-                    if i != 9:
+                    if i != 0:
                         flag = 0# 表示该example含有entity
                         break
                 the_no_entity_number += flag
@@ -116,14 +119,20 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                         new_label[i] = label_ids[j]
                         j = j+1
                     else:
-                        new_label[i] = 0 #new_label[i-1]
-                        # todo 0 means "O"（label id=0 ）
+                        if new_label[i-1] % 3 == 2:# B- label
+                            new_label[i] = new_label[i-1]+1# new_label[i] should be I-
+                        else:
+                            new_label[i] = new_label[i-1]
+                           # should not use O(0 means "O") anymore!
 
-                for i in range(len(new_label)):
+                for i in range(len(new_label)-1):
                     # for all the lonely token(donot count the split words), replace B- with S-
-                    if new_label[i] % 3 == 2 and new_label[i+1] == 0: # new_label[i] == B- and new_label[i+1] == O
-                        new_label[i] = new_label[i+1]-1# replace B- with S-
+                    if new_label[i] % 3 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
+                        new_label[i] = new_label[i]-1# replace B- with S-
 
+                k = len(new_label)-1
+                if new_label[k] % 3 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
+                    new_label[k] = new_label[k]-1# replace B- with S-
 
                 special_tokens_count = 0
                 if len(tokens) > max_seq_length - special_tokens_count:
@@ -183,8 +192,8 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
                                               segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
 
-            print("****************  the total no entity example number: "+str(the_no_entity_number)+'   ******************')
-            print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index) + '   ******************')
+            print("****************  the total no entity example number: "+str(the_no_entity_number)+'  ******************')
+            print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index) + ' ******************')
             return features, count
 
         # elif "bert" or 'Bert' in tokenizer_name:
@@ -200,7 +209,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
         #
         #         flag = 1
         #         for i in label_ids:
-        #             if i != 9:
+        #             if i != 0:
         #                 flag = 0
         #         the_no_entity_number += flag
         #
@@ -216,7 +225,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
         #                     # [' 's ', ...]
         #                     break# todo 这里到底那个地方出问题了？？？
         #             else:
-        #                 new_label[i] = 9# new_label[i-1]
+        #                 new_label[i] = 0# new_label[i-1]
         #
         #         # Account for [CLS] and [SEP] with "- 2".
         #         special_tokens_count = 2
@@ -298,7 +307,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
 
             flag = 1
             for i in label_ids:
-                if i != 9:
+                if i != 0:
                     flag = 0# 表示该example含有entity
                     break
             the_no_entity_number += flag
