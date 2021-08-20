@@ -31,7 +31,7 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name)
 
         self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings()#embedding是GPT2LMHeadModel的embedding
-        # self.embeddings.weight.requires_grad = False todo
+        # self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
         # perform fine_tuning
@@ -51,7 +51,7 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         self.prompt_encoder = PromptEncoder(self.template, self.hidden_size, device)
         self.prompt_encoder = self.prompt_encoder.to(device)
 
-        self.num_entities = 19 # todo for ontonote
+        self.num_entities = 19# todo for ontonote
 
         self.label_embedding = LabelEmbeder([self.num_entities], self.hidden_size, device)
         self.label_embedding = self.label_embedding.to(self.device)
@@ -119,15 +119,15 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         input_state_expanded = input_state_expanded.view(-1, self.hidden_size)     # B*5 x hidden_dim
 
         label_embedding_fea = label_embedding.view(-1, self.hidden_size)
-        att_features = label_embedding_fea + input_state_expanded    # B*5 x hidden_dim
+        att_features = label_embedding_fea + input_state_expanded    # B*self.num_entities x hidden_dim
         e = torch.tanh(att_features)
-        scores = self.fc(e)                                      # B*5 x 1
-        scores = scores.view(-1, self.num_entities)                              # B x 5
-        attn_dist_ = F.softmax(scores, dim=1)                    # B x 5
+        scores = self.fc(e)                                      # B*self.num_entities x 1
+        scores = scores.view(-1, self.num_entities)                              # B x self.num_entities
+        attn_dist_ = F.softmax(scores, dim=1)                    # B x self.num_entities
         normalization_factor = attn_dist_.sum(1, keepdim=True)
         attn_dist = attn_dist_ / normalization_factor
-        attn_dist = attn_dist.unsqueeze(1)                        # B x 1 x 5
-        output_state = torch.bmm(attn_dist, label_embedding)      # B x 1 x 5  *   5 x hidden_dim
+        attn_dist = attn_dist.unsqueeze(1)                        # B x 1 x self.num_entities
+        output_state = torch.bmm(attn_dist, label_embedding)      # B x 1 x self.num_entities * self.num_entities x hidden_dim
 
         output_state = output_state.squeeze(1)
         output_state += input_state

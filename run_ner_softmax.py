@@ -53,7 +53,8 @@ TEMPLATE_CLASSES = {
     '2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
     '3': (12, 12, 0),
     '4': (24, 24, 0),# note '4 for cluener'= (12, 24, 0)  因为gpt for ner 与 gptlm for ner 不一样
-    '5': (24, 88, 0)# todo 88 = 24+64 是不是可能好一点？ ontonote ontonote!
+    #'5': (24, 88, 0)# todo 88 = 24+64  ontonote  这个是不是写错了啊 为啥这么低！！！check！！难道不能用24+64？
+    '6': (12, 32, 0)
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
