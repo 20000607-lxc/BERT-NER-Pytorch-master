@@ -66,8 +66,8 @@ def collate_fn(batch):
     all_labels = all_labels[:,:max_len]
     return all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_lens
 
-from transformers import AutoTokenizer
-tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
+# from transformers import AutoTokenizer
+# tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
 
 
 def convert_examples_to_features(english, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
@@ -113,6 +113,11 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
 
                 # align the label_ids with tokens
                 new_label = [0] * len(tokens)
+
+                if len(tokens) == 0:# for the empty tokens list: pass!
+                    count += 1 # count such abnormal tokens
+                    continue
+
                 j = 0
                 for i in range(len(tokens)):
                     if 'Ġ' in tokens[i]:
@@ -319,7 +324,6 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 tokens = tokens[: (max_seq_length - special_tokens_count)]
                 label_ids = label_ids[: (max_seq_length - special_tokens_count)]
 
-
             # label_ids += [label_map['O']]
             # label_ids = [label_map['O']] + label_ids
             # tokens = ['*']+tokens
@@ -345,7 +349,6 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
             # For classification tasks, the first vector (corresponding to [CLS]) is
             # used as as the "sentence vector". Note that this only makes sense because
             # the entire model is fine-tuned.
-
 
             tokens += [sep_token]
             label_ids += [label_map['O']]
@@ -382,7 +385,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
             assert len(input_ids) == max_seq_length
             assert len(input_mask) == max_seq_length
             assert len(segment_ids) == max_seq_length
-            #assert len(label_ids) == max_seq_length
+            # assert len(label_ids) == max_seq_length
             # if ex_index < 5:
             #     logger.info("*** Example ***")
             #     logger.info("guid: %s", example.guid)
