@@ -24,11 +24,11 @@ class CNerTokenizer(BertTokenizer):
 class DataProcessor(object):
     """Base class for data converters for sequence classification data sets."""
 
-    def get_train_examples(self, data_dir):
+    def get_train_examples(self, data_dir, limit):
         """Gets a collection of `InputExample`s for the train set."""
         raise NotImplementedError()
 
-    def get_dev_examples(self, data_dir):
+    def get_dev_examples(self, data_dir, limit):
         """Gets a collection of `InputExample`s for the dev set."""
         raise NotImplementedError()
 
@@ -104,7 +104,7 @@ class DataProcessor(object):
     #     return lines
 
 
-def get_entity_bios(seq,id2label):
+def get_entity_bios(seq, id2label):
     """Gets entities from sequence.
     note: BIOS
     Args:
@@ -195,7 +195,7 @@ def get_entities(seq,id2label, markup='bios'):
     :param markup:
     :return:
     '''
-    assert markup in ['bio','bios']
+    assert markup in ['bio', 'bios']
     if markup =='bio':
         return get_entity_bio(seq, id2label)
     else:

@@ -21,7 +21,7 @@ from models.BART_for_ner import BartSoftmaxForNer
 from models.transformers_master.models.gpt2.configuration_gpt2 import GPT2Config #new config
 from models.transformers_master.models.bert.configuration_bert import BertConfig #new config
 from models.transformers_master.models.bart.configuration_bart import BartConfig
-from models.gpt_for_ner import GPT2SoftmaxForNer_fix, BareGPT2# , GPT2GenerateForNer
+from models.gpt_for_ner import GPT2SoftmaxForNer_fix, BareGPT2 , GPT2GenerateForNer
 from models.gpt_LE_for_ner import GPT2SoftmaxForNer_LE# , GPT2GenerateForNer
 
 from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer, BareChineseGPT2
@@ -45,22 +45,23 @@ MODEL_CLASSES = {
     'bare_gpt2': (GPT2Config, BareGPT2, CNerTokenizer),
     'bare_chinese_gpt2':  (GPT2Config, BareChineseGPT2, CNerTokenizer),
     'label_embedding': (GPT2Config, GPT2SoftmaxForNer_LE, CNerTokenizer),
+    'generate': (GPT2Config, GPT2GenerateForNer, CNerTokenizer),
      #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer)
 }
 
 TEMPLATE_CLASSES = {
     '1': (6, 6, 0),# use the prompt + input + prompt + input module, and cut the hidden state of the later input to classify
-    '2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
+    #'2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
     '3': (12, 12, 0),
-    '4': (24, 24, 0),# note '4 for cluener'= (12, 24, 0)  因为gpt for ner 与 gptlm for ner 不一样
+    #'4': (24, 24, 0),# note '4 for cluener'= (12, 24, 0)  因为gpt for ner 与 gptlm for ner 不一样
     #'5': (24, 88, 0)# todo 88 = 24+64  ontonote  这个是不是写错了啊 为啥这么低！！！check！！难道不能用24+64？
-    '6': (12, 32, 0)
+    #'6': (12, 32, 0)
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = 60#None
-EVAL_LIMIT = 20#None
-TEST_LIMIT = 20#None
+TRAIN_LIMIT = None
+EVAL_LIMIT = None
+TEST_LIMIT = None
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
@@ -123,7 +124,7 @@ def train(args, train_dataset, model, tokenizer):
         # Load in optimizer and scheduler states
         optimizer.load_state_dict(torch.load(os.path.join(args.model_name_or_path, "optimizer.pt")))
         scheduler.load_state_dict(torch.load(os.path.join(args.model_name_or_path, "scheduler.pt")))
-    if args.fp16:#可理解为自动半精度训练，缩短训练时间和模型大小
+    if args.fp16:#自动半精度训练，缩短训练时间和模型大小
         try:
             from apex import amp
         except ImportError:
@@ -163,7 +164,7 @@ def train(args, train_dataset, model, tokenizer):
         logger.info("  Will skip the first %d steps in the first epoch", steps_trained_in_current_epoch)
 
     tr_loss, logging_loss = 0.0, 0.0
-    if args.do_adv:#对抗训练
+    if args.do_adv:# 对抗训练
         fgm = FGM(model, emb_name=args.adv_name, epsilon=args.adv_epsilon)#fast gradient method
     model.zero_grad()
     seed_everything(args.seed)  # Added here for reproductibility (even between python 2 and 3)
@@ -171,7 +172,6 @@ def train(args, train_dataset, model, tokenizer):
         pbar = ProgressBar(n_total=len(train_dataloader), desc='Training')
 
         for step, batch in enumerate(train_dataloader):
-
             if steps_trained_in_current_epoch > 0:
                 steps_trained_in_current_epoch -= 1
                 continue
@@ -277,7 +277,6 @@ def evaluate(args, model, tokenizer, prefix=''):
         os.makedirs(eval_output_dir)
     output_results = []
     labels = []
-    # todo remember to change the name each time if want to see the ids, tokens and entities
     output_submit_file = os.path.join(eval_output_dir, prefix, args.output_file_name)
 
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
@@ -292,7 +291,6 @@ def evaluate(args, model, tokenizer, prefix=''):
             outputs = model(**inputs)
 
         tmp_eval_loss, logits = outputs[:2]
-
         # convert the example into tokens and add into json_d
         example = outputs[2]
         example = example.tolist()
@@ -460,7 +458,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
         features = torch.load(cached_features_file)
     else:
         logger.info("Creating features from dataset file at %s", args.data_dir)
-        label_list = processor.get_labels()
+        label_list = processor.get_labels(args.markup)
         if data_type == 'train':
             examples = processor.get_train_examples(args.data_dir, limit)
         elif data_type == 'dev':
@@ -473,7 +471,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
         else:
             ENGLISH = True
         # gpt2tokenizer 没有sep_token  pad_token cls_token 因此都是None
-        features, count = convert_examples_to_features(english=ENGLISH, task_name=data_type,
+        features, count = convert_examples_to_features(english=ENGLISH, markup=args.markup, task_name=data_type,
                                                 tokenizer_name=args.tokenizer_name if args.tokenizer_name!='' else args.model_name_or_path,
                                                 examples=examples,
                                                 tokenizer=tokenizer,
@@ -502,11 +500,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
     all_segment_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long)
     all_label_ids = torch.tensor([f.label_ids for f in features], dtype=torch.long)
     all_lens = torch.tensor([f.input_len for f in features], dtype=torch.long)
-    all_tokens = [f.tokens for f in features]
     dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids)
-    # if args.do_predict:
-    #     # predict时将tokens也输出并写入文件，方便与label对应
-    #     return dataset, all_tokens
     return dataset
 
 def main():
@@ -515,7 +509,6 @@ def main():
         assert args.task_name in ['cluener', 'cner']
     if use_wandb:
         wandb.init(config=args, project='gpt2_sweep_2_try', entity='li_xuechun')
-    args = get_argparse().parse_args()
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
     args.output_dir = args.output_dir + '{}'.format(args.model_type)
@@ -557,7 +550,9 @@ def main():
     if args.task_name not in processors:
         raise ValueError("Task not found: %s" % (args.task_name))
     processor = processors[args.task_name]()
-    label_list = processor.get_labels()
+
+    # 按照markup方式得到labels： bieso, biso, bio
+    label_list = processor.get_labels(args.markup)
     args.id2label = {i: label for i, label in enumerate(label_list)}
     args.label2id = {label: i for i, label in enumerate(label_list)}
     num_labels = len(label_list)
@@ -582,12 +577,11 @@ def main():
                                                         do_lower_case=args.do_lower_case,
                                                         cache_dir=args.cache_dir if args.cache_dir else None,)
         else:
-            # 英文采用与model一致的tokenizer， 不采用cner tokenizer
+            # 英文采用与model一致的tokenizer(不采用cner tokenizer)
             tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)#use_fast=True, add_prefix_space=True
 
         # model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
         #                                     config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path,  cache_dir=args.cache_dir if args.cache_dir else None,)
-
         model = model_class(config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path)
 
     else: # bert or albert

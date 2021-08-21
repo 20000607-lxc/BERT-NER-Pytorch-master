@@ -69,8 +69,7 @@ def collate_fn(batch):
 # from transformers import AutoTokenizer
 # tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
 
-
-def convert_examples_to_features(english, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
+def convert_examples_to_features(english, markup, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
                                  cls_token_at_end=False, cls_token="[CLS]", cls_token_segment_id=1,
                                  sep_token="[SEP]", pad_on_left=False, pad_token=0, pad_token_segment_id=0,
                                  sequence_a_segment_id=0, mask_padding_with_zero=True,):
@@ -115,26 +114,40 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                 # align the label_ids with tokens
                 new_label = [0] * len(tokens)
                 j = 0
-                for i in range(len(tokens)):
-                    if 'Ġ' in tokens[i]:
-                        new_label[i] = label_ids[j]
-                        j = j+1
-                    else:
-                        if new_label[i-1] % 3 == 2:# B- label
-                            new_label[i] = new_label[i-1]+1# new_label[i] should be I-
+                if 's' in markup:
+                    # todo only for biso
+                    for i in range(len(tokens)):
+                        if 'Ġ' in tokens[i]:
+                            new_label[i] = label_ids[j]
+                            j = j+1
                         else:
-                            new_label[i] = new_label[i-1]# new_label[i] should be I- or O
-                            # should not use O(0 means "O") anymore!
+                            if new_label[i-1] % 3 == 2:# B- label
+                                new_label[i] = new_label[i-1]+1# new_label[i] should be I-
+                            else:
+                                new_label[i] = new_label[i-1]# new_label[i] should be I- or O
+                                # should not use O(0 means "O") anymore!
 
-                # replace B- with S-
-                for i in range(len(new_label)-1):
-                    # for all the lonely token(do not count the split words), replace B- with S-
-                    if new_label[i] % 3 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
-                        new_label[i] = new_label[i]-1# replace B- with S-
+                    # replace B- with S-
+                    for i in range(len(new_label)-1):
+                        # for all the lonely token(do not count the split words), replace B- with S-
+                        if new_label[i] % 3 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
+                            new_label[i] = new_label[i]-1# replace B- with S-
 
-                k = len(new_label)-1
-                if new_label[k] % 3 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
-                    new_label[k] = new_label[k]-1# replace B- with S-
+                    k = len(new_label)-1
+                    if new_label[k] % 3 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
+                        new_label[k] = new_label[k]-1# replace B- with S-
+
+                else:
+                    for i in range(len(tokens)):
+                        if 'Ġ' in tokens[i]:
+                            new_label[i] = label_ids[j]
+                            j = j+1
+                        else:
+                            if new_label[i-1] % 2 == 1:# B- label
+                                new_label[i] = new_label[i-1]+1# new_label[i] should be I-
+                            else:
+                                new_label[i] = new_label[i-1]# new_label[i] should be I- or O
+                                # should not use O(0 means "O") anymore!
 
                 # truncate
                 special_tokens_count = 0
@@ -418,9 +431,9 @@ class CnerProcessor(DataProcessor):
 
     def get_labels(self):
         """See base class."""
-        return ["X", 'B-CONT', 'B-EDU', 'B-LOC', 'B-NAME', 'B-ORG', 'B-PRO', 'B-RACE', 'B-TITLE',
+        return ["O", 'B-CONT', 'B-EDU', 'B-LOC', 'B-NAME', 'B-ORG', 'B-PRO', 'B-RACE', 'B-TITLE',
                 'I-CONT', 'I-EDU', 'I-LOC', 'I-NAME', 'I-ORG', 'I-PRO', 'I-RACE', 'I-TITLE',
-                'O', 'S-NAME', 'S-ORG', 'S-RACE', "[START]", "[END]"]
+                'X', 'S-NAME', 'S-ORG', 'S-RACE', "[START]", "[END]"]
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""
@@ -464,13 +477,13 @@ class CluenerProcessor(DataProcessor):
 
     def get_labels(self):
         """See base class."""
-        return ["X", "B-address", "B-book", "B-company", 'B-game', 'B-government', 'B-movie', 'B-name',
+        return ["O", "B-address", "B-book", "B-company", 'B-game', 'B-government', 'B-movie', 'B-name',
                 'B-organization', 'B-position','B-scene',"I-address",
                 "I-book", "I-company", 'I-game', 'I-government', 'I-movie', 'I-name',
                 'I-organization', 'I-position', 'I-scene',
                 "S-address", "S-book", "S-company", 'S-game', 'S-government', 'S-movie',
                 'S-name', 'S-organization', 'S-position',
-                'S-scene', 'O', "[START]", "[END]"]
+                'S-scene', 'X', "[START]", "[END]"]
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""
@@ -501,15 +514,32 @@ class Conll2003Processor(DataProcessor):
         """See base class."""
         return self._create_examples(self._read_text(os.path.join(data_dir, "test.txt")), "test", limit)
 
-    def get_labels(self):
-        """See base class."""
-        return ['O',
-                'S-LOC', 'B-LOC',  'I-LOC',
-                'S-PER', 'B-PER',  'I-PER',
-                'S-MISC', 'B-MISC', 'I-MISC',
-                'S-ORG', 'B-ORG', 'I-ORG',
-                ] #'X', "[START]", "[END]"
-        # note: should be in this order!
+    def get_labels(self, markup='bio'):
+        """See base class.
+       type can be choose from [bio bieso biso]"""
+        if markup == 'bieso':
+            raise(NotImplementedError)
+            # return ['O',
+            #         'S-LOC', 'B-LOC',  'I-LOC', 'E-LOC',
+            #         'S-PER', 'B-PER',  'I-PER', 'E-PER',
+            #         'S-MISC', 'B-MISC', 'I-MISC', 'E-MISC',
+            #         'S-ORG', 'B-ORG', 'I-ORG', 'E-ORG'
+            #         ] #'X', "[START]", "[END]"
+            # note: should be in this order!
+        elif markup == 'biso':
+            return ['O',
+                    'S-LOC', 'B-LOC',  'I-LOC',
+                    'S-PER', 'B-PER',  'I-PER',
+                    'S-MISC', 'B-MISC', 'I-MISC',
+                     'S-ORG', 'B-ORG', 'I-ORG',
+                    ] #'X', "[START]", "[END]"
+        else:
+            return ['O',
+                    'B-LOC',  'I-LOC',
+                    'B-PER',  'I-PER',
+                    'B-MISC', 'I-MISC',
+                    'B-ORG', 'I-ORG',
+                    ] #'X', "[START]", "[END]"
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""
@@ -549,9 +579,54 @@ class OntonoteProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(self._read_text(os.path.join(data_dir, "test.sd.conllx"), 'ontonote'), "test", limit)
 
-    def get_labels(self):
-        """See base class."""
-        return ["O",
+    def get_labels(self, markup='bio'):
+        """See base class.
+        type can be choose from [bio bieso biso]"""
+        if markup == 'bieso':
+            raise(NotImplementedError)
+            # return ["O",
+            #         'S-NORP', 'B-NORP', 'I-NORP', 'E-NORP',
+            #         'S-GPE', 'B-GPE', 'I-GPE', 'E-GPE',
+            #         'S-FAC', 'B-FAC', 'I-FAC', 'E-FAC',
+            #         'S-PERSON', 'B-PERSON',  'I-PERSON',  'E-PERSON',
+            #         'S-DATE', 'B-DATE',  'I-PERSON', 'E-PERSON',
+            #         'S-ORG', 'B-ORG', 'I-ORG', 'E-ORG',
+            #         'S-LOC', 'B-LOC', 'I-LOC',  'E-LOC',
+            #         'S-WORK_OF_ART', 'B-WORK_OF_ART', 'I-WORK_OF_ART', 'E-WORK_OF_ART',
+            #         'S-EVENT', 'B-EVENT', 'I-EVENT', 'E-EVENT',
+            #         'S-CARDINAL', 'B-CARDINAL', 'I-CARDINAL', 'E-CARDINAL',
+            #         'S-ORDINAL', 'B-ORDINAL', 'I-ORDINAL', 'E-ORDINAL',
+            #         'S-PRODUCT', 'B-PRODUCT', 'I-PRODUCT', 'E-PRODUCT',
+            #         'S-QUANTITY', 'B-QUANTITY', 'I-QUANTITY', 'E-QUANTITY',
+            #         'S-TIME', 'B-TIME', 'I-TIME', 'E-TIME',
+            #         'S-PERCENT', 'B-PERCENT', 'I-PERCENT', 'E-PERCENT',
+            #         'S-MONEY', 'B-MONEY', 'I-MONEY', 'E-MONEY',
+            #         'S-LAW', 'B-LAW', 'I-LAW', 'E-LAW',
+            #         'S-LANGUAGE', 'B-LANGUAGE', 'I-LANGUAGE',  'E-LANGUAGE',
+            #         ] #'X', "[START]", "[END]"
+        elif markup == 'bio':
+            return ["O",
+                    'B-NORP', 'I-NORP',
+                    'B-GPE', 'I-GPE',
+                    'B-FAC', 'I-FAC',
+                    'B-PERSON',  'I-PERSON',
+                    'B-DATE', 'I-DATE',
+                    'B-ORG', 'I-ORG',
+                    'B-LOC', 'I-LOC',
+                    'B-WORK_OF_ART', 'I-WORK_OF_ART',
+                    'B-CARDINAL', 'I-CARDINAL',
+                    'B-ORDINAL', 'I-ORDINAL',
+                    'B-PRODUCT', 'I-PRODUCT',
+                    'B-QUANTITY', 'I-QUANTITY',
+                    'B-TIME', 'I-TIME',
+                    'B-EVENT', 'I-EVENT',
+                    'B-PERCENT', 'I-PERCENT',
+                    'B-MONEY', 'I-MONEY',
+                    'B-LAW', 'I-LAW',
+                    'B-LANGUAGE', 'I-LANGUAGE',
+                    ]# 'X', "[START]", "[END]"
+        else:
+            return ["O",
                 'S-NORP', 'B-NORP', 'I-NORP',
                 'S-GPE', 'B-GPE', 'I-GPE',
                 'S-FAC', 'B-FAC', 'I-FAC',
