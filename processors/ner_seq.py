@@ -123,7 +123,7 @@ def convert_examples_to_features(english, tokenizer_name, task_name, examples, l
                         if new_label[i-1] % 3 == 2:# B- label
                             new_label[i] = new_label[i-1]+1# new_label[i] should be I-
                         else:
-                            new_label[i] = new_label[i-1]
+                            new_label[i] = new_label[i-1]# new_label[i] should be I- or O
                             # should not use O(0 means "O") anymore!
 
                 # replace B- with S-
@@ -508,7 +508,7 @@ class Conll2003Processor(DataProcessor):
                 'S-PER', 'B-PER',  'I-PER',
                 'S-MISC', 'B-MISC', 'I-MISC',
                 'S-ORG', 'B-ORG', 'I-ORG',
-                'X', "[START]", "[END]"]
+                ] #'X', "[START]", "[END]"
         # note: should be in this order!
 
     def _create_examples(self, lines, set_type, limit=None):
@@ -570,7 +570,7 @@ class OntonoteProcessor(DataProcessor):
                 'S-MONEY', 'B-MONEY', 'I-MONEY',
                 'S-LAW', 'B-LAW', 'I-LAW',
                 'S-LANGUAGE', 'B-LANGUAGE', 'I-LANGUAGE',
-                'X', "[START]", "[END]"]
+                ] #'X', "[START]", "[END]"
     # note: should be in this order!
 
     def _create_examples(self, lines, set_type, limit=None):

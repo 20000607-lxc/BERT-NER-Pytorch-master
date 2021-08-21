@@ -290,9 +290,10 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
 
         for bdix in range(bz):
             if self.template[0] == self.template[1]:
-                place = sum(self.template)+counts[bdix]+1# 45 = 6+6+32+1
+                place = sum(self.template)+counts[bdix]# 45 = 6+6+32+1 # todo 英文数据集 ： 不向后移动一位
             else:
-                place = self.template[0] + counts[bdix] + 1# 采用第二个prompt对应的hs
+                place = self.template[0] + counts[bdix]# 采用第二个prompt对应的hs
+                # todo 英文数据集 ： 不向后移动一位
                 # place = 2 * self.template[0] + counts[bdix] + 1 不得行 差好多
             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
             # todo 只截取没有pad的id对应的input

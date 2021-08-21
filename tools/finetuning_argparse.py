@@ -11,7 +11,7 @@ def get_argparse():
     parser.add_argument("--output_dir", default='outputs/ontonote_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written.", )
-    parser.add_argument("--model_type", default='label_embedding', type=str, #required=True,
+    parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
                         help="Model type selected in the list:['bert', 'albert', "
                              "'bare_gpt2', 'gpt2', "
                              "'chinese_pretrained_gpt2', 'bare_chinese_gpt2',"
@@ -60,7 +60,7 @@ def get_argparse():
     # a PyTorch model using the provided conversion scripts and loading the PyTorch model afterwards.
     # - None if you are both providing the configuration and state dictionary (resp. with keyword arguments ``config`` and ``state_dict``)
 
-    parser.add_argument("--template", default='2', type=str, #required=True,
+    parser.add_argument("--template", default='1', type=str, #required=True,
                         help="prompt size, choose from the list:['1','2','3','4'] or you can modify the template in run_ner_xxx.py by changing TEMPLATE_CLASSES ")
     parser.add_argument("--learning_rate", default=5e-5, type=float,#bert default = 5e-5
                         help="The initial learning rate for Adam.")
@@ -88,7 +88,7 @@ def get_argparse():
     parser.add_argument("--eval_max_seq_length", default=32, type=int,#default = 128,
                         help="The maximum total input sequence length after tokenization. Sequences longer "
                              "than this will be truncated, sequences shorter will be padded.", )
-    parser.add_argument('--cuda', type=int, default=1, help='Avaiable GPU ID')
+    parser.add_argument('--cuda', type=int, default=2, help='Avaiable GPU ID')
     parser.add_argument("--do_train", action="store_true", default=True,
                         help="Whether to run training.")
     parser.add_argument("--evaluate_and_test_during_training", action="store_true", default=True,
