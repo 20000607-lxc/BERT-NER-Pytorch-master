@@ -7,6 +7,107 @@ import json
 from .utils_ner import DataProcessor
 logger = logging.getLogger(__name__)
 
+def markup_for_bert_chinese(markup, tokens, new_label):
+    if markup == 'biso':
+        # replace B- with S-
+        for i in range(len(new_label)-1):
+            # for all the lonely token(do not count the split words), replace B- with S-
+            if new_label[i] % 3 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
+                new_label[i] = new_label[i]-1# replace B- with S-
+
+        k = len(new_label)-1
+        if new_label[k] % 3 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
+            new_label[k] = new_label[k]-1# replace B- with S-
+
+    elif markup == 'bio':
+        return tokens, new_label
+
+    elif markup == 'bieso':
+        # replace B- with S- and I- with E-
+        for i in range(len(new_label)-1):
+            # for all the lonely token(do not count the split words), replace B- with S-
+            if new_label[i] % 4 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
+                new_label[i] = new_label[i]-1# replace B- with S-
+            if new_label[i] % 4 == 3 and new_label[i+1] == 0:# means new_label[i] == I- and new_label[i+1] == O
+                new_label[i] = new_label[i]+1# replace I- with E-
+
+        k = len(new_label)-1
+        if new_label[k] % 4 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
+            new_label[k] = new_label[k]-1# replace B- with S-
+        if new_label[k] % 4 == 3:# means new_label[k] == I-
+            new_label[k] = new_label[k]+1# replace I- with E-
+
+    return  tokens, new_label
+
+def markup_for_gpt2_english(markup, tokens,  label_ids):
+    j = 0
+    new_label = [0] * len(tokens)
+    if markup == 'biso':
+        for i in range(len(tokens)):
+            if 'Ġ' in tokens[i]:
+                new_label[i] = label_ids[j]
+                j = j+1
+            else:
+                if new_label[i-1] % 3 == 2:# B- label
+                    new_label[i] = new_label[i-1]+1# new_label[i] should be I-
+                else:
+                    new_label[i] = new_label[i-1]# new_label[i] should be I- or O
+                    # should not use O(0 means "O") anymore!
+
+        # replace B- with S-
+        for i in range(len(new_label)-1):
+            # for all the lonely token(do not count the split words), replace B- with S-
+            if new_label[i] % 3 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
+                new_label[i] = new_label[i]-1# replace B- with S-
+
+        k = len(new_label)-1
+        if new_label[k] % 3 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
+            new_label[k] = new_label[k]-1# replace B- with S-
+
+    elif markup == 'bio':
+        for i in range(len(tokens)):
+            if 'Ġ' in tokens[i]:
+                new_label[i] = label_ids[j]
+                j = j+1
+            else:
+                if new_label[i-1] % 2 == 1:# B- label
+                    new_label[i] = new_label[i-1]+1# new_label[i] should be I-
+                else:
+                    new_label[i] = new_label[i-1]# new_label[i] should be I- or O
+                    # should not use O(0 means "O") anymore!
+
+    elif markup == 'bieso':
+        for i in range(len(tokens)):
+            if 'Ġ' in tokens[i]:
+                new_label[i] = label_ids[j]
+                j = j+1
+            else:
+                # todo 这里可以索引i-1因为第一个单词必须是有G的
+                if new_label[i-1] % 4 == 2:# B- label
+                    new_label[i] = new_label[i-1]+1# new_label[i] should be I-
+                # todo 这里可能会有问题： 万一是把最后一个单词劈开了 那就不能索引new_label[i+1] 但是讲道理每一句话最后都有标点符号的吧
+                elif new_label[i+1] == 0 and new_label[i] % 4 == 3:# new_label[i] should be E-
+                    new_label[i] = new_label[i-1]+1
+                else:
+                    new_label[i] = new_label[i-1]# new_label[i] should be I- or O
+                    # should not use O(0 means "O") anymore
+
+        # replace B- with S- and I- with E-
+        for i in range(len(new_label)-1):
+            # for all the lonely token(do not count the split words), replace B- with S-
+            if new_label[i] % 4 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
+                new_label[i] = new_label[i]-1# replace B- with S-
+            if new_label[i] % 4 == 3 and new_label[i+1] == 0:# means new_label[i] == I- and new_label[i+1] == O
+                new_label[i] = new_label[i]+1# replace I- with E-
+
+        k = len(new_label)-1
+        if new_label[k] % 4 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
+            new_label[k] = new_label[k]-1# replace B- with S-
+        if new_label[k] % 4 == 3:# means new_label[k] == I-
+            new_label[k] = new_label[k]+1# replace I- with E-
+
+    return markup, tokens, new_label, label_ids
+
 class InputExample(object):
     """A single training/test example for token classification."""
     def __init__(self, guid, text_a, labels):
@@ -91,8 +192,6 @@ def convert_examples_to_features(english, markup, tokenizer_name, task_name, exa
                 if ex_index % 10000 == 0:
                     logger.info("Writing example %d of %d", ex_index, len(examples))
                 if type(example.text_a) == list:
-                    if example.text_a == []:# if list == []: pass!
-                        continue
                     new_text = ' '.join(example.text_a)
                     tokens = tokenizer.tokenize(' ' + new_text)
                     sum_length_of_example += len(tokens)
@@ -112,43 +211,7 @@ def convert_examples_to_features(english, markup, tokenizer_name, task_name, exa
                 the_no_entity_number += flag
 
                 # align the label_ids with tokens
-                new_label = [0] * len(tokens)
-                j = 0
-                if 's' in markup:
-                    # todo only for bios
-                    for i in range(len(tokens)):
-                        if 'Ġ' in tokens[i]:
-                            new_label[i] = label_ids[j]
-                            j = j+1
-                        else:
-                            if new_label[i-1] % 3 == 2:# B- label
-                                new_label[i] = new_label[i-1]+1# new_label[i] should be I-
-                            else:
-                                new_label[i] = new_label[i-1]# new_label[i] should be I- or O
-                                # should not use O(0 means "O") anymore!
-
-                    # replace B- with S-
-                    for i in range(len(new_label)-1):
-                        # for all the lonely token(do not count the split words), replace B- with S-
-                        if new_label[i] % 3 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
-                            new_label[i] = new_label[i]-1# replace B- with S-
-
-                    k = len(new_label)-1
-                    if new_label[k] % 3 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
-                        new_label[k] = new_label[k]-1# replace B- with S-
-
-                else:
-                    for i in range(len(tokens)):
-                        if 'Ġ' in tokens[i]:
-                            new_label[i] = label_ids[j]
-                            j = j+1
-                        else:
-                            if new_label[i-1] % 2 == 1:# B- label
-                                new_label[i] = new_label[i-1]+1# new_label[i] should be I-
-                            else:
-                                new_label[i] = new_label[i-1]# new_label[i] should be I- or O
-                                # should not use O(0 means "O") anymore!
-
+                markup, tokens, new_label, label_ids = markup_for_gpt2_english(markup, tokens, label_ids)
                 # truncate
                 special_tokens_count = 0
                 if len(tokens) > max_seq_length - special_tokens_count:
@@ -202,7 +265,6 @@ def convert_examples_to_features(english, markup, tokenizer_name, task_name, exa
                 #     logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
                 #     logger.info("label_ids: %s", " ".join([str(x) for x in new_label]))
 
-                # if flag == 0:# todo 2 only use the sequence that contains entity
                 features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
                                               segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
 
@@ -326,7 +388,10 @@ def convert_examples_to_features(english, markup, tokenizer_name, task_name, exa
                     break
             the_no_entity_number += flag
 
-        # Account for [CLS] and [SEP] with "- 2".
+            # convert the labels into markup style
+            tokens, label_ids = markup_for_bert_chinese(markup, tokens, label_ids)
+
+            # Account for [CLS] and [SEP] with "- 2".
             special_tokens_count = 2
             # todo test remove all special tokens (但是预训练的gpt2的vocabulary也是和bert一样的 可能没什么用）
             if len(tokens) > max_seq_length - special_tokens_count:
@@ -429,11 +494,40 @@ class CnerProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(self._read_text(os.path.join(data_dir, "test.char.bmes")), "test", limit)
 
-    def get_labels(self):
+    def get_labels(self, markup='bio'):
         """See base class."""
-        return ["O", 'B-CONT', 'B-EDU', 'B-LOC', 'B-NAME', 'B-ORG', 'B-PRO', 'B-RACE', 'B-TITLE',
-                'I-CONT', 'I-EDU', 'I-LOC', 'I-NAME', 'I-ORG', 'I-PRO', 'I-RACE', 'I-TITLE',
-                'X', 'S-NAME', 'S-ORG', 'S-RACE', "[START]", "[END]"]
+        if markup=='bio':
+            return ["O",
+                    'B-CONT','I-CONT',
+                    'B-EDU', 'I-EDU',
+                    'B-LOC', 'I-LOC',
+                    'B-NAME', 'I-NAME',
+                    'B-ORG', 'I-ORG',
+                    'B-PRO', 'I-PRO',
+                    'B-RACE', 'I-RACE',
+                    'B-TITLE', 'I-TITLE']#, 'X', "[START]", "[END]"
+        elif markup=='biso':
+            return ["O",
+                    'S-CONT','B-CONT','I-CONT',
+                    'S-EDU','B-EDU', 'I-EDU',
+                    'S-LOC','B-LOC', 'I-LOC',
+                    'S-NAME','B-NAME', 'I-NAME',
+                    'S-ORG', 'B-ORG', 'I-ORG',
+                    'S-PRO','B-PRO', 'I-PRO',
+                    'S-RACE', 'B-RACE', 'I-RACE',
+                    'S-TITLE', 'B-TITLE', 'I-TITLE',
+                    ]
+        elif markup=='bieso':
+            return  ["O",
+                     'S-CONT','B-CONT','I-CONT', 'E-CONT',
+                     'S-EDU','B-EDU', 'I-EDU', 'E-EDU',
+                     'S-LOC','B-LOC', 'I-LOC', 'E-LOC',
+                     'S-NAME','B-NAME', 'I-NAME', 'E-NAME',
+                     'S-ORG', 'B-ORG', 'I-ORG', 'E-ORG',
+                     'S-PRO','B-PRO', 'I-PRO', 'E-PRO',
+                     'S-RACE', 'B-RACE', 'I-RACE', 'E-RACE',
+                     'S-TITLE','B-TITLE', 'I-TITLE', 'E-TITLE',
+                     ]
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""
@@ -475,15 +569,50 @@ class CluenerProcessor(DataProcessor):
         return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "test", limit)
         # todo 文件中没有test.txt
 
-    def get_labels(self):
+    def get_labels(self, markup='bio'):
         """See base class."""
-        return ["O", "B-address", "B-book", "B-company", 'B-game', 'B-government', 'B-movie', 'B-name',
-                'B-organization', 'B-position','B-scene',"I-address",
-                "I-book", "I-company", 'I-game', 'I-government', 'I-movie', 'I-name',
-                'I-organization', 'I-position', 'I-scene',
-                "S-address", "S-book", "S-company", 'S-game', 'S-government', 'S-movie',
-                'S-name', 'S-organization', 'S-position',
-                'S-scene', 'X', "[START]", "[END]"]
+        if markup == 'biso':
+            return ["O",
+                    "S-address", "B-address",  "I-address",
+                    "S-book", "B-book", "I-book",
+                    "S-company", "B-company",  "I-company",
+                    'S-game', 'B-game',  'I-game',
+                    'S-government', 'B-government', 'I-government',
+                    'S-movie', 'B-movie', 'I-movie',
+                    'S-name', 'B-name', 'I-name',
+                    'S-organization', 'B-organization', 'I-organization',
+                    'S-position', 'B-position', 'I-position',
+                    'S-scene', 'B-scene',  'I-scene',
+                    ]
+        elif markup=='bio':
+            return ["O",
+                    "B-address",  "I-address",
+                    "B-book", "I-book",
+                    "B-company",  "I-company",
+                    'B-game',  'I-game',
+                    'B-government','I-government',
+                    'B-movie','I-movie',
+                    'B-name','I-name',
+                    'B-organization','I-organization',
+                    'B-position', 'I-position',
+                    'B-scene', 'I-scene',
+                    ]
+        elif markup=='bieso':
+            return ["O",
+                    "S-address","B-address",  "I-address", "E-address",
+                    "S-book", "B-book", "I-book","E-book",
+                    "S-company","B-company",  "I-company", "E-company",
+                    'S-game','B-game',  'I-game','E-game',
+                    'S-government','B-government','I-government','E-government',
+                    'S-movie','B-movie','I-movie','E-movie',
+                    'S-name','B-name','I-name','E-name',
+                    'S-organization','B-organization','I-organization','E-organization',
+                    'S-position','B-position', 'I-position', 'E-position',
+                    'S-scene''B-scene',  'I-scene','E-scene',
+                   ]
+        else:
+            raise (NotImplementedError)
+
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""
@@ -514,32 +643,33 @@ class Conll2003Processor(DataProcessor):
         """See base class."""
         return self._create_examples(self._read_text(os.path.join(data_dir, "test.txt")), "test", limit)
 
-    def get_labels(self, markup='bio'):
+    def get_labels(self, markup='bios'):
         """See base class.
        type can be choose from [bio bieso bios]"""
         if markup == 'bieso':
-            raise(NotImplementedError)
-            # return ['O',
-            #         'S-LOC', 'B-LOC',  'I-LOC', 'E-LOC',
-            #         'S-PER', 'B-PER',  'I-PER', 'E-PER',
-            #         'S-MISC', 'B-MISC', 'I-MISC', 'E-MISC',
-            #         'S-ORG', 'B-ORG', 'I-ORG', 'E-ORG'
-            #         ] #'X', "[START]", "[END]"
+            return ['O',
+                    'S-LOC', 'B-LOC',  'I-LOC', 'E-LOC',
+                    'S-PER', 'B-PER',  'I-PER', 'E-PER',
+                    'S-MISC', 'B-MISC', 'I-MISC', 'E-MISC',
+                    'S-ORG', 'B-ORG', 'I-ORG', 'E-ORG'
+                    ] #'X', "[START]", "[END]"
             # note: should be in this order!
-        elif markup == 'bios':
+        elif markup == 'biso':
             return ['O',
                     'S-LOC', 'B-LOC',  'I-LOC',
                     'S-PER', 'B-PER',  'I-PER',
                     'S-MISC', 'B-MISC', 'I-MISC',
                      'S-ORG', 'B-ORG', 'I-ORG',
                     ] #'X', "[START]", "[END]"
-        else:
+        elif markup=='bio':
             return ['O',
                     'B-LOC',  'I-LOC',
                     'B-PER',  'I-PER',
                     'B-MISC', 'I-MISC',
                     'B-ORG', 'I-ORG',
                     ] #'X', "[START]", "[END]"
+        else:
+            raise(NotImplementedError)
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""
@@ -583,27 +713,26 @@ class OntonoteProcessor(DataProcessor):
         """See base class.
         type can be choose from [bio bieso bios]"""
         if markup == 'bieso':
-            raise(NotImplementedError)
-            # return ["O",
-            #         'S-NORP', 'B-NORP', 'I-NORP', 'E-NORP',
-            #         'S-GPE', 'B-GPE', 'I-GPE', 'E-GPE',
-            #         'S-FAC', 'B-FAC', 'I-FAC', 'E-FAC',
-            #         'S-PERSON', 'B-PERSON',  'I-PERSON',  'E-PERSON',
-            #         'S-DATE', 'B-DATE',  'I-PERSON', 'E-PERSON',
-            #         'S-ORG', 'B-ORG', 'I-ORG', 'E-ORG',
-            #         'S-LOC', 'B-LOC', 'I-LOC',  'E-LOC',
-            #         'S-WORK_OF_ART', 'B-WORK_OF_ART', 'I-WORK_OF_ART', 'E-WORK_OF_ART',
-            #         'S-EVENT', 'B-EVENT', 'I-EVENT', 'E-EVENT',
-            #         'S-CARDINAL', 'B-CARDINAL', 'I-CARDINAL', 'E-CARDINAL',
-            #         'S-ORDINAL', 'B-ORDINAL', 'I-ORDINAL', 'E-ORDINAL',
-            #         'S-PRODUCT', 'B-PRODUCT', 'I-PRODUCT', 'E-PRODUCT',
-            #         'S-QUANTITY', 'B-QUANTITY', 'I-QUANTITY', 'E-QUANTITY',
-            #         'S-TIME', 'B-TIME', 'I-TIME', 'E-TIME',
-            #         'S-PERCENT', 'B-PERCENT', 'I-PERCENT', 'E-PERCENT',
-            #         'S-MONEY', 'B-MONEY', 'I-MONEY', 'E-MONEY',
-            #         'S-LAW', 'B-LAW', 'I-LAW', 'E-LAW',
-            #         'S-LANGUAGE', 'B-LANGUAGE', 'I-LANGUAGE',  'E-LANGUAGE',
-            #         ] #'X', "[START]", "[END]"
+            return ["O",
+                    'S-NORP', 'B-NORP', 'I-NORP', 'E-NORP',
+                    'S-GPE', 'B-GPE', 'I-GPE', 'E-GPE',
+                    'S-FAC', 'B-FAC', 'I-FAC', 'E-FAC',
+                    'S-PERSON', 'B-PERSON',  'I-PERSON',  'E-PERSON',
+                    'S-DATE', 'B-DATE',  'I-PERSON', 'E-PERSON',
+                    'S-ORG', 'B-ORG', 'I-ORG', 'E-ORG',
+                    'S-LOC', 'B-LOC', 'I-LOC',  'E-LOC',
+                    'S-WORK_OF_ART', 'B-WORK_OF_ART', 'I-WORK_OF_ART', 'E-WORK_OF_ART',
+                    'S-EVENT', 'B-EVENT', 'I-EVENT', 'E-EVENT',
+                    'S-CARDINAL', 'B-CARDINAL', 'I-CARDINAL', 'E-CARDINAL',
+                    'S-ORDINAL', 'B-ORDINAL', 'I-ORDINAL', 'E-ORDINAL',
+                    'S-PRODUCT', 'B-PRODUCT', 'I-PRODUCT', 'E-PRODUCT',
+                    'S-QUANTITY', 'B-QUANTITY', 'I-QUANTITY', 'E-QUANTITY',
+                    'S-TIME', 'B-TIME', 'I-TIME', 'E-TIME',
+                    'S-PERCENT', 'B-PERCENT', 'I-PERCENT', 'E-PERCENT',
+                    'S-MONEY', 'B-MONEY', 'I-MONEY', 'E-MONEY',
+                    'S-LAW', 'B-LAW', 'I-LAW', 'E-LAW',
+                    'S-LANGUAGE', 'B-LANGUAGE', 'I-LANGUAGE',  'E-LANGUAGE',
+                    ] #'X', "[START]", "[END]"
         elif markup == 'bio':
             return ["O",
                     'B-NORP', 'I-NORP',
@@ -625,7 +754,7 @@ class OntonoteProcessor(DataProcessor):
                     'B-LAW', 'I-LAW',
                     'B-LANGUAGE', 'I-LANGUAGE',
                     ]# 'X', "[START]", "[END]"
-        else:
+        elif markup == 'biso':
             return ["O",
                 'S-NORP', 'B-NORP', 'I-NORP',
                 'S-GPE', 'B-GPE', 'I-GPE',
@@ -646,7 +775,9 @@ class OntonoteProcessor(DataProcessor):
                 'S-LAW', 'B-LAW', 'I-LAW',
                 'S-LANGUAGE', 'B-LANGUAGE', 'I-LANGUAGE',
                 ] #'X', "[START]", "[END]"
-    # note: should be in this order!
+             # note: should be in this order!
+        else:
+            raise(NotImplementedError)
 
     def _create_examples(self, lines, set_type, limit=None):
         """Creates examples for the training and dev sets."""

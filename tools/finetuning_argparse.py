@@ -7,24 +7,24 @@ def get_argparse():
     parser.add_argument("--task_name", default='ontonote', type=str, #required=True,
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote'] ")
     parser.add_argument("--data_dir", default='datasets/ontonote', type=str, #required=True,
-                        help="The input data dir, choose from ['cluener','cner','conll2003_bio', 'ontonote']", )
+                        help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll2003_bio', 'datasets/ontonote'] )
     parser.add_argument("--output_dir", default='outputs/ontonote_output/gpt2', type=str, #required=True,
                         help="The output directory where "
-                             "the model predictions and checkpoints will be written.", )
+                             "the model predictions and checkpoints will be written."
+                             " In my implementation, I mkdir the files listed in choices, you can mkdir your own output file",
+                        choices=['outputs/ontonote_output/gpt2', 'outputs/conll2003_output/gpt2', 'outputs/cner_output/gpt2', 'outputs/cluener_output/gpt2'] )
     parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
-                        help="Model type selected in the list:['bert', 'albert', "
-                             "'bare_gpt2', 'gpt2','generate', "
-                             "'chinese_pretrained_gpt2', 'bare_chinese_gpt2',"
-                             "'label_embedding'] ")
+                        help="Model type selected ",
+                        choices=['bert', 'albert', 'bare_gpt2', 'gpt2','generate',
+                             'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'label_embedding'] )
     parser.add_argument("--note", default='', type=str,
                         help="the implementation details to remind")
     parser.add_argument("--save_model", default=False, action="store_true",
                         help="Whether to save the model checkpoints, currently, there is no need to save the checkpoints.")
     parser.add_argument("--model_name_or_path", default='gpt2',
                         type=str, #required=True,
-                        help="Path to pre-trained model or shortcut name , ""I only used:"
-                             " ['gpt2','gpt2-large','gpt2-medium'"
-                             "'bert-base-chinese','bert-base-cased' ]" )
+                        help="Path to pre-trained model or shortcut name. ",
+                        choices=['gpt2', 'gpt2-large','gpt2-medium','bert-base-chinese', 'bert-base-cased'])
     parser.add_argument("--output_file_name", default='.json',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name")
@@ -61,7 +61,8 @@ def get_argparse():
     # - None if you are both providing the configuration and state dictionary (resp. with keyword arguments ``config`` and ``state_dict``)
 
     parser.add_argument("--template", default='1', type=str, #required=True,
-                        help="prompt size, choose from the list:['1','2','3','4'] or you can modify the template in run_ner_xxx.py by changing TEMPLATE_CLASSES ")
+                        help="prompt size, you can modify the template in run_ner_xxx.py by changing TEMPLATE_CLASSES ",
+                        choices=['1', '2', '3', '4'])
     parser.add_argument("--learning_rate", default=5e-5, type=float,#bert default = 5e-5
                         help="The initial learning rate for Adam.")
     parser.add_argument("--crf_learning_rate", default=5e-5, type=float,#bert default = 5e-5
@@ -75,7 +76,7 @@ def get_argparse():
 
     # Other parameters: always use the default values and haven't changed yet.
     parser.add_argument('--markup', default='bios', type=str,
-                        choices=['bios', 'bio'])
+                        choices=['biso', 'bio', 'bieso'])
     parser.add_argument('--loss_type', default='ce', type=str,
                         choices=['lsr', 'focal', 'ce'])
     parser.add_argument("--config_name", default="", type=str,

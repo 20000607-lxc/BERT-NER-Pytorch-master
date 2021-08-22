@@ -553,6 +553,15 @@ def main():
 
     # 按照markup方式得到labels： bieso, biso, bio
     label_list = processor.get_labels(args.markup)
+    if args.markup == 'bio':
+        assert (len(label_list)-1) % 2 == 0
+    elif args.markup == 'biso':
+        assert (len(label_list)-1) % 3 == 0
+    elif args.markup == 'bieso':
+        assert (len(label_list)-1) % 4 == 0
+
+    assert label_list[0] == 'O'
+
     args.id2label = {i: label for i, label in enumerate(label_list)}
     args.label2id = {label: i for i, label in enumerate(label_list)}
     num_labels = len(label_list)
