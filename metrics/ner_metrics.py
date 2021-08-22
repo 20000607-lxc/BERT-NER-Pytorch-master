@@ -48,13 +48,18 @@ class SeqEntityScore(object):
         Example:
             >>> labels_paths = [['O', 'O', 'O', 'B-MISC', 'I-MISC', 'I-MISC', 'O'], ['B-PER', 'I-PER', 'O']]
             >>> pred_paths = [['O', 'O', 'B-MISC', 'I-MISC', 'I-MISC', 'I-MISC', 'O'], ['B-PER', 'I-PER', 'O']]
+            the upper example is not right: for labels_paths and pred_paths are both list:1(only for one example at a time )
         '''
         for label_path, pre_path in zip(label_paths, pred_paths):
+
+            assert len(label_paths) == len(pred_paths) == 1
+
             label_entities = get_entities(label_path, self.id2label, self.markup)
             pre_entities = get_entities(pre_path, self.id2label, self.markup)
             self.origins.extend(label_entities)
             self.founds.extend(pre_entities)
             self.rights.extend([pre_entity for pre_entity in pre_entities if pre_entity in label_entities])
+
 
 class SpanEntityScore(object):
     def __init__(self, id2label):

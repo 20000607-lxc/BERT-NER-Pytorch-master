@@ -335,6 +335,7 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
         self.num_labels = config.num_labels
         self.gpt2 = New_GPT2.from_pretrained('gpt2')# 可以接受inputs_embeds和input_ids
         self.embeddings = GPT2LMHeadModel.from_pretrained('gpt2').base_model.get_input_embeddings()#embedding是GPT2LMHeadModel的embedding
+        self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name)
 
         # self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
@@ -430,6 +431,9 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
 
         # todo gpt2里面计算的时候有没有改变这个inputs啊？
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
+        outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
+
 
         sequence_output = outputs[0][..., -1, :]# [batch_size, 768]
         sequence_output = self.dropout(sequence_output)
@@ -461,8 +465,9 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
             sequence[:, round, :] = sequence_output[:, :]
 
         logits = self.classifier(sequence)#logits：每个词的labels分数
+        outputs = (example,)+outputs[2:]
 
-        outputs = (logits,) + outputs[2:]  # add hidden states and attention if they are here
+        outputs = (logits,) + outputs  # add hidden states and attention if they are here
         if labels is not None:
             assert self.loss_type in ['lsr', 'focal', 'ce']
             if self.loss_type == 'lsr':

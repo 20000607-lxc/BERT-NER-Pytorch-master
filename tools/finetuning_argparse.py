@@ -11,7 +11,7 @@ def get_argparse():
     parser.add_argument("--output_dir", default='outputs/ontonote_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written.", )
-    parser.add_argument("--model_type", default='generate', type=str, #required=True,
+    parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
                         help="Model type selected in the list:['bert', 'albert', "
                              "'bare_gpt2', 'gpt2','generate', "
                              "'chinese_pretrained_gpt2', 'bare_chinese_gpt2',"
