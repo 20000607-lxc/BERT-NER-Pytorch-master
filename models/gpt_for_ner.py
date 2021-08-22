@@ -221,9 +221,9 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
                 count += 1
                 input.append(input_id[i].item())
         if self.template[0] == self.template[1]:
-            query = prompt1 + input + prompt2 + input + prompt3# prompt3 一位
+            query = prompt1 + input + prompt2 + input #+ prompt3# prompt3 一位
         else:
-            query = prompt1 + input + prompt2 + prompt3
+            query = prompt1 + input + prompt2# + prompt3
 
         return query, count
 
@@ -246,7 +246,7 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
                 raw_embeds[bidx, i+counts[bidx]+self.template[0], :] = replace_embeds[i+self.template[0], :]
 
             # 加入最后一位
-            raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
+            # raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
         return raw_embeds
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, labels=None):
@@ -335,10 +335,12 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
         self.num_labels = config.num_labels
         self.gpt2 = New_GPT2.from_pretrained('gpt2')# 可以接受inputs_embeds和input_ids
         self.embeddings = GPT2LMHeadModel.from_pretrained('gpt2').base_model.get_input_embeddings()#embedding是GPT2LMHeadModel的embedding
-        self.embeddings.weight.requires_grad = False
+
+        # self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
         # perform fine_tuning
+
         self.dropout = nn.Dropout(config.resid_pdrop)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
         self.linear = nn.Linear(2*config.hidden_size, config.hidden_size)
@@ -412,7 +414,6 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
 
         """
         bz = len(input_ids)#batch_size
-        bx = len(input_ids[0])
         prompt_tokens = [self.pseudo_token_id]
         counts = []
         queries = []
@@ -426,6 +427,7 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
 
         inputs_embeds = self.embed_input(queries, counts)
         inputs = inputs_embeds.to(self.device)
+
         # todo gpt2里面计算的时候有没有改变这个inputs啊？
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
 
@@ -448,7 +450,11 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
             # 采用 inputs[:, self.template[0]+round:self.template[0]+round, :] 这样就只能指望past_key_values里面存储了足够的信息？
             # 否则这样做就跟直接用embedding做SL没什么区别了
             # 也可以尝试torch.cat sequence_output 和 inputs[:, self.template[0]+round:self.template[0]+round, :]
-            outputs = self.gpt2(inputs_embeds=inputs[:, self.template[0]+round:self.template[0]+round, :].unsqueeze(1), past_key_values=past_key_values, return_dict=None)
+
+            # 如果用inputs再计算一次的话，这里面loss应该用哪里的loss还是个问题了 不知道要谁不require grad啊？
+            # 应该是两次计算都要require grad的吧？？？
+            # k = copy.deepcopy(inputs[:, self.template[0]+round:self.template[0]+round+1, :])
+            outputs = self.gpt2(inputs_embeds=inputs[:, self.template[0]+round:self.template[0]+round+1, :], past_key_values=past_key_values, return_dict=None)
             sequence_output = outputs.last_hidden_state[..., -1, :]
             # todo 采用last_hidden_state对吗？
             past_key_values = outputs.past_key_values

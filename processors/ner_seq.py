@@ -86,7 +86,7 @@ def convert_examples_to_features(english, markup, tokenizer_name, task_name, exa
     sum_length_of_example = 0
     if english:
         if 'gpt2' in tokenizer_name:
-            print("gpt2_english tokenizer， use biso s for the lonely entity which contains one ****token***** ")
+            print("gpt2_english tokenizer， use bios s for the lonely entity which contains one ****token***** ")
             for (ex_index, example) in enumerate(examples):
                 if ex_index % 10000 == 0:
                     logger.info("Writing example %d of %d", ex_index, len(examples))
@@ -115,7 +115,7 @@ def convert_examples_to_features(english, markup, tokenizer_name, task_name, exa
                 new_label = [0] * len(tokens)
                 j = 0
                 if 's' in markup:
-                    # todo only for biso
+                    # todo only for bios
                     for i in range(len(tokens)):
                         if 'Ġ' in tokens[i]:
                             new_label[i] = label_ids[j]
@@ -516,7 +516,7 @@ class Conll2003Processor(DataProcessor):
 
     def get_labels(self, markup='bio'):
         """See base class.
-       type can be choose from [bio bieso biso]"""
+       type can be choose from [bio bieso bios]"""
         if markup == 'bieso':
             raise(NotImplementedError)
             # return ['O',
@@ -526,7 +526,7 @@ class Conll2003Processor(DataProcessor):
             #         'S-ORG', 'B-ORG', 'I-ORG', 'E-ORG'
             #         ] #'X', "[START]", "[END]"
             # note: should be in this order!
-        elif markup == 'biso':
+        elif markup == 'bios':
             return ['O',
                     'S-LOC', 'B-LOC',  'I-LOC',
                     'S-PER', 'B-PER',  'I-PER',
@@ -581,7 +581,7 @@ class OntonoteProcessor(DataProcessor):
 
     def get_labels(self, markup='bio'):
         """See base class.
-        type can be choose from [bio bieso biso]"""
+        type can be choose from [bio bieso bios]"""
         if markup == 'bieso':
             raise(NotImplementedError)
             # return ["O",
