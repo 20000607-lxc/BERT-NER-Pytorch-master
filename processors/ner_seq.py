@@ -7,6 +7,29 @@ import json
 from .utils_ner import DataProcessor
 logger = logging.getLogger(__name__)
 
+def iob_iobes(tags):
+    """
+    IOB -> IOBES
+    """
+    new_tags = []
+    for i, tag in enumerate(tags):
+        if tag.value == "O":
+            new_tags.append(tag.value)
+        elif tag.value.split("-")[0] == "B":
+            if i + 1 != len(tags) and tags[i + 1].value.split("-")[0] == "I":
+                new_tags.append(tag.value)
+            else:
+                new_tags.append(tag.value.replace("B-", "S-"))
+        elif tag.value.split("-")[0] == "I":
+            if i + 1 < len(tags) and tags[i + 1].value.split("-")[0] == "I":
+                new_tags.append(tag.value)
+            else:
+                new_tags.append(tag.value.replace("I-", "E-"))
+        else:
+            raise Exception("Invalid IOB format!")
+    return new_tags
+
+
 def markup_for_bert_chinese(markup, tokens, new_label):
     if markup == 'biso':
         # replace B- with S-
@@ -38,6 +61,7 @@ def markup_for_bert_chinese(markup, tokens, new_label):
             new_label[k] = new_label[k]+1# replace I- with E-
 
     return  tokens, new_label
+
 
 def markup_for_gpt2_english(markup, tokens,  label_ids):
     j = 0
@@ -85,12 +109,14 @@ def markup_for_gpt2_english(markup, tokens,  label_ids):
                 # todo 这里可以索引i-1因为第一个单词必须是有G的
                 if new_label[i-1] % 4 == 2:# B- label
                     new_label[i] = new_label[i-1]+1# new_label[i] should be I-
-                # todo 这里可能会有问题： 万一是把最后一个单词劈开了 那就不能索引new_label[i+1] 但是讲道理每一句话最后都有标点符号的吧
-                elif new_label[i+1] == 0 and new_label[i] % 4 == 3:# new_label[i] should be E-
-                    new_label[i] = new_label[i-1]+1
+                elif new_label[i] % 4 == 3:
+                    if i == len(new_label)-1:
+                        new_label[i] = new_label[i-1]+1
+                    elif new_label[i+1] == 0:# new_label[i] should be E-
+                        new_label[i] = new_label[i-1]+1
                 else:
                     new_label[i] = new_label[i-1]# new_label[i] should be I- or O
-                    # should not use O(0 means "O") anymore
+                    # todo should not use O(0 means "O") anymore
 
         # replace B- with S- and I- with E-
         for i in range(len(new_label)-1):
@@ -107,6 +133,7 @@ def markup_for_gpt2_english(markup, tokens,  label_ids):
             new_label[k] = new_label[k]+1# replace I- with E-
 
     return markup, tokens, new_label, label_ids
+
 
 class InputExample(object):
     """A single training/test example for token classification."""
