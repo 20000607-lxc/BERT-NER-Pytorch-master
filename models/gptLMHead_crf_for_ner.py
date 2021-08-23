@@ -69,7 +69,7 @@ class GPT2LMcrfForNer(torch.nn.Module):
             if input_id[i] != 0:
                 count += 1
                 input.append(input_id[i].item())
-        query = prompt1 + input + prompt2 + input + prompt3# prompt3 一位
+        query = prompt1 + input + prompt2 + input #+ prompt3# prompt3 一位
 
         return query, count
 
@@ -92,7 +92,7 @@ class GPT2LMcrfForNer(torch.nn.Module):
                 raw_embeds[bidx, i+counts[bidx]+self.template[0], :] = replace_embeds[i+self.template[0], :]
 
             # 加入最后一位
-            raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
+            #raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
         return raw_embeds
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None,input_lens=None, labels=None):
@@ -128,15 +128,14 @@ class GPT2LMcrfForNer(torch.nn.Module):
         # sequence_output = outputs[0]## gpt2model
         sequence_output = outputs.last_hidden_state# gpt2MLMHeadbasemodel # gpt2model
         # the example of the output words of batch[0]
-        outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
 
-        # todo example is computed by GPT2LMhead model
+        outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
         example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
         sequence_output = self.dropout(sequence_output)
         sequence = torch.zeros(bz, bx, self.hidden_size).to(self.device)
 
         for bdix in range(bz):
-            place = sum(self.template)+counts[bdix]+1# 45 = 6+6+32+1
+            place = sum(self.template)+counts[bdix]# 45 = 6+6+32+1
             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
             # todo 只截取没有pad的id对应的input
 
@@ -157,8 +156,6 @@ class GPT2LMcrfForNer(torch.nn.Module):
             outputs = (-1*loss,)+outputs
 
         return outputs  # (loss), scores, (hidden_states), (attentions)
-
-
 
 
 

@@ -77,9 +77,9 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
                 count += 1
                 input.append(input_id[i].item())
         if self.template[0] == self.template[1]:
-            query = prompt1 + input + prompt2 + input + prompt3# prompt3 一位
+            query = prompt1 + input + prompt2 + input#  + prompt3# prompt3 一位
         else:
-            query = prompt1 + input + prompt2 + prompt3
+            query = prompt1 + input + prompt2# + prompt3
 
         return query, count
 
@@ -102,7 +102,7 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
                 raw_embeds[bidx, i+counts[bidx]+self.template[0], :] = replace_embeds[i+self.template[0], :]
 
             # 加入最后一位
-            raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
+            # raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
         return raw_embeds
 
     def attention(self, input_state, label_embedding, bz):
@@ -209,9 +209,9 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
 
         for bdix in range(bz):
             if self.template[0] == self.template[1]:
-                place = sum(self.template)+counts[bdix]+1# 45 = 6+6+32+1
+                place = sum(self.template)+counts[bdix]# 45 = 6+6+32+1
             else:
-                place = self.template[0] + counts[bdix] + 1
+                place = self.template[0] + counts[bdix]
             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
             # todo 只截取没有pad的id对应的input
 

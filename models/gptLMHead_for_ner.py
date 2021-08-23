@@ -68,7 +68,7 @@ class GPT2LMSoftmaxForNer(torch.nn.Module):
             if input_id[i] != 0:
                 count += 1
                 input.append(input_id[i].item())
-        query = prompt1 + input + prompt2 + input + prompt3# prompt3 一位
+        query = prompt1 + input + prompt2 + input #+ prompt3# prompt3 一位
 
         return query, count
 
@@ -91,7 +91,7 @@ class GPT2LMSoftmaxForNer(torch.nn.Module):
                 raw_embeds[bidx, i+counts[bidx]+self.template[0], :] = replace_embeds[i+self.template[0], :]
 
             # 加入最后一位
-            raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
+            # raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
         return raw_embeds
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None,input_lens=None, labels=None):
@@ -135,7 +135,7 @@ class GPT2LMSoftmaxForNer(torch.nn.Module):
         sequence = torch.zeros(bz, bx, self.hidden_size).to(self.device)
 
         for bdix in range(bz):
-            place = sum(self.template)+counts[bdix]+1# 45 = 6+6+32+1
+            place = sum(self.template)+counts[bdix]
             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
             # todo 只截取没有pad的id对应的input
 

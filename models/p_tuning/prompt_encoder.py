@@ -8,7 +8,7 @@ class PromptEncoder(torch.nn.Module):
         self.spell_length = sum(template)
         self.hidden_size = hidden_size
         # ent embedding
-        self.cloze_length = (template[0], template[1], 0)# todo prompt多加一位，用于将output向后偏移一位
+        self.cloze_length = (template[0], template[1], 0)
 
         self.cloze_mask = [
             [1] * self.cloze_length[0]  # first cloze
