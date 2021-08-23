@@ -189,14 +189,14 @@ def get_entity_bio(seq,id2label):
     return chunks
 
 
-def get_entities(seq,id2label, markup='biso'):
+def get_entities(seq, id2label, markup='biso'):
     '''
     :param seq:
     :param id2label:
     :param markup:
     :return:
     '''
-    assert markup in ['bio', 'biso']
+    assert markup in ['bio', 'biso', 'bieso']
     if markup =='bio':
         return get_entity_bio(seq, id2label)
     else:

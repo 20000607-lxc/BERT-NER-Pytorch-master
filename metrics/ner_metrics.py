@@ -52,6 +52,8 @@ class NewSeqEntityScore(object):
         pred_paths[0] = [self.id2label[i] for i in pred_paths[0]]
         self.founds.extend(pred_paths)
 
+
+
 class SeqEntityScore(object):
     def __init__(self, id2label, markup='biso'):
         self.id2label = id2label

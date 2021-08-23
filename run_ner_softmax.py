@@ -1,4 +1,3 @@
-import argparse
 import glob
 import logging
 import os
@@ -6,7 +5,6 @@ import json
 import time
 import numpy as np
 import torch
-from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 from callback.optimizater.adamw import AdamW
@@ -32,8 +30,7 @@ from processors.ner_seq import ner_processors as processors
 from processors.ner_seq import collate_fn
 from metrics.ner_metrics import SeqEntityScore, NewSeqEntityScore
 from tools.finetuning_argparse import get_argparse
-from transformers import BertTokenizer, GPT2Tokenizer, AutoTokenizer
-from models.transformers_master.models.bert.tokenization_bert import BertTokenizer
+from transformers import AutoTokenizer
 import wandb
 import pprint
 
@@ -325,16 +322,16 @@ def evaluate(args, model, tokenizer, prefix=''):
 
         tags = [args.id2label[x] for x in preds]
 
-        label_entities = get_entities(preds, args.id2label, args.markup)
+        #label_entities = get_entities(preds, args.id2label, args.markup)
         true_labels = batch[3].detach().cpu().numpy().tolist()[0]
-        true_label_entities = get_entities(true_labels, args.id2label, args.markup)
+        #true_label_entities = get_entities(true_labels, args.id2label, args.markup)
         json_d = {}
         json_d['id'] = step
         #json_d['true_tag_seq'] = " ".join(true_labels)
         json_d['pred_tag_seq'] = " ".join(tags)
         json_d['example of the gpt2 output words'] = example
-        json_d['entities'] = label_entities
-        json_d['true_entities'] = true_label_entities
+        #json_d['entities'] = label_entities
+        #json_d['true_entities'] = true_label_entities
         output_results.append(json_d)
         pbar(step)
 
@@ -421,17 +418,17 @@ def predict(args, model, tokenizer, prefix = ''):
             preds = preds[0]# 对于英文没有用[cls]和[sep] 因此不截取
 
         tags = [args.id2label[x] for x in preds]
-        label_entities = get_entities(preds, args.id2label, args.markup)
+        #label_entities = get_entities(preds, args.id2label, args.markup)
         true_labels = batch[3].detach().cpu().numpy().tolist()[0]
-        true_label_entities = get_entities(true_labels, args.id2label, args.markup)
+        #true_label_entities = get_entities(true_labels, args.id2label, args.markup)
         json_d = {}
         json_d['id'] = step
         #f = all_tokens[step]
         #json_d['token'] = f
         #json_d['true_tag_seq'] = " ".join(true_labels)
         json_d['tag_seq'] = " ".join(tags)
-        json_d['entities'] = label_entities
-        json_d['true_entities'] = true_label_entities
+        #json_d['entities'] = label_entities
+        #json_d['true_entities'] = true_label_entities
         output_results.append(json_d)
         pbar(step)
 

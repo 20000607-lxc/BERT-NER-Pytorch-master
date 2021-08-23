@@ -47,6 +47,7 @@ BTC and GUM: I didn't test them yet.
 2. cuda=9.0
 3. python3.6+
 4. transformers >= 4.6.0
+5. use seqeval to compute the metric 
 
 ### input format
 
