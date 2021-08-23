@@ -344,17 +344,27 @@ def evaluate(args, model, tokenizer, prefix=''):
 
     logger.info("\n")
     eval_loss = eval_loss / nb_eval_steps
-    eval_info, entity_info = metric.result()
-    results = {f'{key}': value for key, value in eval_info.items()}
-    results['loss'] = eval_loss
-    logger.info("***** Eval results %s *****", prefix)
-    info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
-    logger.info(info)
-    logger.info("***** Entity results %s *****", prefix)
-    for key in sorted(entity_info.keys()):
-        logger.info("******* %s results ********"%key)
-        info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
+    new = True
+    if new:
+        eval_info = metric.result()
+        results = {f'{key}': value for key, value in eval_info.items()}
+        results['loss'] = eval_loss
+        logger.info("***** Eval results %s *****", prefix)
+        info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
         logger.info(info)
+    else:
+        eval_info, entity_info = metric.result()
+        results = {f'{key}': value for key, value in eval_info.items()}
+        results['loss'] = eval_loss
+        logger.info("***** Eval results %s *****", prefix)
+        info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
+        logger.info(info)
+        logger.info("***** Entity results %s *****", prefix)
+        for key in sorted(entity_info.keys()):
+            logger.info("******* %s results ********"%key)
+            info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
+            logger.info(info)
+
     if use_wandb:
         wandb.log(results)
     return results
@@ -426,19 +436,29 @@ def predict(args, model, tokenizer, prefix = ''):
         pbar(step)
 
     logger.info("\n")
-    test_info, entity_info = metric.result()
-    results = {f'{key}': value for key, value in test_info.items()}
+    new = True
+    if new:
+        test_info = metric.result()
+        results = {f'{key}': value for key, value in test_info.items()}
+        logger.info("***** Test results %s *****", prefix)
+        info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
+        logger.info(info)
+    else:
+        test_info, entity_info = metric.result()
+        results = {f'{key}': value for key, value in test_info.items()}
+        if use_wandb:
+            wandb.log(results)
+        logger.info("***** Test results %s *****", prefix)
+        info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
+        logger.info(info)
+        logger.info("***** Test Entity results %s *****", prefix)
+        for key in sorted(entity_info.keys()):
+            logger.info("******* %s results ********"%key)
+            info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
+            logger.info(info)
+
     if use_wandb:
         wandb.log(results)
-    logger.info("***** Test results %s *****", prefix)
-    info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
-    logger.info(info)
-    logger.info("***** Test Entity results %s *****", prefix)
-    for key in sorted(entity_info.keys()):
-        logger.info("******* %s results ********"%key)
-        info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
-        logger.info(info)
-
     with open(output_submit_file, "w") as writer:
         for record in output_results:
             writer.write(json.dumps(record) + '\n')

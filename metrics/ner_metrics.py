@@ -11,10 +11,10 @@ from seqeval.metrics import classification_report
 
 class NewSeqEntityScore(object):
     def __init__(self, id2label, markup):
+        assert markup in ['bio', 'bieso']
         self.id2label = id2label
         self.markup = markup
         self.reset()
-
         # a = [['B-ORG']]
         # b =  [['B-ORG']]
         # c = [['B-ORG', ['O']]]
@@ -30,7 +30,7 @@ class NewSeqEntityScore(object):
         recall = recall_score(self.origins, self.founds)
         f1 = 0. if recall + accuracy == 0 else (2 * accuracy * recall) / (accuracy + recall)
 
-        classification_report(self.origins, self.founds)
+        print(classification_report(self.origins, self.founds))
 
         return {'acc': accuracy, 'recall': recall, 'f1': f1}
 
