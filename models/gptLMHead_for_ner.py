@@ -16,7 +16,6 @@ class GPT2LMSoftmaxForNer(torch.nn.Module):
         self.num_labels = config.num_labels
         self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model# 21128 768 donnt use it anymore!!!
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall")
-
         #self.gpt2 = New_GPT2.from_pretrained('gpt2') #50257 768  this model is much better !!!
 
         self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings()# 21128 768
