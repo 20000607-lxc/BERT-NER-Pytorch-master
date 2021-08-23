@@ -10,9 +10,9 @@
 
 **note**: the official link is  https://github.com/CLUEbenchmark/CLUENERBut I didn't find the datset from the above link, instead, I download the cluener dataset from  https://github.com/liuyukid/transformers-ner
 
-3. conll2003_bio: datasets/conll2003_bio
+3. conll_03_english: datasets/conll_03_english
 
-**note**: it's the BIO version of conll2003 dataset.
+**note**: it's the BIO version of conll2003 dataset. get from https://github.com/Alibaba-NLP/CLNER 
 
 4. ontonote: datasets/ontonote
    
