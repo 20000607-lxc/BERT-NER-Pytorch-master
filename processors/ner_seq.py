@@ -664,11 +664,11 @@ class Conll2003Processor(DataProcessor):
 
     def get_dev_examples(self, data_dir, limit=None):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "dev", limit)
+        return self._create_examples(self._read_text(os.path.join(data_dir, "testa.txt")), "dev", limit)
 
     def get_test_examples(self, data_dir,limit=None):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "test.txt")), "test", limit)
+        return self._create_examples(self._read_text(os.path.join(data_dir, "testb.txt")), "test", limit)
 
     def get_labels(self, markup='bios'):
         """See base class.

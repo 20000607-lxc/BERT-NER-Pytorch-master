@@ -5,9 +5,9 @@ def get_argparse():
     # Required parameters
 
     parser.add_argument("--task_name", default='ontonote', type=str, #required=True,
-                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote'] ")
+                        help="The name of the task to train selected in the list: ['cluener','cner','badconll2003', 'ontonote'] ")
     parser.add_argument("--data_dir", default='datasets/ontonote', type=str, #required=True,
-                        help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll2003_bio', 'datasets/ontonote'] )
+                        help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll_03_english', 'datasets/ontonote'] )
     parser.add_argument("--output_dir", default='outputs/ontonote_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written."

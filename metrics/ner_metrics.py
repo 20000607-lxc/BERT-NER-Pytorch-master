@@ -37,7 +37,7 @@ class NewSeqEntityScore(object):
     def update(self, label_paths, pred_paths):
         '''
         labels_paths: [[],[],[],....]
-        pred_paths: [[],[],[],.....]
+        prcoed_paths: [[],[],[],.....]
 
         :param label_paths:
         :param pred_paths:

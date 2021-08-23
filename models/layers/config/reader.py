@@ -41,7 +41,7 @@ class Reader:
                     if len(insts) == number:
                         break
                     continue
-                # if "conll2003" in file:
+                # if "badconll2003" in file:
                 #     word, pos, head, dep_label, label = line.split()
                 # else:
                 vals = line.split()
@@ -83,7 +83,7 @@ class Reader:
                     if len(insts) == number:
                         break
                     continue
-                if "conll2003" in file:
+                if "badconll2003" in file:
                     word, pos, label = line.split()
                 else:
                     vals = line.split()

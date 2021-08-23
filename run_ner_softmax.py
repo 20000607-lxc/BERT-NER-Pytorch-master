@@ -253,7 +253,7 @@ def train(args, train_dataset, model, tokenizer):
     return global_step, tr_loss / global_step
 
 def evaluate(args, model, tokenizer, prefix=''):
-    metric = NewSeqEntityScore(args.id2label, markup=args.markup)
+    metric = NewSeqEntityScore(args.id2label, up=args.markup)
     eval_output_dir = args.output_dir
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
