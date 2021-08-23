@@ -718,7 +718,7 @@ class OntonoteProcessor(DataProcessor):
                     'S-GPE', 'B-GPE', 'I-GPE', 'E-GPE',
                     'S-FAC', 'B-FAC', 'I-FAC', 'E-FAC',
                     'S-PERSON', 'B-PERSON',  'I-PERSON',  'E-PERSON',
-                    'S-DATE', 'B-DATE',  'I-PERSON', 'E-PERSON',
+                    'S-DATE', 'B-DATE',  'I-DATE', 'E-DATE',
                     'S-ORG', 'B-ORG', 'I-ORG', 'E-ORG',
                     'S-LOC', 'B-LOC', 'I-LOC',  'E-LOC',
                     'S-WORK_OF_ART', 'B-WORK_OF_ART', 'I-WORK_OF_ART', 'E-WORK_OF_ART',
