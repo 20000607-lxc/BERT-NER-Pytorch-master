@@ -26,13 +26,13 @@ class NewSeqEntityScore(object):
         self.founds = []
 
     def result(self):
+        precision = precision_score(self.origins, self.founds)
         accuracy = accuracy_score(self.origins, self.founds)
         recall = recall_score(self.origins, self.founds)
-        f1 = 0. if recall + accuracy == 0 else (2 * accuracy * recall) / (accuracy + recall)
-
+        f1 = f1_score(self.origins, self.founds)
         print(classification_report(self.origins, self.founds))
+        return {'precision': precision, 'recall': recall, 'f1': f1, 'acc': accuracy}
 
-        return {'acc': accuracy, 'recall': recall, 'f1': f1}
 
     def update(self, label_paths, pred_paths):
         '''
@@ -51,7 +51,6 @@ class NewSeqEntityScore(object):
         self.origins.extend(label_paths)
         pred_paths[0] = [self.id2label[i] for i in pred_paths[0]]
         self.founds.extend(pred_paths)
-
 
 class SeqEntityScore(object):
     def __init__(self, id2label, markup='biso'):

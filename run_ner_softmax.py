@@ -59,9 +59,9 @@ TEMPLATE_CLASSES = {
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = 60#None
-EVAL_LIMIT = 20#None
-TEST_LIMIT = 20#None
+TRAIN_LIMIT = None
+EVAL_LIMIT = None
+TEST_LIMIT = None
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
@@ -613,7 +613,7 @@ def main():
         #                                     config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path,  cache_dir=args.cache_dir if args.cache_dir else None,)
         model = model_class(config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path)
 
-    else: # bert or albert
+    else:# bert or albert
         if args.task_name in ['cluener', 'cner']:
             # 中文只采用bert-base-chinese
             tokenizer_name = 'bert-base-chinese'
@@ -651,8 +651,7 @@ def main():
         # )  # Take care of distributed/parallel training
         # model_to_save.save_pretrained(args.output_dir)
         tokenizer.save_vocabulary(args.output_dir)
-        # todo tokenizer 训练了吗？？？
-        # todo 咋区分的best perform model？？？
+        # todo tokenizer 训练了吗？？？咋区分的best perform model？？？
 
         # Good practice: save your training arguments together with the trained model
         torch.save(args, os.path.join(args.output_dir, "training_args.bin"))
@@ -662,7 +661,6 @@ def main():
         # torch.save(optimizer.state_dict(), os.path.join(args.output_dir, "optimizer.pt"))
         # torch.save(scheduler.state_dict(), os.path.join(args.output_dir, "scheduler.pt"))
         # logger.info("Saving optimizer and scheduler states to %s", args.output_dir)
-
 
     # Evaluation（加载保存的模型，单独evaluation）
     results = {}
