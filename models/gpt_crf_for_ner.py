@@ -7,7 +7,6 @@ from torch.nn.utils.rnn import pad_sequence
 from transformers import GPT2LMHeadModel
 from .layers.model.lstmcrf import NNCRF
 
-
 class GPT2CrfForNer(torch.nn.Module):
     """
     输出input[1:] + prompt3 对应的hidden state

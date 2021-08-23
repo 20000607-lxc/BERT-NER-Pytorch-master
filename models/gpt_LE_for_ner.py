@@ -1,20 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .layers.crf import CRF
-from .layers.linears import PoolerEndLogits, PoolerStartLogits
 from torch.nn import CrossEntropyLoss
 from losses.focal_loss import FocalLoss
 from losses.label_smoothing import LabelSmoothingCrossEntropy
 from .transformers_master.models.gpt2.modeling_gpt2 import GPT2Model as New_GPT2
-from .transformers_master.models.gpt2.modeling_gpt2 import GPT2PreTrainedModel
-from processors.utils_ner import CNerTokenizer
 from models.p_tuning.prompt_encoder import PromptEncoder
 from torch.nn.utils.rnn import pad_sequence
 from transformers import GPT2LMHeadModel
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-from .layers.model.lstmcrf import NNCRF
-import copy
 from models.p_tuning.label_embedder import LabelEmbeder
 
 class GPT2SoftmaxForNer_LE(torch.nn.Module):
@@ -241,4 +234,4 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
                 loss = loss_fct(logits.contiguous().view(-1, self.num_labels), labels.contiguous().view(-1))
             outputs = (loss,) + outputs
 
-        return outputs  # (loss), scores, (hidden_states), (attentions)
+        return outputs

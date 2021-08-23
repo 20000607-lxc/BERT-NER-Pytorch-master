@@ -1,26 +1,16 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from .layers.crf import CRF
-from .layers.linears import PoolerEndLogits, PoolerStartLogits
 from torch.nn import CrossEntropyLoss
 from losses.focal_loss import FocalLoss
 from losses.label_smoothing import LabelSmoothingCrossEntropy
-from .transformers_master.models.gpt2.modeling_gpt2 import GPT2Model as New_GPT2
-from .transformers_master.models.gpt2.modeling_gpt2 import GPT2PreTrainedModel
 from models.p_tuning.prompt_encoder import PromptEncoder
 from torch.nn.utils.rnn import pad_sequence
 from transformers import GPT2LMHeadModel
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-from .layers.model.lstmcrf import NNCRF
-import copy
 
 class GPT2LMSoftmaxForNer(torch.nn.Module):
-
     """
     采用中文预训练gpt2 model的embedding weights, 由于许多参数与gpt2model不一致，因此单独写了该class
     """
-
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
         self.num_labels = config.num_labels
