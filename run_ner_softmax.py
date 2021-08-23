@@ -30,7 +30,7 @@ from processors.utils_ner import CNerTokenizer, get_entities
 from processors.ner_seq import convert_examples_to_features
 from processors.ner_seq import ner_processors as processors
 from processors.ner_seq import collate_fn
-from metrics.ner_metrics import SeqEntityScore
+from metrics.ner_metrics import SeqEntityScore, NewSeqEntityScore
 from tools.finetuning_argparse import get_argparse
 from transformers import BertTokenizer, GPT2Tokenizer, AutoTokenizer
 from models.transformers_master.models.bert.tokenization_bert import BertTokenizer
@@ -59,9 +59,9 @@ TEMPLATE_CLASSES = {
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = None
-EVAL_LIMIT = None
-TEST_LIMIT = None
+TRAIN_LIMIT = 60#None
+EVAL_LIMIT = 20#None
+TEST_LIMIT = 20#None
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
@@ -256,7 +256,7 @@ def train(args, train_dataset, model, tokenizer):
     return global_step, tr_loss / global_step
 
 def evaluate(args, model, tokenizer, prefix=''):
-    metric = SeqEntityScore(args.id2label, markup=args.markup)
+    metric = NewSeqEntityScore(args.id2label, markup=args.markup)
     eval_output_dir = args.output_dir
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
@@ -360,7 +360,7 @@ def evaluate(args, model, tokenizer, prefix=''):
     return results
 
 def predict(args, model, tokenizer, prefix = ''):
-    metric = SeqEntityScore(args.id2label, markup=args.markup)
+    metric = NewSeqEntityScore(args.id2label, markup=args.markup)
     pred_output_dir = args.output_dir
     if not os.path.exists(pred_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(pred_output_dir)

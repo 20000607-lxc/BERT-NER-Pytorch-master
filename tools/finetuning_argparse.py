@@ -75,7 +75,7 @@ def get_argparse():
     # I set the tokenizer for chinese as bert-base-chinese in run_ner_xxx.py and cannot be modified by --tokenizer_name.
 
     # Other parameters: always use the default values and haven't changed yet.
-    parser.add_argument('--markup', default='bios', type=str,
+    parser.add_argument('--markup', default='bio', type=str,
                         choices=['biso', 'bio', 'bieso'])
     parser.add_argument('--loss_type', default='ce', type=str,
                         choices=['lsr', 'focal', 'ce'])

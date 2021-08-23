@@ -291,7 +291,8 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
 
         for bdix in range(bz):
             if self.template[0] == self.template[1]:
-                place = sum(self.template)+counts[bdix]# 45 = 6+6+32
+                place = sum(self.template)+counts[bdix]
+                # todo note donot shift!! for ontonote it is better!
             else:
                 place = self.template[0] + counts[bdix]# 采用第二个prompt对应的hs
                 # place = 2 * self.template[0] + counts[bdix] + 1 不得行 差好多

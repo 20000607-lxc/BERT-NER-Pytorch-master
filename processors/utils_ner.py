@@ -1,6 +1,7 @@
 import csv
 import json
 import torch
+
 from models.transformers import BertTokenizer
 # 采用本代码原始的transformers，未替换
 
@@ -104,7 +105,7 @@ class DataProcessor(object):
         return lines
 
 
-def get_entity_bios(seq, id2label):
+def get_entity_biso(seq, id2label):
     """Gets entities from sequence.
     note: BIOS
     Args:
@@ -188,18 +189,21 @@ def get_entity_bio(seq,id2label):
             chunk = [-1, -1, -1]
     return chunks
 
-def get_entities(seq,id2label, markup='bios'):
+
+def get_entities(seq,id2label, markup='biso'):
     '''
     :param seq:
     :param id2label:
     :param markup:
     :return:
     '''
-    assert markup in ['bio', 'bios']
+    assert markup in ['bio', 'biso', 'bieso']
     if markup =='bio':
         return get_entity_bio(seq, id2label)
-    else:
-        return get_entity_bios(seq, id2label)
+    elif markup == 'biso':
+        return get_entity_biso(seq, id2label)
+    elif markup == 'bieso':
+        raise(NotImplementedError)
 
 def bert_extract_item(start_logits, end_logits):
     S = []

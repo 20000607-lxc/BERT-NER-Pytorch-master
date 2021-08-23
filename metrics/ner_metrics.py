@@ -1,9 +1,53 @@
 import torch
 from collections import Counter
 from processors.utils_ner import get_entities
+from seqeval.metrics import f1_score
+from seqeval.metrics import precision_score
+from seqeval.metrics import accuracy_score
+from seqeval.metrics import recall_score
+from seqeval.metrics import classification_report
+
+
+class NewSeqEntityScore(object):
+    def __init__(self, id2label, markup='biso'):
+        self.id2label = id2label
+        self.markup = markup
+        self.reset()
+
+    def reset(self):
+        self.origins = []
+        self.founds = []
+
+    def result(self):
+        accuracy = accuracy_score(self.origins, self.founds)
+        recall = recall_score(self.origins, self.founds)
+        f1 = 0. if recall + accuracy == 0 else (2 * accuracy * recall) / (accuracy + recall)
+
+        classification_report(self.origins, self.founds)
+
+        return {'acc': accuracy, 'recall': recall, 'f1': f1}
+
+    def update(self, label_paths, pred_paths):
+        '''
+        labels_paths: [[],[],[],....]
+        pred_paths: [[],[],[],.....]
+
+        :param label_paths:
+        :param pred_paths:
+        :return:
+        Example:
+            >>> labels_paths = [['O', 'O', 'O', 'B-MISC', 'I-MISC', 'I-MISC', 'O']]
+            >>> pred_paths = [['O', 'O', 'B-MISC', 'I-MISC', 'I-MISC', 'I-MISC', 'O']]
+            the upper example is not right: for labels_paths and pred_paths are both list:1(only for one example at a time )
+        '''
+        assert len(label_paths) == len(pred_paths) == 1
+        self.origins.extend(label_paths)
+        pred_paths[0] = [self.id2label[i] for i in pred_paths[0]]
+        self.founds.extend(pred_paths)
+
 
 class SeqEntityScore(object):
-    def __init__(self, id2label, markup='bios'):
+    def __init__(self, id2label, markup='biso'):
         self.id2label = id2label
         self.markup = markup
         self.reset()
@@ -34,7 +78,7 @@ class SeqEntityScore(object):
         found = len(self.founds)
         right = len(self.rights)
         recall, precision, f1 = self.compute(origin, found, right)
-        # todo 计算指标的方式不是example(input sequence)-level ，而是entity-level
+        # 计算指标的方式不是example(input sequence)-level ，而是entity-level
         return {'acc': precision, 'recall': recall, 'f1': f1}, class_info
 
     def update(self, label_paths, pred_paths):
