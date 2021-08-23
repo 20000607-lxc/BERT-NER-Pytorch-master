@@ -7,6 +7,8 @@ import json
 from .utils_ner import DataProcessor
 logger = logging.getLogger(__name__)
 
+
+# todo 采用这个和我写的转化方式比较一下？
 def iob_iobes(tags):
     """
     IOB -> IOBES
@@ -672,7 +674,7 @@ class Conll2003Processor(DataProcessor):
 
     def get_labels(self, markup='bios'):
         """See base class.
-       type can be choose from [bio bieso bios]"""
+         type can be choose from [bio bieso bios]"""
         if markup == 'bieso':
             return ['O',
                     'S-LOC', 'B-LOC',  'I-LOC', 'E-LOC',
