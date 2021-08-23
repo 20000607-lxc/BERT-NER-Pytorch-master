@@ -30,7 +30,7 @@ import copy
 #         self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name)
 #
 #         self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings()#embedding是GPT2LMHeadModel的embedding
-#         #self.embeddings.weight.requires_grad = False todo
+#         #self.embeddings.weight.requires_grad = False
 #         # for param in self.gpt2.parameters():
 #         #     param.requires_grad = False
 #         # perform fine_tuning
@@ -69,7 +69,6 @@ import copy
 #                 input.append(input_id[i].item())
 #         query = prompt1 + input + prompt2 + input + prompt3# prompt3 一位
 #         #query = prompt1 + input + prompt2 + prompt3
-#         # todo change query
 #
 #         return query, count
 #
@@ -137,7 +136,6 @@ import copy
 #
 #         for bdix in range(bz):
 #             place = sum(self.template)+counts[bdix]+1# 45 = 6+6+32+1
-#             # todo change place2
 #
 #             #place2 = self.template[0] + counts[bdix] + 1
 #             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
@@ -179,7 +177,6 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
             model_name = 'gpt2'
         self.gpt2 = New_GPT2.from_pretrained(model_name)# 可以接受inputs_embeds和input_ids
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name)
-
         self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings()#embedding是GPT2LMHeadModel的embedding
         # self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
@@ -202,7 +199,7 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
         self.prompt_encoder = self.prompt_encoder.to(device)
         print("***************** init GPT2SoftmaxForNer *********************")
         print("***************** "+str(model_name) + " *********************")
-        print("************** num_labels *** "+str(self.num_labels) + " *********************")
+        print("************** num_labels *** " + str(self.num_labels) + " *********************")
 
     def get_query(self, input_id, prompt_tokens):
         input = []
@@ -221,7 +218,7 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
                 count += 1
                 input.append(input_id[i].item())
         if self.template[0] == self.template[1]:
-            query = prompt1 + input + prompt2 + input #+ prompt3# prompt3 一位
+            query = prompt1 + input + prompt2 + input #+ prompt3 # prompt3 一位
         else:
             query = prompt1 + input + prompt2# + prompt3
 
@@ -244,14 +241,12 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
                 raw_embeds[bidx, i, :] = replace_embeds[i, :]
             for i in range(self.template[1]):
                 raw_embeds[bidx, i+counts[bidx]+self.template[0], :] = replace_embeds[i+self.template[0], :]
-
             # 加入最后一位
             # raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
         return raw_embeds
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, labels=None):
         """
-
         Args:
             input_ids: padded seuqence:[batch_size, max_length]
             if Chinese: input_ids = [101,...,102, 0,...,0]
@@ -260,7 +255,6 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
             position_ids: [batch_size, max_length]
             head_mask: [batch_size, max_length]
             labels: [batch_size, max_length]
-
         Returns:
             outputs
 
@@ -281,6 +275,7 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
         inputs_embeds = self.embed_input(queries, counts)
         inputs = inputs_embeds.to(self.device)
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
+
         # decode the output ids to see if there is some patterns
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
         example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
@@ -328,7 +323,6 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
     """
     循环生成下一位的hidden state
     """
-
     def __init__(self, config, device, template, model_name=None):
         super(GPT2GenerateForNer, self).__init__(config)
         if model_name == None:
@@ -488,6 +482,7 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
             outputs = (loss,) + outputs
 
         return outputs  # (loss), scores, (hidden_states), (attentions)
+
 
 
 class BareGPT2(torch.nn.Module):

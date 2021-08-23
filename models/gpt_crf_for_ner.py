@@ -1,20 +1,11 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from .layers.crf import CRF
-from .layers.linears import PoolerEndLogits, PoolerStartLogits
-from torch.nn import CrossEntropyLoss
-from losses.focal_loss import FocalLoss
-from losses.label_smoothing import LabelSmoothingCrossEntropy
 from .transformers_master.models.gpt2.modeling_gpt2 import GPT2Model as New_GPT2
-from .transformers_master.models.gpt2.modeling_gpt2 import GPT2PreTrainedModel
-from processors.utils_ner import CNerTokenizer
 from models.p_tuning.prompt_encoder import PromptEncoder
 from torch.nn.utils.rnn import pad_sequence
 from transformers import GPT2LMHeadModel
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from .layers.model.lstmcrf import NNCRF
-import copy
 
 
 class GPT2CrfForNer(torch.nn.Module):
@@ -94,9 +85,9 @@ class GPT2CrfForNer(torch.nn.Module):
                 count += 1
                 input.append(input_id[i].item())
         if self.template[0] == self.template[1]:
-            query = prompt1 + input + prompt2 + input + prompt3# prompt3 一位
+            query = prompt1 + input + prompt2 + input# + prompt3# prompt3 一位
         else:
-            query = prompt1 + input + prompt2 + prompt3
+            query = prompt1 + input + prompt2 # + prompt3
         return query, count
 
 
@@ -189,6 +180,7 @@ class GPT2CrfForNer(torch.nn.Module):
         inputs_embeds = self.embed_input(queries, input_ids, Bi_lstm, lstm, counts)
         inputs = inputs_embeds.to(self.device)
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
+
         # decode the output ids to see if there is some patterns
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
         example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
@@ -199,9 +191,9 @@ class GPT2CrfForNer(torch.nn.Module):
 
         for bdix in range(bz):
             if self.template[0] == self.template[1]:
-                place = sum(self.template)+counts[bdix]+1# 45 = 6+6+32+1
+                place = sum(self.template)+counts[bdix]
             else:
-                place = self.template[0] + counts[bdix] + 1
+                place = self.template[0] + counts[bdix]
             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
             # todo 只截取没有pad的id对应的input
 
@@ -209,11 +201,6 @@ class GPT2CrfForNer(torch.nn.Module):
         outputs = (example,)+outputs[2:]
         outputs = (logits,) + outputs # add hidden states and attention if they are here
         if labels is not None:
-            # word_seq_length = torch.LongTensor([sum(attention_mask[i]).item() for i in range(len(attention_mask))])
-            # word_seq_length = word_seq_length.unsqueeze(dim=0)
-            # word_seq_length = word_seq_length.transpose(0, 1)
-            # word_seq_length = word_seq_length.squeeze(dim=1)#shape = batch_size, 没有1
-
             loss = self.crf(emissions=logits, tags=labels, mask=attention_mask)#crf的作用即为计算loss
             # loss = self.lstmcrf(word_embeds=sequence_output, word_seq_length=word_seq_length,
             #                     #emissions=logits,
