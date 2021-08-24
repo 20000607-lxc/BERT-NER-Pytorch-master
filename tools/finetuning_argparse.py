@@ -4,15 +4,15 @@ def get_argparse():
     parser = argparse.ArgumentParser()
     # Required parameters
 
-    parser.add_argument("--task_name", default='cluener', type=str, #required=True,
-                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote'] ")
-    parser.add_argument("--data_dir", default='datasets/cluener', type=str, #required=True,
-                        help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll_03_english', 'datasets/ontonote'] )
-    parser.add_argument("--output_dir", default='outputs/cluener_output/gpt2', type=str, #required=True,
+    parser.add_argument("--task_name", default='ontonote4', type=str, #required=True,
+                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote', 'ontonote4'] ")
+    parser.add_argument("--data_dir", default='datasets/ontonote4', type=str, #required=True,
+                        help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll_03_english', 'datasets/ontonote', 'datasets/ontonote4'] )
+    parser.add_argument("--output_dir", default='outputs/ontonote4_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written."
                              " In my implementation, I mkdir the files listed in choices, you can mkdir your own output file",
-                        choices=['outputs/cluener_output/gpt2', 'outputs/cluener_output/gpt2', 'outputs/cner_output/gpt2', 'outputs/cluener_output/gpt2'] )
+                        choices=['outputs/cluener_output/gpt2', 'outputs/ontonote_output/gpt2', 'outputs/cner_output/gpt2', 'outputs/conll2003_output/gpt2', 'outputs/ontonote4_output/gpt2'] )
     parser.add_argument("--model_type", default='chinese_pretrained_gpt2', type=str, #required=True,
                         help="Model type selected ",
                         choices=['bert', 'albert', 'bare_gpt2', 'gpt2','generate',

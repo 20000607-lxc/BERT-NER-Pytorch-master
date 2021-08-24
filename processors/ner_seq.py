@@ -7,8 +7,7 @@ import json
 from .utils_ner import DataProcessor
 logger = logging.getLogger(__name__)
 
-
-# todo 采用这个和我写的转化方式比较一下？
+# todo 采用这个和我自己写的转化方式比较一下？
 def iob_iobes(tags):
     """
     IOB -> IOBES
@@ -607,81 +606,6 @@ class CnerProcessor(DataProcessor):
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
 
-# class CluenerProcessor(DataProcessor):
-#     """Processor for the chinese ner data set."""
-#
-#     def get_train_examples(self, data_dir, limit):
-#         """See base class."""
-#         return self._create_examples(self._read_text(os.path.join(data_dir, "train.txt")), "train", limit)
-#
-#     def get_dev_examples(self, data_dir, limit):
-#         """See base class."""
-#         return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "dev", limit)
-#
-#     def get_test_examples(self, data_dir, limit):
-#         """See base class."""
-#         return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "test", limit)
-#         # todo 文件中没有test.txt
-#
-#     def get_labels(self, markup='bio'):
-#         """See base class."""
-#         if markup == 'biso':
-#             return ["O",
-#                     "S-address", "B-address",  "I-address",
-#                     "S-book", "B-book", "I-book",
-#                     "S-company", "B-company",  "I-company",
-#                     'S-game', 'B-game',  'I-game',
-#                     'S-government', 'B-government', 'I-government',
-#                     'S-movie', 'B-movie', 'I-movie',
-#                     'S-name', 'B-name', 'I-name',
-#                     'S-organization', 'B-organization', 'I-organization',
-#                     'S-position', 'B-position', 'I-position',
-#                     'S-scene', 'B-scene',  'I-scene',
-#                     ]
-#         elif markup=='bio':
-#             return ["O",
-#                     "B-address",  "I-address",
-#                     "B-book", "I-book",
-#                     "B-company",  "I-company",
-#                     'B-game',  'I-game',
-#                     'B-government','I-government',
-#                     'B-movie','I-movie',
-#                     'B-name','I-name',
-#                     'B-organization','I-organization',
-#                     'B-position', 'I-position',
-#                     'B-scene', 'I-scene',
-#                     ]
-#         elif markup=='bieso':
-#             return ["O",
-#                     "S-address","B-address",  "I-address", "E-address",
-#                     "S-book", "B-book", "I-book","E-book",
-#                     "S-company","B-company",  "I-company", "E-company",
-#                     'S-game','B-game',  'I-game','E-game',
-#                     'S-government','B-government','I-government','E-government',
-#                     'S-movie','B-movie','I-movie','E-movie',
-#                     'S-name','B-name','I-name','E-name',
-#                     'S-organization','B-organization','I-organization','E-organization',
-#                     'S-position','B-position', 'I-position', 'E-position',
-#                     'S-scene''B-scene',  'I-scene','E-scene',
-#                     ]
-#         else:
-#             raise (NotImplementedError)
-#
-#
-#     def _create_examples(self, lines, set_type, limit=None):
-#         """Creates examples for the training and dev sets."""
-#         examples = []
-#         for (i, line) in enumerate(lines):
-#             if limit != None:
-#                 if i > limit:
-#                     break
-#             guid = "%s-%s" % (set_type, i)
-#             text_a= line['words']
-#             # BIOS
-#             labels = line['labels']
-#             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
-#         return examples
-
 
 class CluenerProcessor(DataProcessor):
     """Processor for the chinese ner data set."""
@@ -714,7 +638,7 @@ class CluenerProcessor(DataProcessor):
                     'S-position', 'B-position', 'I-position',
                     'S-scene', 'B-scene',  'I-scene',
                     ]
-        elif markup=='bio':
+        elif markup == 'bio':
             return ["O",
                     "B-address",  "I-address",
                     "B-book", "I-book",
@@ -727,7 +651,7 @@ class CluenerProcessor(DataProcessor):
                     'B-position', 'I-position',
                     'B-scene', 'I-scene',
                     ]
-        elif markup=='bieso':
+        elif markup == 'bieso':
             return ["O",
                     "S-address","B-address",  "I-address", "E-address",
                     "S-book", "B-book", "I-book","E-book",
@@ -755,6 +679,75 @@ class CluenerProcessor(DataProcessor):
             text_a= line['words']
             # BIOS
             labels = line['labels']
+            examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
+        return examples
+
+
+class Ontonote4Processor(DataProcessor):
+    """Processor for the chinese ner data set."""
+
+    def get_train_examples(self, data_dir, limit):
+        """See base class."""
+        return self._create_examples(self._read_text2(os.path.join(data_dir, "train.char.bmes")), "train", limit)
+
+    def get_dev_examples(self, data_dir, limit):
+        """See base class."""
+        return self._create_examples(self._read_text2(os.path.join(data_dir, "dev.char.bmes")), "dev", limit)
+
+    def get_test_examples(self, data_dir, limit):
+        """See base class."""
+        return self._create_examples(self._read_text2(os.path.join(data_dir, "dev.char.bmes")), "test", limit)
+        # todo
+
+    def get_labels(self, markup='bio'):
+        """See base class.
+        type can be choose from [bio bieso bios]"""
+        if markup == 'bieso':
+            return ["O",
+                    'S-GPE', 'B-GPE', 'I-GPE', 'E-GPE',
+                    'S-PER', 'B-PER',  'I-PER',  'E-PER',
+                    'S-ORG', 'B-ORG', 'I-ORG', 'E-ORG',
+                    'S-LOC', 'B-LOC', 'I-LOC',  'E-LOC',
+                    ] #'X', "[START]", "[END]"
+        elif markup == 'bio':
+            return ["O",
+                    'B-GPE', 'I-GPE',
+                    'B-PER',  'I-PER',
+                    'B-ORG', 'I-ORG',
+                    'B-LOC', 'I-LOC',
+                    ]# 'X', "[START]", "[END]"
+        elif markup == 'biso':
+            return ["O",
+                    'S-GPE', 'B-GPE', 'I-GPE',
+                    'S-PER', 'B-PER',  'I-PER',
+                    'S-ORG', 'B-ORG', 'I-ORG',
+                    'S-LOC', 'B-LOC', 'I-LOC',
+                    ] #'X', "[START]", "[END]"
+            # note: should be in this order!
+        else:
+            raise(NotImplementedError)
+
+    def _create_examples(self, lines, set_type, limit=None):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            if limit != None:
+                if i > limit:
+                    break
+            guid = "%s-%s" % (set_type, i)
+            text_a= line['words']
+            # BIOS
+            labels = []
+            for x in line['labels']:
+                # change the labels in cner dataset to BIO style
+                if 'M-' in x:
+                    labels.append(x.replace('M-', 'I-'))
+                elif 'E-' in x:
+                    labels.append(x.replace('E-', 'I-'))
+                else:
+                    labels.append(x)
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
 
@@ -933,10 +926,11 @@ class OntonoteProcessor(DataProcessor):
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
 
+
 ner_processors = {
     "cner": CnerProcessor,
     'cluener': CluenerProcessor,
+    'ontonote4': Ontonote4Processor,
     'conll2003': Conll2003Processor,
     'ontonote': OntonoteProcessor
-
 }

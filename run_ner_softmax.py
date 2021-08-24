@@ -428,7 +428,7 @@ def predict(args, model, tokenizer, prefix = ''):
 
 
         # used for write results in output file
-        if args.task_name in ['cluener', 'cner']:
+        if args.task_name in ['cluener', 'cner', 'ontonote4']:
             preds = preds[0][1:-1]# [CLS]XXXX[SEP]
         else:
             preds = preds[0]# 英文没有用[cls]和[sep] 因此不截取
@@ -535,7 +535,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
         else:
             examples = processor.get_test_examples(args.data_dir, limit)
 
-        if args.task_name in ['cluener', 'cner']:
+        if args.task_name in ['cluener', 'cner', 'ontonote4']:
             ENGLISH = False
         else:
             ENGLISH = True
@@ -577,7 +577,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
 def main():
     args = get_argparse().parse_args()
     if args.model_type == "chinese_pretrained_gpt2":
-        assert args.task_name in ['cluener', 'cner']
+        assert args.task_name in ['cluener', 'cner', 'ontonote4']
         assert args.markup == 'biso'# 中文一律采用biso
     if use_wandb:
         wandb.init(config=args, project='gpt2_sweep_2_try', entity='li_xuechun')
@@ -651,7 +651,7 @@ def main():
                                           cache_dir=args.cache_dir if args.cache_dir else None,)
 
     if args.model_name_or_path in ['gpt2', 'gpt2-large', 'gpt2-medium', "distilgpt2"]:
-        if args.task_name in ['cluener', 'cner']:
+        if args.task_name in ['cluener', 'cner', 'ontonote4']:
             # 中文只采用bert-base-chinese 并且采用 Cner-tokenizer
             tokenizer_name = 'bert-base-chinese'
             tokenizer = tokenizer_class.from_pretrained(tokenizer_name,
@@ -666,7 +666,7 @@ def main():
         model = model_class(config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path)
 
     else:# bert or albert
-        if args.task_name in ['cluener', 'cner']:
+        if args.task_name in ['cluener', 'cner', 'ontonote4']:
             # 中文只采用bert-base-chinese
             tokenizer_name = 'bert-base-chinese'
             tokenizer = tokenizer_class.from_pretrained(tokenizer_name,
@@ -717,7 +717,7 @@ def main():
     # Evaluation（加载保存的模型，单独evaluation）
     results = {}
     if args.do_eval_with_saved_model and args.local_rank in [-1, 0]:
-        if args.task_name in ['cluener', 'cner']:
+        if args.task_name in ['cluener', 'cner', 'ontonote4']:
             # 中文延用tokenizer_class
             tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
         else:
@@ -756,7 +756,7 @@ def main():
 
     # test（加载保存的模型，单独test）
     if args.do_predict_with_saved_model and args.local_rank in [-1, 0]:
-        if args.task_name in ['cluener', 'cner']:
+        if args.task_name in ['cluener', 'cner', 'ontonote4']:
             # 中文延用tokenizer_class
             tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
         else:

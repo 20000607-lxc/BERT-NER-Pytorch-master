@@ -81,6 +81,26 @@ class DataProcessor(object):
         return lines
 
     @classmethod
+    def _read_text2(self, input_file, task_name=None):
+        # 读取ontonote4.0
+        lines = []
+        with open(input_file, 'r') as f:
+            words = []
+            labels = []
+            for line in f:
+                splits = line.split(" ")
+                k = len(splits)//2
+                kk = len(splits)-1 #去掉每行最后的换行符号
+                for i in range(k):
+                    s = splits[i][0].split("-")
+                    words.append(s[0])# 对于1988-03-06 只取1988
+                for i in range(k+1, kk):
+                    labels.append(splits[i])
+            if words:
+                lines.append({"words": words, "labels": labels})
+        return lines
+
+    @classmethod
     def _read_json(self, input_file):
         # 读取cluener
         lines = []
