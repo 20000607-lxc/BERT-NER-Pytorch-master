@@ -88,14 +88,9 @@ class DataProcessor(object):
             words = []
             labels = []
             for line in f:
-                splits = line.split(" ")
-                k = len(splits)//2
-                kk = len(splits)-1 #去掉每行最后的换行符号
-                for i in range(k):
-                    s = splits[i][0].split("-")
-                    words.append(s[0])# 对于1988-03-06 只取1988
-                for i in range(k+1, kk):
-                    labels.append(splits[i])
+                splits = line.split("\t")
+                words.extend(splits[0].split(' '))
+                labels.extend(splits[-1].replace("\n", ""))
             if words:
                 lines.append({"words": words, "labels": labels})
         return lines

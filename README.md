@@ -8,7 +8,7 @@
 
 2. CLUENER: datasets/cluener
 
-**note**: the official link is  https://github.com/CLUEbenchmark/CLUENERBut I didn't find the datset from the above link, instead, I download the cluener dataset from  https://github.com/liuyukid/transformers-ner
+**note**: donot have labels in the test dataset, to evaluate the test results, should subimit the results to the official link. the official link is  https://github.com/CLUEbenchmark/CLUENER
 
 3. conll_03_english: datasets/conll_03_english
 
@@ -16,9 +16,14 @@
 
 4. ontonote: datasets/ontonote
    
-**note**: the same with dataset used in [NAACL 2021] Better Feature Integration for Named Entity Recognition (In NAACL 2021)
+**note**: the same with dataset used in [NAACL 2021] Better Feature Integration for Named Entity Recognition (In NAACL 2021) SynLSTM-for-NER/data/ontonotes at master · xuuuluuu/SynLSTM-for-NER 
 
-4. other datasets:
+5.ontonote4.0 
+
+**note**: the dataset is for chinese ner and get from https://github.com/ShannonAI/glyce 
+
+
+6. other datasets:
 
 conll2003: datasets/conll2003
 
