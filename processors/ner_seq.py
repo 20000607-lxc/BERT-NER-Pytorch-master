@@ -32,39 +32,39 @@ def iob_iobes(tags):
             raise Exception("Invalid IOB format!")
     return new_tags
 
-
-def markup_for_bert_chinese(markup, tokens, new_label):
-    if markup == 'biso':
-        # replace B- with S-
-        for i in range(len(new_label)-1):
-            # for all the lonely token(do not count the split words), replace B- with S-
-            if new_label[i] % 3 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
-                new_label[i] = new_label[i]-1# replace B- with S-
-
-        k = len(new_label)-1
-        if new_label[k] % 3 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
-            new_label[k] = new_label[k]-1# replace B- with S-
-
-    elif markup == 'bio':
-        return tokens, new_label
-
-    elif markup == 'bieso':
-        # replace B- with S- and I- with E-
-        for i in range(len(new_label)-1):
-            # for all the lonely token(do not count the split words), replace B- with S-
-            if new_label[i] % 4 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
-                new_label[i] = new_label[i]-1# replace B- with S-
-            if new_label[i] % 4 == 3 and new_label[i+1] == 0:# means new_label[i] == I- and new_label[i+1] == O
-                new_label[i] = new_label[i]+1# replace I- with E-
-
-        k = len(new_label)-1
-        if new_label[k] % 4 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
-            new_label[k] = new_label[k]-1# replace B- with S-
-        if new_label[k] % 4 == 3:# means new_label[k] == I-
-            new_label[k] = new_label[k]+1# replace I- with E-
-
-    return tokens, new_label
-
+# def markup_for_bert_chinese(markup, tokens, new_label):
+# 没有必要转化 一律采用biso
+# 这里的代码没写错
+#     if markup == 'biso':
+#         # replace B- with S-
+#         for i in range(len(new_label)-1):
+#             # for all the lonely token(do not count the split words), replace B- with S-
+#             if new_label[i] % 3 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
+#                 new_label[i] = new_label[i]-1# replace B- with S-
+#
+#         k = len(new_label)-1
+#         if new_label[k] % 3 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
+#             new_label[k] = new_label[k]-1# replace B- with S-
+#
+#     elif markup == 'bio':
+#         return tokens, new_label
+#
+#     elif markup == 'bieso':
+#         # replace B- with S- and I- with E-
+#         for i in range(len(new_label)-1):
+#             # for all the lonely token(do not count the split words), replace B- with S-
+#             if new_label[i] % 4 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
+#                 new_label[i] = new_label[i]-1# replace B- with S-
+#             if new_label[i] % 4 == 3 and new_label[i+1] == 0:# means new_label[i] == I- and new_label[i+1] == O
+#                 new_label[i] = new_label[i]+1# replace I- with E-
+#
+#         k = len(new_label)-1
+#         if new_label[k] % 4 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
+#             new_label[k] = new_label[k]-1# replace B- with S-
+#         if new_label[k] % 4 == 3:# means new_label[k] == I-
+#             new_label[k] = new_label[k]+1# replace I- with E-
+#
+#     return tokens, new_label
 
 def markup_for_gpt2_english(markup, tokens,  label_ids, label_on):
     j = 0
@@ -154,7 +154,6 @@ def markup_for_gpt2_english(markup, tokens,  label_ids, label_on):
             new_label[k] = new_label[k]+1# replace I- with E-
 
     return markup, tokens, new_label, label_ids
-
 
 class InputExample(object):
     """A single training/test example for token classification."""
@@ -441,9 +440,6 @@ def convert_examples_to_features(english, markup, tokenize_split_with_O, tokeniz
                     break
             the_no_entity_number += flag
 
-            # convert the labels into markup style
-            tokens, label_ids = markup_for_bert_chinese(markup, tokens, label_ids)
-
             # Account for [CLS] and [SEP] with "- 2".
             special_tokens_count = 2
             # todo test remove all special tokens (但是预训练的gpt2的vocabulary也是和bert一样的 可能没什么用）
@@ -547,8 +543,9 @@ class CnerProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(self._read_text(os.path.join(data_dir, "test.char.bmes")), "test", limit)
 
-    def get_labels(self, markup='bio'):
+    def get_labels(self, markup='biso'):
         """See base class."""
+        assert markup=='biso'
         if markup == 'bio':
             return ["O",
                     'B-CONT','I-CONT',
@@ -623,8 +620,9 @@ class CluenerProcessor(DataProcessor):
         return self._create_examples(self._read_json(os.path.join(data_dir, "dev.json")), "test", limit)
         # todo
 
-    def get_labels(self, markup='bio'):
+    def get_labels(self, markup='biso'):
         """See base class."""
+        assert markup=='biso'
         if markup == 'biso':
             return ["O",
                     "S-address", "B-address",  "I-address",
@@ -699,9 +697,10 @@ class Ontonote4Processor(DataProcessor):
         return self._create_examples(self._read_text2(os.path.join(data_dir, "dev.char.bmes")), "test", limit)
         # todo
 
-    def get_labels(self, markup='bio'):
-        """See base class.
-        type can be choose from [bio bieso bios]"""
+    def get_labels(self, markup='biso'):
+        """See base class."""
+
+        assert markup == 'biso'
         if markup == 'bieso':
             return ["O",
                     'S-GPE', 'B-GPE', 'I-GPE', 'E-GPE',
