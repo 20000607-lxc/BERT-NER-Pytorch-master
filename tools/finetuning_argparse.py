@@ -4,16 +4,16 @@ def get_argparse():
     parser = argparse.ArgumentParser()
     # Required parameters
 
-    parser.add_argument("--task_name", default='ontonote4', type=str, #required=True,
-                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote', 'ontonote4'] ")
-    parser.add_argument("--data_dir", default='datasets/ontonote4', type=str, #required=True,
-                        help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll_03_english', 'datasets/ontonote', 'datasets/ontonote4'] )
-    parser.add_argument("--output_dir", default='outputs/ontonote4_output/gpt2', type=str, #required=True,
+    parser.add_argument("--task_name", default='conll2003', type=str, #required=True,
+                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote'] ")
+    parser.add_argument("--data_dir", default='datasets/conll_03_english', type=str, #required=True,
+                        help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll_03_english', 'datasets/ontonote'] )
+    parser.add_argument("--output_dir", default='outputs/conll2003_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written."
                              " In my implementation, I mkdir the files listed in choices, you can mkdir your own output file",
-                        choices=['outputs/cluener_output/gpt2', 'outputs/ontonote_output/gpt2', 'outputs/cner_output/gpt2', 'outputs/conll2003_output/gpt2', 'outputs/ontonote4_output/gpt2'] )
-    parser.add_argument("--model_type", default='chinese_pretrained_gpt2', type=str, #required=True,
+                        choices=['outputs/cluener_output/gpt2', 'outputs/conll2003_output/gpt2', 'outputs/cner_output/gpt2', 'outputs/cluener_output/gpt2'] )
+    parser.add_argument("--model_type", default='generate', type=str, #required=True,
                         help="Model type selected ",
                         choices=['bert', 'albert', 'bare_gpt2', 'gpt2','generate',
                              'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'label_embedding'] )
@@ -77,7 +77,7 @@ def get_argparse():
     # I set the tokenizer for chinese as bert-base-chinese in run_ner_xxx.py and cannot be modified by --tokenizer_name.
 
     # Other parameters: always use the default values and haven't changed yet.
-    parser.add_argument('--markup', default='biso', type=str,
+    parser.add_argument('--markup', default='bio', type=str,
                         choices=['biso', 'bio', 'bieso'])
     parser.add_argument('--loss_type', default='ce', type=str,
                         choices=['lsr', 'focal', 'ce'])

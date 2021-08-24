@@ -24,6 +24,7 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name)
 
         self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings()#embedding是GPT2LMHeadModel的embedding
+
         # self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
@@ -169,7 +170,6 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
 
         """
         label_init = self.label_embedding()
-
         bz = len(input_ids)#batch_size
         bx = len(input_ids[0])
         prompt_tokens = [self.pseudo_token_id]
@@ -184,7 +184,7 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         attention_mask1 = queries != self.pad_token_id
 
         inputs_embeds = self.embed_input(queries, counts)
-        # todo 2 直接在query上加LE 这样感觉起来不是很对 inputid是很多样的 并且有语意 如果强行加了别的东西不太对
+        #  直接在query上加LE (X)  这样感觉起来不是很对 inputid是很多样的 并且有语意 如果强行加了别的东西不太对
 
         # todo 3 只在prompt上加LE
         inputs_embeds = self.add_label_embedding(inputs_embeds, label_init, counts)
@@ -208,7 +208,7 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
             # todo 只截取没有pad的id对应的input
 
 
-        # todo 1之前测试的LE是在generate之后加LE
+        # 1 之前测试的LE是在generate之后加LE (X)
         #sequence = self.add_label_embedding(sequence, label_init)
 
         logits = self.classifier(sequence)#logits：每个词的labels分数

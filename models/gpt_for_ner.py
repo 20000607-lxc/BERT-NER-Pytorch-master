@@ -274,8 +274,9 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
         example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
 
         sequence_output = outputs[0][..., -1, :]# [batch_size, 768]
-        sequence_output = self.dropout(sequence_output)
         past_key_values = outputs.past_key_values
+
+        assert outputs[0][0][0][0] == outputs.last_hidden_state[0][0][0]
 
         sequence = torch.zeros(input_ids.shape[0], input_ids.shape[1], self.hidden_size).to(self.device)
 
@@ -288,6 +289,7 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
             #  另外就是可可能有的batch已经到头了，有的还没有，不同的batch之间应该不会相互影响吧？？？？
 
             sequence_output = sequence_output.unsqueeze(1)
+            # todo 换成id行不行？？？
             outputs = self.gpt2(inputs_embeds=sequence_output, past_key_values=past_key_values, return_dict=None)
 
             # todo gpt2 的 sequence_output 应该是 input ids 的 hidden state? 不然这样连续生成可能会一直扩大不准确性？
@@ -298,14 +300,15 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
             # k = copy.deepcopy(inputs[:, self.template[0]+round:self.template[0]+round+1, :])
 
             #todo 这个不行！！！ 只有60%  outputs = self.gpt2(inputs_embeds=inputs[:, self.template[0]+round:self.template[0]+round+1, :], past_key_values=past_key_values, return_dict=None)
-            sequence_output = outputs.last_hidden_state[..., -1, :]
-            # todo 采用last_hidden_state对吗？
+
+            sequence_output = outputs[0][..., -1, :]
             past_key_values = outputs.past_key_values
-            sequence[:, round, :] = sequence_output[:, :]
+            sequence[:, round, :] = sequence_output
 
+        sequence = self.dropout(sequence)
         logits = self.classifier(sequence)#logits：每个词的labels分数
-        outputs = (example,)+outputs[2:]
 
+        outputs = (example,)+outputs[2:]
         outputs = (logits,) + outputs  # add hidden states and attention if they are here
         if labels is not None:
             assert self.loss_type in ['lsr', 'focal', 'ce']
