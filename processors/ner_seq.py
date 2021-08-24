@@ -731,16 +731,15 @@ class Ontonote4Processor(DataProcessor):
         """Creates examples for the training and dev sets."""
         examples = []
         for (i, line) in enumerate(lines):
-            if i == 0:
-                continue
             if limit != None:
                 if i > limit:
                     break
             guid = "%s-%s" % (set_type, i)
-            text_a= line['words']
+            text_a = line['words']
             # BIOS
             labels = []
             for x in line['labels']:
+                x.replace("\n", "")
                 # change the labels in cner dataset to BIO style
                 if 'M-' in x:
                     labels.append(x.replace('M-', 'I-'))

@@ -85,14 +85,18 @@ class DataProcessor(object):
         # 读取ontonote4.0
         lines = []
         with open(input_file, 'r') as f:
-            words = []
-            labels = []
             for line in f:
+                words = []
+                labels = []
                 splits = line.split("\t")
                 words.extend(splits[0].split(' '))
-                labels.extend(splits[-1].replace("\n", ""))
-            if words:
-                lines.append({"words": words, "labels": labels})
+                split_label = splits[-1].split(' ')
+                split_label[0].replace("\n", "")
+                split_label[-1].replace("\n", "")
+                labels.extend(split_label)
+                if words:
+                    assert len(words) == len(labels)
+                    lines.append({"words": words, "labels": labels})
         return lines
 
     @classmethod
