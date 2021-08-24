@@ -217,12 +217,12 @@ def train(args, train_dataset, model, tokenizer):
                     if args.local_rank == -1:
                         # Only evaluate when single GPU otherwise metrics may not average well
                         evaluate(args, model, tokenizer)
-                if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0 and epoch == args.num_train_epochs-1:
-                    # Log metrics
-                    print(" in the last epoch, do testing  ")
-                    if args.local_rank == -1:
-                        # Only evaluate when single GPU otherwise metrics may not average well
-                        predict(args, model, tokenizer)
+                # if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0 and epoch == args.num_train_epochs-1:
+                #     # Log metrics
+                #     print(" in the last epoch, do testing  ")
+                #     if args.local_rank == -1:
+                #         # Only evaluate when single GPU otherwise metrics may not average well
+                #         predict(args, model, tokenizer)
 
                 if args.local_rank in [-1, 0] and args.save_steps > 0 \
                         and global_step % args.save_steps == 0 and args.save_model and epoch == args.num_train_epochs-1:
@@ -248,6 +248,11 @@ def train(args, train_dataset, model, tokenizer):
                         torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
                         torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
                         logger.info("Saving optimizer and scheduler states to %s", output_dir)
+
+                    print(" in the last epoch, do testing  ")
+                    predict(args, model, tokenizer)
+
+
         logger.info("\n")
         if 'cuda' in str(args.device):
             torch.cuda.empty_cache()
@@ -428,19 +433,20 @@ def predict(args, model, tokenizer, prefix = ''):
         else:
             preds = preds[0]# 英文没有用[cls]和[sep] 因此不截取
 
-        tags = [args.id2label[x] for x in preds]
-        #label_entities = get_entities(preds, args.id2label, args.markup)
-        #true_labels = batch[3].detach().cpu().numpy().tolist()[0]
-        #true_label_entities = get_entities(true_labels, args.id2label, args.markup)
-        json_d = {}
-        json_d['id'] = step
-        #f = all_tokens[step]
-        #json_d['token'] = f
-        #json_d['true_tag_seq'] = " ".join(true_labels)
-        json_d['tag_seq'] = " ".join(tags)
-        #json_d['entities'] = label_entities
-        #json_d['true_entities'] = true_label_entities
-        output_results.append(json_d)
+        # tags = [args.id2label[x] for x in preds]
+        if args.model_type == "chinese_pretrained_gpt2":
+            label_entities = get_entities(preds, args.id2label, args.markup)
+            #true_labels = batch[3].detach().cpu().numpy().tolist()[0]
+            #true_label_entities = get_entities(true_labels, args.id2label, args.markup)
+            json_d = {}
+            json_d['id'] = step
+            #f = all_tokens[step]
+            #json_d['token'] = f
+            #json_d['true_tag_seq'] = " ".join(true_labels)
+            # json_d['tag_seq'] = " ".join(tags)
+            json_d['entities'] = label_entities
+            #json_d['true_entities'] = true_label_entities
+            output_results.append(json_d)
 
         pbar(step)
 

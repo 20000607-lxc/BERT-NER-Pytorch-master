@@ -550,7 +550,7 @@ class CnerProcessor(DataProcessor):
 
     def get_labels(self, markup='bio'):
         """See base class."""
-        if markup=='bio':
+        if markup == 'bio':
             return ["O",
                     'B-CONT','I-CONT',
                     'B-EDU', 'I-EDU',
@@ -560,7 +560,7 @@ class CnerProcessor(DataProcessor):
                     'B-PRO', 'I-PRO',
                     'B-RACE', 'I-RACE',
                     'B-TITLE', 'I-TITLE']#, 'X', "[START]", "[END]"
-        elif markup=='biso':
+        elif markup == 'biso':
             return ["O",
                     'S-CONT','B-CONT','I-CONT',
                     'S-EDU','B-EDU', 'I-EDU',
@@ -571,7 +571,7 @@ class CnerProcessor(DataProcessor):
                     'S-RACE', 'B-RACE', 'I-RACE',
                     'S-TITLE', 'B-TITLE', 'I-TITLE',
                     ]
-        elif markup=='bieso':
+        elif markup == 'bieso':
             return  ["O",
                      'S-CONT','B-CONT','I-CONT', 'E-CONT',
                      'S-EDU','B-EDU', 'I-EDU', 'E-EDU',
@@ -696,8 +696,8 @@ class CluenerProcessor(DataProcessor):
 
     def get_test_examples(self, data_dir, limit):
         """See base class."""
-        return self._create_examples(self._read_json(os.path.join(data_dir, "test.json")), "test", limit)
-        # todo 文件中没有test.txt
+        return self._create_examples(self._read_json(os.path.join(data_dir, "dev.json")), "test", limit)
+        # todo
 
     def get_labels(self, markup='bio'):
         """See base class."""
