@@ -694,7 +694,7 @@ class Ontonote4Processor(DataProcessor):
 
     def get_test_examples(self, data_dir, limit):
         """See base class."""
-        return self._create_examples(self._read_text2(os.path.join(data_dir, "dev.char.bmes")), "test", limit)
+        return self._create_examples(self._read_text2(os.path.join(data_dir, "test.char.bmes")), "test", limit)
         # todo
 
     def get_labels(self, markup='biso'):

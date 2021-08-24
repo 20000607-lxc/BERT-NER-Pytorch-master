@@ -677,7 +677,8 @@ def main():
             tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)
         # for bert or albert, load the model in the from_pretrained way!
         model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
-                                            config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path, cache_dir=args.cache_dir if args.cache_dir else None,)
+                                            config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path,
+                                            cache_dir=args.cache_dir if args.cache_dir else None,)
 
     if args.local_rank == 0:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab

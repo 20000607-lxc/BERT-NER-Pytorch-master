@@ -44,7 +44,7 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         self.prompt_encoder = PromptEncoder(self.template, self.hidden_size, device)
         self.prompt_encoder = self.prompt_encoder.to(device)
 
-        self.num_entities = 19# todo for ontonote
+        self.num_entities = 9# todo for conll2003 区分bio 看看会不会好 不只是区分entity type
 
         self.label_embedding = LabelEmbeder([self.num_entities], self.hidden_size, device)
         self.label_embedding = self.label_embedding.to(self.device)
@@ -93,7 +93,6 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
                 raw_embeds[bidx, i, :] = replace_embeds[i, :]
             for i in range(self.template[1]):
                 raw_embeds[bidx, i+counts[bidx]+self.template[0], :] = replace_embeds[i+self.template[0], :]
-
             # 加入最后一位
             # raw_embeds[bidx, i+1+counts[bidx]+self.template[0], :] = replace_embeds[i+1+self.template[0], :]
         return raw_embeds
@@ -185,7 +184,7 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         attention_mask1 = queries != self.pad_token_id
 
         inputs_embeds = self.embed_input(queries, counts)
-        # todo 2 直接在query上加LE 这样感觉起来不是很对 inputid是很多样的 并且有语意 如果强行加了别的东西可能不太对
+        # todo 2 直接在query上加LE 这样感觉起来不是很对 inputid是很多样的 并且有语意 如果强行加了别的东西不太对
 
         # todo 3 只在prompt上加LE
         inputs_embeds = self.add_label_embedding(inputs_embeds, label_init, counts)
