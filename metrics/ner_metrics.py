@@ -53,7 +53,6 @@ class NewSeqEntityScore(object):
         self.founds.extend(pred_paths)
 
 
-
 class SeqEntityScore(object):
     def __init__(self, id2label, markup='biso'):
         self.id2label = id2label

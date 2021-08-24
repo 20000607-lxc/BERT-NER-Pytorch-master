@@ -96,11 +96,13 @@ def markup_for_gpt2_english(markup, tokens,  label_ids):
                 new_label[i] = label_ids[j]
                 j = j+1
             else:
-                if new_label[i-1] % 2 == 1:# B- label
-                    new_label[i] = new_label[i-1]+1# new_label[i] should be I-
-                else:
-                    new_label[i] = new_label[i-1]# new_label[i] should be I- or O
-                    # should not use O(0 means "O") anymore!
+                new_label[i] = 0
+                # if new_label[i-1] % 2 == 1:# B- label
+                #     new_label[i] = new_label[i-1]+1# new_label[i] should be I-
+                # else:
+                #     new_label[i] = new_label[i-1]# new_label[i] should be I- or O
+                #     # should not use O(0 means "O") anymore!
+
 
     elif markup == 'bieso':
         for i in range(len(tokens)):
@@ -108,17 +110,18 @@ def markup_for_gpt2_english(markup, tokens,  label_ids):
                 new_label[i] = label_ids[j]
                 j = j+1
             else:
-                # todo 这里可以索引i-1因为第一个单词必须是有G的
-                if new_label[i-1] % 4 == 2:# B- label
-                    new_label[i] = new_label[i-1]+1# new_label[i] should be I-
-                elif new_label[i] % 4 == 3:
-                    if i == len(new_label)-1:
-                        new_label[i] = new_label[i-1]+1
-                    elif new_label[i+1] == 0:# new_label[i] should be E-
-                        new_label[i] = new_label[i-1]+1
-                else:
-                    new_label[i] = new_label[i-1]# new_label[i] should be I- or O
-                    # todo should not use O(0 means "O") anymore
+                new_label[i] = new_label[i-1]
+                # # todo 这里可以索引i-1因为第一个单词必须是有G的
+                # if new_label[i-1] % 4 == 2:# B- label
+                #     new_label[i] = new_label[i-1]+1# new_label[i] should be I-
+                # elif new_label[i] % 4 == 3:
+                #     if i == len(new_label)-1:
+                #         new_label[i] = new_label[i-1]+1
+                #     elif new_label[i+1] == 0:# new_label[i] should be E-
+                #         new_label[i] = new_label[i-1]+1
+                # else:
+                #     new_label[i] = new_label[i-1]# new_label[i] should be I- or O
+                #     # todo should not use O(0 means "O") anymore
 
         # replace B- with S- and I- with E-
         for i in range(len(new_label)-1):
@@ -266,7 +269,8 @@ def convert_examples_to_features(english, markup, tokenizer_name, task_name, exa
 
                 # The mask has 1 for real tokens and 0 for padding tokens. Only real tokens are attended to.
                 input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
-                input_len = min(len(new_label), max_seq_length)
+
+                input_len = len(new_label)
 
                 # Zero-pad up to the sequence length.
                 padding_length = max_seq_length - len(input_ids)
@@ -470,6 +474,7 @@ def convert_examples_to_features(english, markup, tokenizer_name, task_name, exa
             # tokens are attended to.
             input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
 
+            assert len(input_ids) == len(label_ids)
             input_len = len(label_ids)
             # Zero-pad up to the sequence length.
 
@@ -582,20 +587,96 @@ class CnerProcessor(DataProcessor):
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
 
+# class CluenerProcessor(DataProcessor):
+#     """Processor for the chinese ner data set."""
+#
+#     def get_train_examples(self, data_dir, limit):
+#         """See base class."""
+#         return self._create_examples(self._read_text(os.path.join(data_dir, "train.txt")), "train", limit)
+#
+#     def get_dev_examples(self, data_dir, limit):
+#         """See base class."""
+#         return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "dev", limit)
+#
+#     def get_test_examples(self, data_dir, limit):
+#         """See base class."""
+#         return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "test", limit)
+#         # todo 文件中没有test.txt
+#
+#     def get_labels(self, markup='bio'):
+#         """See base class."""
+#         if markup == 'biso':
+#             return ["O",
+#                     "S-address", "B-address",  "I-address",
+#                     "S-book", "B-book", "I-book",
+#                     "S-company", "B-company",  "I-company",
+#                     'S-game', 'B-game',  'I-game',
+#                     'S-government', 'B-government', 'I-government',
+#                     'S-movie', 'B-movie', 'I-movie',
+#                     'S-name', 'B-name', 'I-name',
+#                     'S-organization', 'B-organization', 'I-organization',
+#                     'S-position', 'B-position', 'I-position',
+#                     'S-scene', 'B-scene',  'I-scene',
+#                     ]
+#         elif markup=='bio':
+#             return ["O",
+#                     "B-address",  "I-address",
+#                     "B-book", "I-book",
+#                     "B-company",  "I-company",
+#                     'B-game',  'I-game',
+#                     'B-government','I-government',
+#                     'B-movie','I-movie',
+#                     'B-name','I-name',
+#                     'B-organization','I-organization',
+#                     'B-position', 'I-position',
+#                     'B-scene', 'I-scene',
+#                     ]
+#         elif markup=='bieso':
+#             return ["O",
+#                     "S-address","B-address",  "I-address", "E-address",
+#                     "S-book", "B-book", "I-book","E-book",
+#                     "S-company","B-company",  "I-company", "E-company",
+#                     'S-game','B-game',  'I-game','E-game',
+#                     'S-government','B-government','I-government','E-government',
+#                     'S-movie','B-movie','I-movie','E-movie',
+#                     'S-name','B-name','I-name','E-name',
+#                     'S-organization','B-organization','I-organization','E-organization',
+#                     'S-position','B-position', 'I-position', 'E-position',
+#                     'S-scene''B-scene',  'I-scene','E-scene',
+#                     ]
+#         else:
+#             raise (NotImplementedError)
+#
+#
+#     def _create_examples(self, lines, set_type, limit=None):
+#         """Creates examples for the training and dev sets."""
+#         examples = []
+#         for (i, line) in enumerate(lines):
+#             if limit != None:
+#                 if i > limit:
+#                     break
+#             guid = "%s-%s" % (set_type, i)
+#             text_a= line['words']
+#             # BIOS
+#             labels = line['labels']
+#             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
+#         return examples
+
+
 class CluenerProcessor(DataProcessor):
     """Processor for the chinese ner data set."""
 
     def get_train_examples(self, data_dir, limit):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "train.txt")), "train", limit)
+        return self._create_examples(self._read_json(os.path.join(data_dir, "train.json")), "train", limit)
 
     def get_dev_examples(self, data_dir, limit):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "dev", limit)
+        return self._create_examples(self._read_json(os.path.join(data_dir, "dev.json")), "dev", limit)
 
     def get_test_examples(self, data_dir, limit):
         """See base class."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "dev.txt")), "test", limit)
+        return self._create_examples(self._read_json(os.path.join(data_dir, "test.json")), "test", limit)
         # todo 文件中没有test.txt
 
     def get_labels(self, markup='bio'):
@@ -638,7 +719,7 @@ class CluenerProcessor(DataProcessor):
                     'S-organization','B-organization','I-organization','E-organization',
                     'S-position','B-position', 'I-position', 'E-position',
                     'S-scene''B-scene',  'I-scene','E-scene',
-                   ]
+                    ]
         else:
             raise (NotImplementedError)
 
@@ -656,6 +737,7 @@ class CluenerProcessor(DataProcessor):
             labels = line['labels']
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
+
 
 class Conll2003Processor(DataProcessor):
     """Processor for an english ner data set."""

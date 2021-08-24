@@ -271,9 +271,9 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
 
         # todo gpt2里面计算的时候有没有改变这个inputs啊？
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
+
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
         example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
-
 
         sequence_output = outputs[0][..., -1, :]# [batch_size, 768]
         sequence_output = self.dropout(sequence_output)

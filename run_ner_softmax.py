@@ -5,6 +5,7 @@ import json
 import time
 import numpy as np
 import torch
+from tools.common import json_to_text
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 from callback.optimizater.adamw import AdamW
@@ -253,7 +254,7 @@ def train(args, train_dataset, model, tokenizer):
     return global_step, tr_loss / global_step
 
 def evaluate(args, model, tokenizer, prefix=''):
-    metric = NewSeqEntityScore(args.id2label, up=args.markup)
+    metric = NewSeqEntityScore(args.id2label, markup=args.markup)
     eval_output_dir = args.output_dir
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
@@ -314,16 +315,16 @@ def evaluate(args, model, tokenizer, prefix=''):
                     temp_1.append(args.id2label[out_label_ids[i][j]])
                     temp_2.append(preds[i][j])
 
+
+        # to wirte results in the output file
         labels.append(batch[3])
         if args.task_name in ['cluener','cner']:
             preds = preds[0][1:-1]# [CLS]XXXX[SEP]
         else:
             preds = preds[0]# 对于英文没有用[cls]和[sep] 因此不截取
-
         tags = [args.id2label[x] for x in preds]
-
         #label_entities = get_entities(preds, args.id2label, args.markup)
-        true_labels = batch[3].detach().cpu().numpy().tolist()[0]
+        #true_labels = batch[3].detach().cpu().numpy().tolist()[0]
         #true_label_entities = get_entities(true_labels, args.id2label, args.markup)
         json_d = {}
         json_d['id'] = step
@@ -333,6 +334,7 @@ def evaluate(args, model, tokenizer, prefix=''):
         #json_d['entities'] = label_entities
         #json_d['true_entities'] = true_label_entities
         output_results.append(json_d)
+
         pbar(step)
 
     with open(output_submit_file, "w") as writer:
@@ -375,7 +377,8 @@ def predict(args, model, tokenizer, prefix = ''):
     test_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='test', limit = TEST_LIMIT)
     # Note that DistributedSampler samples randomly
     test_sampler = SequentialSampler(test_dataset) if args.local_rank == -1 else DistributedSampler(test_dataset)
-    test_dataloader = DataLoader(test_dataset, sampler=test_sampler, batch_size=1,collate_fn=collate_fn)
+    test_dataloader = DataLoader(test_dataset, sampler=test_sampler, batch_size=1, collate_fn=collate_fn)
+
     # Eval!
     logger.info("***** Running prediction %s *****", prefix)
     logger.info("  Num examples = %d", len(test_dataset))
@@ -412,6 +415,8 @@ def predict(args, model, tokenizer, prefix = ''):
                     temp_1.append(args.id2label[out_label_ids[i][j]])
                     temp_2.append(preds[i][j])
 
+
+        # used for write results in output file
         if args.task_name in ['cluener','cner']:
             preds = preds[0][1:-1]# [CLS]XXXX[SEP]
         else:
@@ -419,7 +424,7 @@ def predict(args, model, tokenizer, prefix = ''):
 
         tags = [args.id2label[x] for x in preds]
         #label_entities = get_entities(preds, args.id2label, args.markup)
-        true_labels = batch[3].detach().cpu().numpy().tolist()[0]
+        #true_labels = batch[3].detach().cpu().numpy().tolist()[0]
         #true_label_entities = get_entities(true_labels, args.id2label, args.markup)
         json_d = {}
         json_d['id'] = step
@@ -430,35 +435,70 @@ def predict(args, model, tokenizer, prefix = ''):
         #json_d['entities'] = label_entities
         #json_d['true_entities'] = true_label_entities
         output_results.append(json_d)
+
         pbar(step)
 
     logger.info("\n")
     new = True
-    if new:
-        test_info = metric.result()
-        results = {f'{key}': value for key, value in test_info.items()}
-        logger.info("***** Test results %s *****", prefix)
-        info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
-        logger.info(info)
-    else:
-        test_info, entity_info = metric.result()
-        results = {f'{key}': value for key, value in test_info.items()}
+    if args.task_name != 'cluener':
+        if new:
+            test_info = metric.result()
+            results = {f'{key}': value for key, value in test_info.items()}
+            logger.info("***** Test results %s *****", prefix)
+            info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
+            logger.info(info)
+        else:
+            test_info, entity_info = metric.result()
+            results = {f'{key}': value for key, value in test_info.items()}
+            if use_wandb:
+                wandb.log(results)
+            logger.info("***** Test results %s *****", prefix)
+            info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
+            logger.info(info)
+            logger.info("***** Test Entity results %s *****", prefix)
+            for key in sorted(entity_info.keys()):
+                logger.info("******* %s results ********"%key)
+                info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
+                logger.info(info)
+
         if use_wandb:
             wandb.log(results)
-        logger.info("***** Test results %s *****", prefix)
-        info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
-        logger.info(info)
-        logger.info("***** Test Entity results %s *****", prefix)
-        for key in sorted(entity_info.keys()):
-            logger.info("******* %s results ********"%key)
-            info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
-            logger.info(info)
+        with open(output_submit_file, "w") as writer:
+            for record in output_results:
+                writer.write(json.dumps(record) + '\n')
 
-    if use_wandb:
-        wandb.log(results)
-    with open(output_submit_file, "w") as writer:
-        for record in output_results:
-            writer.write(json.dumps(record) + '\n')
+    # get the test results !
+    print("get the test results")
+    if args.task_name == "cluener":
+        output_submit_file = os.path.join(pred_output_dir, prefix, "test_submit.json")
+        test_text = []
+        with open(os.path.join(args.data_dir, "test.json"), 'r') as fr:
+            for line in fr:
+                test_text.append(json.loads(line))
+        test_submit = []
+        for x, y in zip(test_text, results):
+            json_d = {}
+            json_d['id'] = x['id']
+            json_d['label'] = {}
+            entities = y['entities']
+            words = list(x['text'])
+            if len(entities) != 0:
+                for subject in entities:
+                    tag = subject[0]
+                    start = subject[1]
+                    end = subject[2]
+                    word = "".join(words[start:end + 1])
+                    if tag in json_d['label']:
+                        if word in json_d['label'][tag]:
+                            json_d['label'][tag][word].append([start, end])
+                        else:
+                            json_d['label'][tag][word] = [[start, end]]
+                    else:
+                        json_d['label'][tag] = {}
+                        json_d['label'][tag][word] = [[start, end]]
+            test_submit.append(json_d)
+        json_to_text(output_submit_file, test_submit)
+
 
 def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = None):
     if args.local_rank not in [-1, 0] and not evaluate:
