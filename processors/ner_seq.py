@@ -739,7 +739,7 @@ class Ontonote4Processor(DataProcessor):
             # BIOS
             labels = []
             for x in line['labels']:
-                x.replace("\n", "")
+                x = x.strip('\n')
                 # change the labels in cner dataset to BIO style
                 if 'M-' in x:
                     labels.append(x.replace('M-', 'I-'))
@@ -747,6 +747,7 @@ class Ontonote4Processor(DataProcessor):
                     labels.append(x.replace('E-', 'I-'))
                 else:
                     labels.append(x)
+            # labels[-1] = 'O'
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
 

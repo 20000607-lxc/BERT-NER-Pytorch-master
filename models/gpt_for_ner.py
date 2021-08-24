@@ -288,6 +288,7 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
             #  另外就是可可能有的batch已经到头了，有的还没有，不同的batch之间应该不会相互影响吧？？？？
 
             sequence_output = sequence_output.unsqueeze(1)
+            outputs = self.gpt2(inputs_embeds=sequence_output, past_key_values=past_key_values, return_dict=None)
 
             # todo gpt2 的 sequence_output 应该是 input ids 的 hidden state? 不然这样连续生成可能会一直扩大不准确性？
             #  采用 inputs[:, self.template[0]+round:self.template[0]+round, :] 这样就只能指望past_key_values里面存储了足够的信息？ 否则这样做就跟直接用embedding做SL没什么区别了
@@ -296,7 +297,7 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
             # 如果用inputs再计算一次的话，这里面loss应该用哪里的loss还是个问题了 不知道要谁不require grad啊？应该是两次计算都要require grad的吧？？？
             # k = copy.deepcopy(inputs[:, self.template[0]+round:self.template[0]+round+1, :])
 
-            outputs = self.gpt2(inputs_embeds=inputs[:, self.template[0]+round:self.template[0]+round+1, :], past_key_values=past_key_values, return_dict=None)
+            #todo 这个不行！！！ 只有60%  outputs = self.gpt2(inputs_embeds=inputs[:, self.template[0]+round:self.template[0]+round+1, :], past_key_values=past_key_values, return_dict=None)
             sequence_output = outputs.last_hidden_state[..., -1, :]
             # todo 采用last_hidden_state对吗？
             past_key_values = outputs.past_key_values

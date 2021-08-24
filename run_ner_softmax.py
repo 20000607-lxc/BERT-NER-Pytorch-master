@@ -249,13 +249,13 @@ def train(args, train_dataset, model, tokenizer):
                         torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
                         logger.info("Saving optimizer and scheduler states to %s", output_dir)
 
-                    print(" in the last epoch, do testing  ")
-                    predict(args, model, tokenizer)
-
+        print(" in the last epoch, do testing  ")
+        predict(args, model, tokenizer)
 
         logger.info("\n")
         if 'cuda' in str(args.device):
             torch.cuda.empty_cache()
+
     return global_step, tr_loss / global_step
 
 def evaluate(args, model, tokenizer, prefix=''):
