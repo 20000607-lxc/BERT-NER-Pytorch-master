@@ -47,8 +47,8 @@ class DataProcessor(object):
             return lines
 
     @classmethod
-    # 中文的entities 都是长度>=2的， 因此不需要S- token (始终为空）
     def _read_text(self, input_file, task_name=None):
+        # 读取cner与英文数据集
         lines = []
         with open(input_file, 'r') as f:
             words = []
@@ -82,6 +82,7 @@ class DataProcessor(object):
 
     @classmethod
     def _read_json(self, input_file):
+        # 读取cluener
         lines = []
         with open(input_file, 'r') as f:
             for line in f:

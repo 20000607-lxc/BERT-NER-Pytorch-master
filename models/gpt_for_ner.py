@@ -237,7 +237,6 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
                 raw_embeds[bidx, i, :] = replace_embeds[i, :]
             for i in range(self.template[1]):
                 raw_embeds[bidx, i+counts[bidx]+self.template[0], :] = replace_embeds[i+self.template[0], :]
-
         return raw_embeds
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, labels=None):
@@ -252,7 +251,6 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
             labels: [batch_size, max_length]
         Returns:
             outputs
-
         """
         bz = len(input_ids)#batch_size
         prompt_tokens = [self.pseudo_token_id]
@@ -287,17 +285,17 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
 
         for round in range(1, max(counts)):# 1 ...  19
             # todo 没有label的(pad token) 应该不会影响计算loss和准确性吧？需要改成32吗？
-            # 另外就是可可能有的batch已经到头了，有的还没有，不同的batch之间应该不会相互影响吧？？？？
+            #  另外就是可可能有的batch已经到头了，有的还没有，不同的batch之间应该不会相互影响吧？？？？
+
             sequence_output = sequence_output.unsqueeze(1)
 
-            # todo gpt2 的 sequence_output 应该是 input ids 的 hidden state? 不然这样随意生成可能会一致扩大不准确性？
-            # 采用 inputs[:, self.template[0]+round:self.template[0]+round, :] 这样就只能指望past_key_values里面存储了足够的信息？
-            # 否则这样做就跟直接用embedding做SL没什么区别了
-            # 也可以尝试torch.cat sequence_output 和 inputs[:, self.template[0]+round:self.template[0]+round, :]
+            # todo gpt2 的 sequence_output 应该是 input ids 的 hidden state? 不然这样连续生成可能会一直扩大不准确性？
+            #  采用 inputs[:, self.template[0]+round:self.template[0]+round, :] 这样就只能指望past_key_values里面存储了足够的信息？ 否则这样做就跟直接用embedding做SL没什么区别了
+            #  也可以尝试torch.cat sequence_output 和 inputs[:, self.template[0]+round:self.template[0]+round, :]
 
-            # 如果用inputs再计算一次的话，这里面loss应该用哪里的loss还是个问题了 不知道要谁不require grad啊？
-            # 应该是两次计算都要require grad的吧？？？
+            # 如果用inputs再计算一次的话，这里面loss应该用哪里的loss还是个问题了 不知道要谁不require grad啊？应该是两次计算都要require grad的吧？？？
             # k = copy.deepcopy(inputs[:, self.template[0]+round:self.template[0]+round+1, :])
+
             outputs = self.gpt2(inputs_embeds=inputs[:, self.template[0]+round:self.template[0]+round+1, :], past_key_values=past_key_values, return_dict=None)
             sequence_output = outputs.last_hidden_state[..., -1, :]
             # todo 采用last_hidden_state对吗？

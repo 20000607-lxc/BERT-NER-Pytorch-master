@@ -254,7 +254,10 @@ def train(args, train_dataset, model, tokenizer):
     return global_step, tr_loss / global_step
 
 def evaluate(args, model, tokenizer, prefix=''):
-    metric = NewSeqEntityScore(args.id2label, markup=args.markup)
+    if args.model_type == "chinese_pretrained_gpt2":
+        metric = SeqEntityScore(args.id2label, markup=args.markup)
+    else:
+        metric = NewSeqEntityScore(args.id2label, markup=args.markup)
     eval_output_dir = args.output_dir
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
@@ -343,15 +346,8 @@ def evaluate(args, model, tokenizer, prefix=''):
 
     logger.info("\n")
     eval_loss = eval_loss / nb_eval_steps
-    new = True
-    if new:
-        eval_info = metric.result()
-        results = {f'{key}': value for key, value in eval_info.items()}
-        results['loss'] = eval_loss
-        logger.info("***** Eval results %s *****", prefix)
-        info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
-        logger.info(info)
-    else:
+
+    if args.model_type == "chinese_pretrained_gpt2":
         eval_info, entity_info = metric.result()
         results = {f'{key}': value for key, value in eval_info.items()}
         results['loss'] = eval_loss
@@ -363,13 +359,23 @@ def evaluate(args, model, tokenizer, prefix=''):
             logger.info("******* %s results ********"%key)
             info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
             logger.info(info)
+    else:
+        eval_info = metric.result()
+        results = {f'{key}': value for key, value in eval_info.items()}
+        results['loss'] = eval_loss
+        logger.info("***** Eval results %s *****", prefix)
+        info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
+        logger.info(info)
 
     if use_wandb:
         wandb.log(results)
     return results
 
 def predict(args, model, tokenizer, prefix = ''):
-    metric = NewSeqEntityScore(args.id2label, markup=args.markup)
+    if args.model_type == "chinese_pretrained_gpt2":
+        metric = SeqEntityScore(args.id2label, markup=args.markup)
+    else:
+        metric = NewSeqEntityScore(args.id2label, markup=args.markup)
     pred_output_dir = args.output_dir
     if not os.path.exists(pred_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(pred_output_dir)
@@ -417,10 +423,10 @@ def predict(args, model, tokenizer, prefix = ''):
 
 
         # used for write results in output file
-        if args.task_name in ['cluener','cner']:
+        if args.task_name in ['cluener', 'cner']:
             preds = preds[0][1:-1]# [CLS]XXXX[SEP]
         else:
-            preds = preds[0]# 对于英文没有用[cls]和[sep] 因此不截取
+            preds = preds[0]# 英文没有用[cls]和[sep] 因此不截取
 
         tags = [args.id2label[x] for x in preds]
         #label_entities = get_entities(preds, args.id2label, args.markup)
@@ -439,15 +445,8 @@ def predict(args, model, tokenizer, prefix = ''):
         pbar(step)
 
     logger.info("\n")
-    new = True
     if args.task_name != 'cluener':
-        if new:
-            test_info = metric.result()
-            results = {f'{key}': value for key, value in test_info.items()}
-            logger.info("***** Test results %s *****", prefix)
-            info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
-            logger.info(info)
-        else:
+        if args.model_type == "chinese_pretrained_gpt2":
             test_info, entity_info = metric.result()
             results = {f'{key}': value for key, value in test_info.items()}
             if use_wandb:
@@ -460,12 +459,19 @@ def predict(args, model, tokenizer, prefix = ''):
                 logger.info("******* %s results ********"%key)
                 info = "-".join([f' {key}: {value:.4f} ' for key, value in entity_info[key].items()])
                 logger.info(info)
+        else:
+            test_info = metric.result()
+            results = {f'{key}': value for key, value in test_info.items()}
+            logger.info("***** Test results %s *****", prefix)
+            info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
+            logger.info(info)
 
         if use_wandb:
             wandb.log(results)
         with open(output_submit_file, "w") as writer:
             for record in output_results:
                 writer.write(json.dumps(record) + '\n')
+
 
     # get the test results !
     print("get the test results")
@@ -476,7 +482,7 @@ def predict(args, model, tokenizer, prefix = ''):
             for line in fr:
                 test_text.append(json.loads(line))
         test_submit = []
-        for x, y in zip(test_text, results):
+        for x, y in zip(test_text, output_results):
             json_d = {}
             json_d['id'] = x['id']
             json_d['label'] = {}
@@ -528,7 +534,9 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
         else:
             ENGLISH = True
         # gpt2tokenizer 没有sep_token  pad_token cls_token 因此都是None
-        features, count = convert_examples_to_features(english=ENGLISH, markup=args.markup, task_name=data_type,
+        features, count = convert_examples_to_features(english=ENGLISH, markup=args.markup,
+                                                tokenize_split_with_O=args.tokenize_split_with_O,
+                                                task_name=data_type,
                                                 tokenizer_name=args.tokenizer_name if args.tokenizer_name!='' else args.model_name_or_path,
                                                 examples=examples,
                                                 tokenizer=tokenizer,
@@ -564,6 +572,7 @@ def main():
     args = get_argparse().parse_args()
     if args.model_type == "chinese_pretrained_gpt2":
         assert args.task_name in ['cluener', 'cner']
+        assert args.markup == 'biso'# 中文一律采用biso
     if use_wandb:
         wandb.init(config=args, project='gpt2_sweep_2_try', entity='li_xuechun')
     if not os.path.exists(args.output_dir):

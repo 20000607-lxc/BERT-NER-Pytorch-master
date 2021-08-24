@@ -22,6 +22,8 @@ def iob_iobes(tags):
                 new_tags.append(tag.value)
             else:
                 new_tags.append(tag.value.replace("B-", "S-"))
+                # todo 这个做法就会把split token B-B-换成S- B-
+
         elif tag.value.split("-")[0] == "I":
             if i + 1 < len(tags) and tags[i + 1].value.split("-")[0] == "I":
                 new_tags.append(tag.value)
@@ -62,10 +64,10 @@ def markup_for_bert_chinese(markup, tokens, new_label):
         if new_label[k] % 4 == 3:# means new_label[k] == I-
             new_label[k] = new_label[k]+1# replace I- with E-
 
-    return  tokens, new_label
+    return tokens, new_label
 
 
-def markup_for_gpt2_english(markup, tokens,  label_ids):
+def markup_for_gpt2_english(markup, tokens,  label_ids, label_on):
     j = 0
     new_label = [0] * len(tokens)
     if markup == 'biso':
@@ -90,18 +92,25 @@ def markup_for_gpt2_english(markup, tokens,  label_ids):
         if new_label[k] % 3 == 2:# means new_label[k] == B-, since it is the sentence from file, we assume its for the lonely token(there is nothing with it anymore)
             new_label[k] = new_label[k]-1# replace B- with S-
 
+
     elif markup == 'bio':
         for i in range(len(tokens)):
             if 'Ġ' in tokens[i]:
                 new_label[i] = label_ids[j]
                 j = j+1
             else:
-                new_label[i] = 0
-                # if new_label[i-1] % 2 == 1:# B- label
-                #     new_label[i] = new_label[i-1]+1# new_label[i] should be I-
-                # else:
-                #     new_label[i] = new_label[i-1]# new_label[i] should be I- or O
-                #     # should not use O(0 means "O") anymore!
+                if label_on:
+                    new_label[i] = new_label[i-1]
+
+                    # 下面这种实验跑出来88% 不知道是不是他的问题
+                    # if new_label[i-1] % 2 == 1:# B- label
+                    #     new_label[i] = new_label[i-1]+1# new_label[i] should be I-
+                    # else:
+                    #     new_label[i] = new_label[i-1]# new_label[i] should be I- or O
+                    #     # should not use O(0 means "O") anymore!
+
+                else:
+                    new_label[i] = 0
 
 
     elif markup == 'bieso':
@@ -110,20 +119,28 @@ def markup_for_gpt2_english(markup, tokens,  label_ids):
                 new_label[i] = label_ids[j]
                 j = j+1
             else:
-                new_label[i] = new_label[i-1]
-                # # todo 这里可以索引i-1因为第一个单词必须是有G的
-                # if new_label[i-1] % 4 == 2:# B- label
-                #     new_label[i] = new_label[i-1]+1# new_label[i] should be I-
-                # elif new_label[i] % 4 == 3:
-                #     if i == len(new_label)-1:
-                #         new_label[i] = new_label[i-1]+1
-                #     elif new_label[i+1] == 0:# new_label[i] should be E-
-                #         new_label[i] = new_label[i-1]+1
-                # else:
-                #     new_label[i] = new_label[i-1]# new_label[i] should be I- or O
-                #     # todo should not use O(0 means "O") anymore
+                if label_on:
+                    new_label[i] = new_label[i-1]
+
+                    # 下面这种实验跑出来88% 不知道是不是他的问题
+                    # # todo 这里可以索引i-1因为第一个单词必须是有G的
+                    # if new_label[i-1] % 4 == 2:# B- label
+                    #     new_label[i] = new_label[i-1]+1# todo ? new_label[i] should be I-
+                    # elif new_label[i] % 4 == 3:
+                    #     if i == len(new_label)-1:
+                    #         new_label[i] = new_label[i-1]+1
+                    #     elif new_label[i+1] == 0:# new_label[i] should be E-
+                    #         new_label[i] = new_label[i-1]+1
+                    # else:
+                    #     new_label[i] = new_label[i-1]# new_label[i] should be I- or O
+                    #     # todo should not use O(0 means "O") anymore
+
+                else:
+                    new_label[i] = 0
+
 
         # replace B- with S- and I- with E-
+        # todo 这个应该对于label on 的两种方式 是一样的？ 对于label 不on的怎么做？不on的就不能做了 因为会在中间出现O  可能会转换错误
         for i in range(len(new_label)-1):
             # for all the lonely token(do not count the split words), replace B- with S-
             if new_label[i] % 4 == 2 and new_label[i+1] == 0:# means new_label[i] == B- and new_label[i+1] == O
@@ -202,7 +219,7 @@ def collate_fn(batch):
 # from transformers import AutoTokenizer
 # tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
 
-def convert_examples_to_features(english, markup, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
+def convert_examples_to_features(english, markup, tokenize_split_with_O, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
                                  cls_token_at_end=False, cls_token="[CLS]", cls_token_segment_id=1,
                                  sep_token="[SEP]", pad_on_left=False, pad_token=0, pad_token_segment_id=0,
                                  sequence_a_segment_id=0, mask_padding_with_zero=True,):
@@ -212,6 +229,10 @@ def convert_examples_to_features(english, markup, tokenizer_name, task_name, exa
             - True (XLNet/GPT pattern): A + [SEP] + B + [SEP] + [CLS]
         `cls_token_segment_id` define the segment id associated to the CLS token (0 for BERT, 2 for XLNet)
     """
+    if tokenize_split_with_O == 0:
+        label_on = False
+    else:
+        label_on = True
     count = 0
     the_no_entity_number = 0
     label_map = {label: i for i, label in enumerate(label_list)}
@@ -243,7 +264,7 @@ def convert_examples_to_features(english, markup, tokenizer_name, task_name, exa
                 the_no_entity_number += flag
 
                 # align the label_ids with tokens
-                markup, tokens, new_label, label_ids = markup_for_gpt2_english(markup, tokens, label_ids)
+                markup, tokens, new_label, label_ids = markup_for_gpt2_english(markup, tokens, label_ids, label_on)
                 # truncate
                 special_tokens_count = 0
                 if len(tokens) > max_seq_length - special_tokens_count:
@@ -474,7 +495,6 @@ def convert_examples_to_features(english, markup, tokenizer_name, task_name, exa
             # tokens are attended to.
             input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
 
-            assert len(input_ids) == len(label_ids)
             input_len = len(label_ids)
             # Zero-pad up to the sequence length.
 
