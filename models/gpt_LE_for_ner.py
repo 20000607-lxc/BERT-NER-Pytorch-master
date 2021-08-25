@@ -45,7 +45,7 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         self.prompt_encoder = PromptEncoder(self.template, self.hidden_size, device)
         self.prompt_encoder = self.prompt_encoder.to(device)
 
-        self.num_entities = 9# todo for conll2003 区分bio 看看会不会好 不只是区分entity type
+        self.num_entities = 17# todo for conll2003 区分bio 看看会不会好 不只是区分entity type
 
         self.label_embedding = LabelEmbeder([self.num_entities], self.hidden_size, device)
         self.label_embedding = self.label_embedding.to(self.device)
