@@ -29,7 +29,7 @@ def get_argparse():
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name")
     parser.add_argument('--label_all_tokens', action="store_true", default=False,
-                        help='{0:label_split tokens with -100, 1:label_all_tokens}')
+                        help='whether to label all the tokens, otherwise will label split tokens(except for the first part in a word) with -100')
     parser.add_argument("--logging_steps", type=int, default=5,
                         help="Log every X updates steps.")
     # model_name_or_path can only be selected in the following list:
