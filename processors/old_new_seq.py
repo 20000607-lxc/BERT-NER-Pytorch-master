@@ -74,7 +74,7 @@ def markup_for_gpt2_english(markup, tokens,  label_ids, label_all_tokens):
                     #     new_label[i] = new_label[i-1]# new_label[i] should be I- or O
                     #     # should not use O(0 means "O") anymore!
                 else:
-                    new_label[i] = -100# todo note： the convention is -100 not O!!
+                    new_label[i] = -100
 
     elif markup == 'bieso':
         label_ids = iob_iobes(label_ids)

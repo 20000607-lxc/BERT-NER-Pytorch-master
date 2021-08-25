@@ -244,7 +244,6 @@ class BareChineseGPT2(torch.nn.Module):
         # the example of the output words of batch[0]
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
 
-        # todo example is computed by GPT2LMhead model
         example = torch.argsort(outputs2[0], dim=2, descending=True)[0, :, 0]
         sequence_output = self.dropout(sequence_output)
 

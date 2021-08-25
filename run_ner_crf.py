@@ -680,7 +680,7 @@ def main():
         # )  # Take care of distributed/parallel training
         # model_to_save.save_pretrained(args.output_dir)
         tokenizer.save_vocabulary(args.output_dir)
-        # todo tokenizer 真的训练了吗？？？
+        # todo tokenizer 训练了吗？
         # todo 咋区分的best perform model？？？
 
         # Good practice: save your training arguments together with the trained model

@@ -7,7 +7,6 @@ from seqeval.metrics import accuracy_score
 from seqeval.metrics import recall_score
 from seqeval.metrics import classification_report
 
-# todo 在 seqeval中，bio version， 那么单独的b-会算成entity吗（好像是会的 accuracy1 = 1.0) precision 和 accuracy有什么区别？
 
 class NewSeqEntityScore(object):
     def __init__(self, id2label, markup):

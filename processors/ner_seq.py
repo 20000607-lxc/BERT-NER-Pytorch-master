@@ -42,7 +42,7 @@ def markup_for_gpt2_english(tokens,  label_ids, label_all_tokens):
             if label_all_tokens:
                 new_label[i] = new_label[i-1]
             else:
-                new_label[i] = -100# todo note： the convention is -100 not O!!
+                new_label[i] = -100# todo note：the convention is -100 not O!
     return tokens, new_label, label_ids
 
 
@@ -241,7 +241,7 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
         #                 if j == len(label_ids):
         #                     # ids that cannot be converted should be passed, such examples include:
         #                     # [' 's ', ...]
-        #                     break# todo 这里到底那个地方出问题了？？？
+        #                     break# todo something wrong here!
         #             else:
         #                 new_label[i] = 0# new_label[i-1]
         #
@@ -332,7 +332,6 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
 
             # Account for [CLS] and [SEP] with "- 2".
             special_tokens_count = 2
-            # todo test remove all special tokens (但是预训练的gpt2的vocabulary也是和bert一样的 可能没什么用）
             if len(tokens) > max_seq_length - special_tokens_count:
                 tokens = tokens[: (max_seq_length - special_tokens_count)]
                 label_ids = label_ids[: (max_seq_length - special_tokens_count)]
@@ -341,8 +340,6 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
             # label_ids = [label_map['O']] + label_ids
             # tokens = ['*']+tokens
             # tokens = tokens + ['*']
-            # todo can add more fixed token to tell model to distiguash between input and prompt
-            #  note: segment id is only used for computing loss
 
         # The convention in BERT is:
             # (a) For sequence pairs:
@@ -585,7 +582,6 @@ class Ontonote4Processor(DataProcessor):
     def get_test_examples(self, data_dir, limit):
         """See base class."""
         return self._create_examples(self._read_text2(os.path.join(data_dir, "test.char.bmes")), "test", limit)
-        # todo
 
     def get_labels(self, markup='biso'):
         """See base class."""

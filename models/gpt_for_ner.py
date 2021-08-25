@@ -132,7 +132,6 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
         for bdix in range(bz):
             if self.template[0] == self.template[1]:
                 place = sum(self.template)+counts[bdix]
-                # todo note donot shift!! for ontonote it is better!
             else:
                 place = self.template[0] + counts[bdix]# 采用第二个prompt对应的hs
                 # place = 2 * self.template[0] + counts[bdix] + 1 不得行 差好多
@@ -267,7 +266,6 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
         inputs_embeds = self.embed_input(queries, counts)
         inputs = inputs_embeds.to(self.device)
 
-        # todo gpt2里面计算的时候有没有改变这个inputs啊？
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
 
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
@@ -283,30 +281,15 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
         for bdix in range(bz):
             # 第一个token
             sequence[bdix, 0, :] = sequence_output[bdix, :]
-
-        for round in range(1, max(counts)):# 1 ...  19
-            # todo 没有label的(pad token) 应该不会影响计算loss和准确性吧？需要改成32吗？
-            #  另外就是可可能有的batch已经到头了，有的还没有，不同的batch之间应该不会相互影响吧？？？？
-
+        for round in range(1, max(counts)):
             sequence_output = sequence_output.unsqueeze(1)
-            # todo 换成id行不行？？？
             outputs = self.gpt2(inputs_embeds=sequence_output, past_key_values=past_key_values, return_dict=None)
-
-            # todo gpt2 的 sequence_output 应该是 input ids 的 hidden state? 不然这样连续生成可能会一直扩大不准确性？
-            #  采用 inputs[:, self.template[0]+round:self.template[0]+round, :] 这样就只能指望past_key_values里面存储了足够的信息？ 否则这样做就跟直接用embedding做SL没什么区别了
-            #  也可以尝试torch.cat sequence_output 和 inputs[:, self.template[0]+round:self.template[0]+round, :]
-
-            # 如果用inputs再计算一次的话，这里面loss应该用哪里的loss还是个问题了 不知道要谁不require grad啊？应该是两次计算都要require grad的吧？？？
-            # k = copy.deepcopy(inputs[:, self.template[0]+round:self.template[0]+round+1, :])
-
-            #todo 这个不行！！！ 只有60%  outputs = self.gpt2(inputs_embeds=inputs[:, self.template[0]+round:self.template[0]+round+1, :], past_key_values=past_key_values, return_dict=None)
-
             sequence_output = outputs[0][..., -1, :]
             past_key_values = outputs.past_key_values
             sequence[:, round, :] = sequence_output
 
         sequence = self.dropout(sequence)
-        logits = self.classifier(sequence)#logits：每个词的labels分数
+        logits = self.classifier(sequence)
 
         outputs = (example,)+outputs[2:]
         outputs = (logits,) + outputs  # add hidden states and attention if they are here
@@ -561,7 +544,7 @@ class BareGPT2(torch.nn.Module):
 #
 #             #place2 = self.template[0] + counts[bdix] + 1
 #             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
-#             # todo 只截取没有pad的id对应的input
+#
 #
 #         logits = self.classifier(sequence)#logits：每个词的labels分数
 #         outputs = (example,)+outputs[2:]

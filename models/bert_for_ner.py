@@ -21,7 +21,6 @@ class BertSoftmaxForNer(BertPreTrainedModel):
         self.bert = BertModel(config)
         self.embeddings = self.bert.get_input_embeddings()
         # self.embeddings.weight.requires_grad = False
-        # todo
 
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
