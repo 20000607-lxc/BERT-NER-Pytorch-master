@@ -77,7 +77,7 @@ there are two prompt style:
 2. (m,length_of_max_sequence_length,0) : construct the query as : prompt+input+prompt and use the output hidden state of the latter prompt to do classification
 ### run the code
 
-1. Modify the configuration information in `run_ner_xxx.py`
+1. Modify the configuration information in `run_ner_xxx.py`,  please only use `run_ner_softmax.py`
 2. Modify the params in ` finetuning_argparse.py`
 4. Modify the prompt template by setting `TEMPLATE_CLASSES` in `run_ner_xxx.py`.
 5. `BART_for_ner.py` cannot run for now.
