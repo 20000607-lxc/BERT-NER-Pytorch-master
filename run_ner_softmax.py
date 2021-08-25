@@ -36,14 +36,14 @@ import wandb
 import pprint
 
 MODEL_CLASSES = {
-    'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
-    'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
+    #'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
+    #'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
     'gpt2': (GPT2Config, GPT2SoftmaxForNer_fix, CNerTokenizer),
     "chinese_pretrained_gpt2": (GPT2Config, GPT2LMSoftmaxForNer, CNerTokenizer),
     'bare_gpt2': (GPT2Config, BareGPT2, CNerTokenizer),
     'bare_chinese_gpt2':  (GPT2Config, BareChineseGPT2, CNerTokenizer),
     'label_embedding': (GPT2Config, GPT2SoftmaxForNer_LE, CNerTokenizer),
-    'generate': (GPT2Config, GPT2GenerateForNer, CNerTokenizer),
+    'generate': (GPT2Config, GPT2GenerateForNer, CNerTokenizer),# todo not good! test later!
      #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer)
 }
 
@@ -51,8 +51,8 @@ TEMPLATE_CLASSES = {
     '1': (6, 6, 0),# use the prompt + input + prompt + input module, and cut the hidden state of the later input to classify
     #'2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
     '3': (12, 12, 0),
-    #'4': (24, 24, 0),# note '4 for cluener'= (12, 24, 0)  因为gpt for ner 与 gptlm for ner 不一样
-    #'5': (24, 88, 0)# todo 88 = 24+64  ontonote  这个是不是写错了啊 为啥这么低！！！check！！难道不能用24+64？
+    #'4': (24, 24, 0),
+    #'5': (24, 88, 0),
     #'6': (12, 32, 0)
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
