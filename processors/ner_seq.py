@@ -13,53 +13,38 @@ def iob_iobes(tags):
     """
     new_tags = []
     for i, tag in enumerate(tags):
-        if tag.value == "O":
-            new_tags.append(tag.value)
-        elif tag.value.split("-")[0] == "B":
-            if i + 1 != len(tags) and tags[i + 1].value.split("-")[0] == "I":
-                new_tags.append(tag.value)
+        if tag == "O":
+            new_tags.append(tag)
+        elif tag.split("-")[0] == "B":
+            if i + 1 != len(tags) and tags[i + 1].split("-")[0] == "I":
+                new_tags.append(tag)
             else:
-                new_tags.append(tag.value.replace("B-", "S-"))
+                new_tags.append(tag.replace("B-", "S-"))
 
-        elif tag.value.split("-")[0] == "I":
-            if i + 1 < len(tags) and tags[i + 1].value.split("-")[0] == "I":
-                new_tags.append(tag.value)
+        elif tag.split("-")[0] == "I":
+            if i + 1 < len(tags) and tags[i + 1].split("-")[0] == "I":
+                new_tags.append(tag)
             else:
-                new_tags.append(tag.value.replace("I-", "E-"))
+                new_tags.append(tag.replace("I-", "E-"))
         else:
             raise Exception("Invalid IOB format!")
     return new_tags
 
 
-def markup_for_gpt2_english(markup, tokens,  label_ids, label_all_tokens):
-    assert markup in ['bio', 'bieso']
+def markup_for_gpt2_english(tokens,  label_ids, label_all_tokens):
     j = 0
     new_label = [0] * len(tokens)
-    if markup == 'bio':
-        for i in range(len(tokens)):
-            if 'Ġ' in tokens[i]:
-                new_label[i] = label_ids[j]
-                j = j+1
+    for i in range(len(tokens)):
+        if 'Ġ' in tokens[i]:
+            new_label[i] = label_ids[j]
+            j = j+1
+        else:
+            if label_all_tokens:
+                new_label[i] = new_label[i-1]
             else:
-                if label_all_tokens:
-                    new_label[i] = new_label[i-1]
-                else:
-                    new_label[i] = -100# todo note： the convention is -100 not O!!
-    elif markup == 'bieso':
-        # convert bio into bieso
-        label_ids = iob_iobes(label_ids)
+                new_label[i] = -100# todo note： the convention is -100 not O!!
 
-        for i in range(len(tokens)):
-            if 'Ġ' in tokens[i]:
-                new_label[i] = label_ids[j]
-                j = j+1
-            else:
-                if label_all_tokens:
-                    new_label[i] = new_label[i-1]
-                else:
-                    new_label[i] = -100
-
-    return markup, tokens, new_label, label_ids
+    return tokens, new_label, label_ids
 
 class InputExample(object):
     """A single training/test example for token classification."""
@@ -155,6 +140,9 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                     count += 1# count such abnormal tokens
                     continue
 
+                if markup == 'bieso':
+                    example.labels = iob_iobes(example.labels)
+
                 label_ids = [label_map[x] for x in example.labels]
                 flag = 1
                 for i in label_ids:
@@ -164,7 +152,7 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                 the_no_entity_number += flag
 
                 # align the label_ids with tokens
-                markup, tokens, new_label, label_ids = markup_for_gpt2_english(markup, tokens, label_ids, label_all_tokens)
+                tokens, new_label, label_ids = markup_for_gpt2_english(tokens, label_ids, label_all_tokens)
                 # truncate
                 special_tokens_count = 0
                 if len(tokens) > max_seq_length - special_tokens_count:

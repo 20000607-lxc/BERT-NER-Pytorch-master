@@ -15,7 +15,7 @@ def get_argparse():
                         choices=['outputs/cluener_output/gpt2', 'outputs/conll2003_output/gpt2', 'outputs/cner_output/gpt2', 'outputs/ontonote_output/gpt2', 'outputs/ontonote4_output/gpt2'] )
     parser.add_argument("--model_type", default='generate', type=str, #required=True,
                         help="Model type selected ",
-                        choices=['bert', 'albert', 'bare_gpt2', 'gpt2','generate',
+                        choices=['bert', 'albert', 'bare_gpt2', 'gpt2', 'generate',
                              'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'label_embedding'] )
     parser.add_argument("--note", default='', type=str,
                         help="the implementation details to remind")
@@ -77,7 +77,7 @@ def get_argparse():
     # I set the tokenizer for chinese as bert-base-chinese in run_ner_xxx.py and cannot be modified by --tokenizer_name.
 
     # Other parameters: always use the default values and haven't changed yet.
-    parser.add_argument('--markup', default='bio', type=str,
+    parser.add_argument('--markup', default='bieso', type=str,
                         choices=['biso', 'bio', 'bieso'])
     parser.add_argument('--loss_type', default='ce', type=str,
                         choices=['lsr', 'focal', 'ce'])
