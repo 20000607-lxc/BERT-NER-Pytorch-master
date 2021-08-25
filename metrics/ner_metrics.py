@@ -33,7 +33,6 @@ class NewSeqEntityScore(object):
         print(classification_report(self.origins, self.founds))
         return {'precision': precision, 'recall': recall, 'f1': f1, 'acc': accuracy}
 
-
     def update(self, label_paths, pred_paths):
         '''
         labels_paths: [[],[],[],....]
