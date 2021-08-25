@@ -43,8 +43,8 @@ def markup_for_gpt2_english(tokens,  label_ids, label_all_tokens):
                 new_label[i] = new_label[i-1]
             else:
                 new_label[i] = -100# todo note： the convention is -100 not O!!
-
     return tokens, new_label, label_ids
+
 
 class InputExample(object):
     """A single training/test example for token classification."""
@@ -135,7 +135,6 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                     sum_length_of_example += len(tokens)
                 else:
                     raise(NotImplementedError)
-
                 if len(tokens) == 0:# for the empty tokens list: pass!
                     count += 1# count such abnormal tokens
                     continue
@@ -153,6 +152,7 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
 
                 # align the label_ids with tokens
                 tokens, new_label, label_ids = markup_for_gpt2_english(tokens, label_ids, label_all_tokens)
+
                 # truncate
                 special_tokens_count = 0
                 if len(tokens) > max_seq_length - special_tokens_count:
