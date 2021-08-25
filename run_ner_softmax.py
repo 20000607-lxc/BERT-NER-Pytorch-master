@@ -320,8 +320,9 @@ def evaluate(args, model, tokenizer, prefix=''):
                     metric.update(pred_paths=[temp_2], label_paths=[temp_1])
                     break
                 else:
-                    temp_1.append(args.id2label[out_label_ids[i][j]])
-                    temp_2.append(preds[i][j])
+                    if out_label_ids[i][j] != -100:
+                        temp_1.append(args.id2label[out_label_ids[i][j]])
+                        temp_2.append(preds[i][j])
 
 
         # to wirte results in the output file
@@ -423,8 +424,9 @@ def predict(args, model, tokenizer, prefix = ''):
                     metric.update(pred_paths=[temp_2], label_paths=[temp_1])
                     break
                 else:
-                    temp_1.append(args.id2label[out_label_ids[i][j]])
-                    temp_2.append(preds[i][j])
+                    if out_label_ids[i][j] != -100:
+                        temp_1.append(args.id2label[out_label_ids[i][j]])
+                        temp_2.append(preds[i][j])
 
 
         # used for write results in output file
@@ -541,7 +543,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
             ENGLISH = True
         # gpt2tokenizer 没有sep_token  pad_token cls_token 因此都是None
         features, count = convert_examples_to_features(english=ENGLISH, markup=args.markup,
-                                                tokenize_split_with_O=args.tokenize_split_with_O,
+                                                label_all_tokens=args.label_all_tokens,
                                                 task_name=data_type,
                                                 tokenizer_name=args.tokenizer_name if args.tokenizer_name!='' else args.model_name_or_path,
                                                 examples=examples,

@@ -24,7 +24,7 @@ class GPT2LMSoftmaxForNer(torch.nn.Module):
 
         self.pseudo_token_id = 21128
         self.dropout = nn.Dropout(config.resid_pdrop)
-        self.loss_type = 'ce'
+        self.loss_type = 'focal'
         self.device = device
 
         # embedding是GPT2LMHeadModel的embedding

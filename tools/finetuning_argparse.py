@@ -5,14 +5,14 @@ def get_argparse():
     # Required parameters
 
     parser.add_argument("--task_name", default='conll2003', type=str, #required=True,
-                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote'] ")
+                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote', 'ontonote4'] ")
     parser.add_argument("--data_dir", default='datasets/conll_03_english', type=str, #required=True,
-                        help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll_03_english', 'datasets/ontonote'] )
+                        help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll_03_english', 'datasets/ontonote',  'datasets/ontonote4'] )
     parser.add_argument("--output_dir", default='outputs/conll2003_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written."
                              " In my implementation, I mkdir the files listed in choices, you can mkdir your own output file",
-                        choices=['outputs/cluener_output/gpt2', 'outputs/conll2003_output/gpt2', 'outputs/cner_output/gpt2', 'outputs/cluener_output/gpt2'] )
+                        choices=['outputs/cluener_output/gpt2', 'outputs/conll2003_output/gpt2', 'outputs/cner_output/gpt2', 'outputs/ontonote_output/gpt2', 'outputs/ontonote4_output/gpt2'] )
     parser.add_argument("--model_type", default='generate', type=str, #required=True,
                         help="Model type selected ",
                         choices=['bert', 'albert', 'bare_gpt2', 'gpt2','generate',
@@ -28,8 +28,8 @@ def get_argparse():
     parser.add_argument("--output_file_name", default='.json',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name")
-    parser.add_argument('--tokenize_split_with_O', type=int, default=0,
-                        help='{0:tokenize_split_with_O, 1:tokenize_split_with_the former_token label}')
+    parser.add_argument('--label_all_tokens', action="store_true", default=False,
+                        help='{0:label_split tokens with -100, 1:label_all_tokens}')
     parser.add_argument("--logging_steps", type=int, default=5,
                         help="Log every X updates steps.")
     # model_name_or_path can only be selected in the following list:

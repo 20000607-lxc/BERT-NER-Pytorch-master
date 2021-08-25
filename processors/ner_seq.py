@@ -33,7 +33,7 @@ def iob_iobes(tags):
     return new_tags
 
 # def markup_for_bert_chinese(markup, tokens, new_label):
-# 没有必要转化 一律采用biso
+# 没有必要转化 一律按照benchmark的做法采用biso
 # 这里的代码没写错
 #     if markup == 'biso':
 #         # replace B- with S-
@@ -66,7 +66,8 @@ def iob_iobes(tags):
 #
 #     return tokens, new_label
 
-def markup_for_gpt2_english(markup, tokens,  label_ids, label_on):
+def markup_for_gpt2_english(markup, tokens,  label_ids, label_all_tokens):
+    assert markup in ['bio', 'bieso']
     j = 0
     new_label = [0] * len(tokens)
     # if markup == 'biso':
@@ -97,16 +98,16 @@ def markup_for_gpt2_english(markup, tokens,  label_ids, label_on):
                 new_label[i] = label_ids[j]
                 j = j+1
             else:
-                if label_on:
+                if label_all_tokens:
                     new_label[i] = new_label[i-1]
-                    # 下面这种实验跑出来conll88% 不知道是不是他的问题
+                    # 下面这种实验跑出来conll88% 不知道是不是他的问题  transformers 没有改变类型
                     # if new_label[i-1] % 2 == 1:# B- label
                     #     new_label[i] = new_label[i-1]+1# new_label[i] should be I-
                     # else:
                     #     new_label[i] = new_label[i-1]# new_label[i] should be I- or O
                     #     # should not use O(0 means "O") anymore!
                 else:
-                    new_label[i] = 0
+                    new_label[i] = -100# todo note： the convention is -100 not O!!
 
     elif markup == 'bieso':
         for i in range(len(tokens)):
@@ -114,10 +115,10 @@ def markup_for_gpt2_english(markup, tokens,  label_ids, label_on):
                 new_label[i] = label_ids[j]
                 j = j+1
             else:
-                if label_on:
+                if label_all_tokens:
                     new_label[i] = new_label[i-1]
-                    # 下面这种实验跑出来conll88% 不知道是不是他的问题
-                    # # todo 这里可以索引i-1因为第一个单词必须是有G的
+                    # 下面这种实验跑出来conll88% 不知道是不是他的问题 transformers 没有改变类型
+                    # #这里可以索引i-1因为第一个单词必须是有G的
                     # if new_label[i-1] % 4 == 2:# B- label
                     #     new_label[i] = new_label[i-1]+1# todo ? new_label[i] should be I-
                     # elif new_label[i] % 4 == 3:
@@ -127,14 +128,13 @@ def markup_for_gpt2_english(markup, tokens,  label_ids, label_on):
                     #         new_label[i] = new_label[i-1]+1
                     # else:
                     #     new_label[i] = new_label[i-1]# new_label[i] should be I- or O
-                    #     # todo should not use O(0 means "O") anymore
-
+                    #     # should not use O(0 means "O") anymore
                 else:
-                    new_label[i] = 0
+                    new_label[i] = -100
 
         # replace B- with S- and I- with E-
         # todo 这个应该对于label on 的两种方式 是一样的？ 对于label 不on的怎么做？不on的就不能做了 因为会在中间出现O  可能会转换错误
-        assert label_on == True
+        assert label_all_tokens == True
 
         for i in range(len(new_label)-1):
             # for all the lonely token(do not count the split words), replace B- with S-
@@ -213,7 +213,7 @@ def collate_fn(batch):
 # from transformers import AutoTokenizer
 # tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
 
-def convert_examples_to_features(english, markup, tokenize_split_with_O, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
+def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
                                  cls_token_at_end=False, cls_token="[CLS]", cls_token_segment_id=1,
                                  sep_token="[SEP]", pad_on_left=False, pad_token=0, pad_token_segment_id=0,
                                  sequence_a_segment_id=0, mask_padding_with_zero=True,):
@@ -223,10 +223,6 @@ def convert_examples_to_features(english, markup, tokenize_split_with_O, tokeniz
             - True (XLNet/GPT pattern): A + [SEP] + B + [SEP] + [CLS]
         `cls_token_segment_id` define the segment id associated to the CLS token (0 for BERT, 2 for XLNet)
     """
-    if tokenize_split_with_O == 0:
-        label_on = False
-    else:
-        label_on = True
     count = 0
     the_no_entity_number = 0
     label_map = {label: i for i, label in enumerate(label_list)}
@@ -258,7 +254,7 @@ def convert_examples_to_features(english, markup, tokenize_split_with_O, tokeniz
                 the_no_entity_number += flag
 
                 # align the label_ids with tokens
-                markup, tokens, new_label, label_ids = markup_for_gpt2_english(markup, tokens, label_ids, label_on)
+                markup, tokens, new_label, label_ids = markup_for_gpt2_english(markup, tokens, label_ids, label_all_tokens)
                 # truncate
                 special_tokens_count = 0
                 if len(tokens) > max_seq_length - special_tokens_count:
