@@ -9,10 +9,9 @@ from models.p_tuning.prompt_encoder import PromptEncoder
 from torch.nn.utils.rnn import pad_sequence
 from transformers import GPT2LMHeadModel
 
-
 class GPT2SoftmaxForNer_fix(torch.nn.Module):
     """
-    输出input[1:] + prompt3 对应的hidden state
+    输出input对应的hidden state
     tokenizer: bert-base-chinese or gpt2 tokenizer
     """
     def __init__(self, config, device, template, model_name=None):
@@ -50,22 +49,22 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
         input = []
         prompt1 = []
         prompt2 = []
-        prompt3 = []
+        #prompt3 = []
         count = 0
         for i in range(self.template[0]):
             prompt1.append(prompt_tokens[0])
         for i in range(self.template[1]):
             prompt2.append(prompt_tokens[0])
 
-        prompt3.append(prompt_tokens[0])
+        #prompt3.append(prompt_tokens[0])
         for i in range(len(input_id)):
             if input_id[i] != 0:
                 count += 1
                 input.append(input_id[i].item())
         if self.template[0] == self.template[1]:
-            query = prompt1 + input + prompt2 + input #+ prompt3 # prompt3 一位
+            query = prompt1 + input + prompt2 + input
         else:
-            query = prompt1 + input + prompt2# + prompt3
+            query = prompt1 + input + prompt2
 
         return query, count
 
@@ -316,7 +315,7 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
 
 class BareGPT2(torch.nn.Module):
     """
-    输出input[1:] + prompt3 对应的hidden state
+    输出input对应的hidden state
     tokenizer: bert-base-chinese
     """
     def __init__(self, config, device, template, model_name=None):

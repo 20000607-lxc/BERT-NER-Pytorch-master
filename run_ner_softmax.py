@@ -482,9 +482,8 @@ def predict(args, model, tokenizer, prefix = ''):
                 writer.write(json.dumps(record) + '\n')
 
 
-    # get the test results !
-    print("get the test results")
     if args.task_name == "cluener":
+        print("get the test results in file and submit ")
         output_submit_file = os.path.join(pred_output_dir, prefix, "test_submit.json")
         test_text = []
         with open(os.path.join(args.data_dir, "test.json"), 'r') as fr:
