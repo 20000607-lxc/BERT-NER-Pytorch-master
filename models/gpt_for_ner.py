@@ -275,15 +275,16 @@ class GPT2GenerateForNer(torch.nn.Module):
         past_key_values = outputs.past_key_values
 
         assert outputs[0][0][0][0] == outputs.last_hidden_state[0][0][0]
-
         sequence = torch.zeros(input_ids.shape[0], input_ids.shape[1], self.hidden_size).to(self.device)
 
-        for bdix in range(bz):
-            # 第一个token
-            sequence[bdix, 0, :] = sequence_output[bdix, :]
+        # 第一个token
+        sequence[:, 0, :] = sequence_output
+
         for round in range(1, max(counts)):
             sequence_output = sequence_output.unsqueeze(1)
-            outputs = self.gpt2(inputs_embeds=sequence_output, past_key_values=past_key_values, return_dict=None)
+            # todo in this place, use the input ids as the context!
+            outputs = self.gpt2(inputs_embeds=inputs_embeds[:, self.template[0]+round-1:self.template[0]+round, :].unsqueeze(1),
+                                past_key_values=past_key_values, return_dict=None)
             sequence_output = outputs[0][..., -1, :]
             past_key_values = outputs.past_key_values
             sequence[:, round, :] = sequence_output
