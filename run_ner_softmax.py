@@ -20,9 +20,8 @@ from models.BART_for_ner import BartSoftmaxForNer
 from models.transformers_master.models.gpt2.configuration_gpt2 import GPT2Config #new config
 from models.transformers_master.models.bert.configuration_bert import BertConfig #new config
 from models.transformers_master.models.bart.configuration_bart import BartConfig
-from models.gpt_for_ner import GPT2SoftmaxForNer_fix, BareGPT2 , GPT2GenerateForNer
+from models.gpt_for_ner import GPT2SoftmaxForNer_fix, BareGPT2, GPT2GenerateForNer
 from models.gpt_LE_for_ner import GPT2SoftmaxForNer_LE# , GPT2GenerateForNer
-
 from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer, BareChineseGPT2
 from models.albert_for_ner import AlbertSoftmaxForNer
 from processors.utils_ner import CNerTokenizer, get_entities
@@ -51,6 +50,7 @@ TEMPLATE_CLASSES = {
     '1': (6, 6, 0),# use the prompt + input + prompt + input module, and cut the hidden state of the later input to classify
     #'2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
     '3': (12, 12, 0),
+    '0': (6,  1,  0)
     #'4': (24, 24, 0),
     #'5': (24, 88, 0),
     #'6': (12, 32, 0)

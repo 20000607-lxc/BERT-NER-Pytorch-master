@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="lixuechun@10.26.6.241:22 (1)" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="lixuechun@10.26.6.241:22 (2)" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
-      <paths name="lixuechun@10.26.6.241:22 (1)">
+      <paths name="lixuechun@10.26.6.241:22 (2)">
         <serverdata>
           <mappings>
-            <mapping deploy="/data/lixuechun/python_work/BERT-NER-Pytorch-master" local="$PROJECT_DIR$" />
+            <mapping deploy="/data/lixuechun/python_work/BERT-NER-Pytorch-master" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

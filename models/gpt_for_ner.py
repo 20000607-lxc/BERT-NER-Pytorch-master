@@ -4,7 +4,6 @@ from torch.nn import CrossEntropyLoss
 from losses.focal_loss import FocalLoss
 from losses.label_smoothing import LabelSmoothingCrossEntropy
 from .transformers_master.models.gpt2.modeling_gpt2 import GPT2Model as New_GPT2
-from .transformers_master.models.gpt2.modeling_gpt2 import GPT2PreTrainedModel
 from models.p_tuning.prompt_encoder import PromptEncoder
 from torch.nn.utils.rnn import pad_sequence
 from transformers import GPT2LMHeadModel
@@ -61,10 +60,11 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
             if input_id[i] != 0:
                 count += 1
                 input.append(input_id[i].item())
-        if self.template[0] == self.template[1]:
-            query = prompt1 + input + prompt2 + input
-        else:
-            query = prompt1 + input + prompt2
+        query = prompt1 + input + prompt2 + input
+        # if self.template[0] == self.template[1]:
+        #     query = prompt1 + input + prompt2 + input
+        # else:
+        #     query = prompt1 + input + prompt2
 
         return query, count
 
@@ -129,10 +129,11 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
         sequence = torch.zeros(bz, bx, self.hidden_size).to(self.device)
 
         for bdix in range(bz):
-            if self.template[0] == self.template[1]:
-                place = sum(self.template)+counts[bdix]
-            else:
-                place = self.template[0] + counts[bdix]# 采用第二个prompt对应的hs
+            place = sum(self.template)+counts[bdix]
+            # if self.template[0] == self.template[1]:
+            #     place = sum(self.template)+counts[bdix]
+            # else:
+            #     place = self.template[0] + counts[bdix]# 采用第二个prompt对应的hs
                 # place = 2 * self.template[0] + counts[bdix] + 1 不得行 差好多
             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
             # todo 只截取没有pad的id对应的input
@@ -162,12 +163,14 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
         return outputs  # (loss), scores, (hidden_states), (attentions)
 
 
-class GPT2GenerateForNer(GPT2PreTrainedModel):
+
+
+class GPT2GenerateForNer(torch.nn.Module):
     """
     循环生成下一位的hidden state
     """
     def __init__(self, config, device, template, model_name=None):
-        super(GPT2GenerateForNer, self).__init__(config)
+        super().__init__()
         if model_name == None:
             model_name = 'gpt2'
         self.num_labels = config.num_labels
@@ -179,23 +182,21 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
         # perform fine_tuning
+        self.device = device
 
         self.dropout = nn.Dropout(config.resid_pdrop)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
         self.linear = nn.Linear(2*config.hidden_size, config.hidden_size)
         self.loss_type = 'ce'
-        self.init_weights()
-
         self.pseudo_token_id = 50257# prompt word 的id
 
         self.hidden_size = self.embeddings.embedding_dim
         self.template = template
-
         self.pad_token_id = 0
         self.spell_length = sum(self.template)
         self.prompt_encoder = PromptEncoder(self.template, self.hidden_size, device)
         self.prompt_encoder = self.prompt_encoder.to(device)
-        print("****************init  GPT2GenerateForNer***********************")
+        print("****************init  GPT2GenerateForNer  ***********************")
         print("****************generate hidden state in a loop****************")
         print("***************** "+str(model_name) + " *********************")
         print("************** num_labels *** "+str(self.num_labels) + " *********************")
@@ -215,7 +216,6 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
                 count += 1
                 input.append(input_id[i].item())
         query = prompt1 + input + prompt2
-
         return query, count
 
     def embed_input(self, queries, counts):
@@ -237,7 +237,8 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
                 raw_embeds[bidx, i+counts[bidx]+self.template[0], :] = replace_embeds[i+self.template[0], :]
         return raw_embeds
 
-    def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, labels=None):
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None,
+                position_ids=None, head_mask=None, labels=None):
         """
         Args:
             input_ids: padded seuqence:[batch_size, max_length]
@@ -291,7 +292,7 @@ class GPT2GenerateForNer(GPT2PreTrainedModel):
         logits = self.classifier(sequence)
 
         outputs = (example,)+outputs[2:]
-        outputs = (logits,) + outputs  # add hidden states and attention if they are here
+        outputs = (logits,) + outputs# add hidden states and attention if they are here
         if labels is not None:
             assert self.loss_type in ['lsr', 'focal', 'ce']
             if self.loss_type == 'lsr':

@@ -64,7 +64,7 @@ def get_argparse():
 
     parser.add_argument("--template", default='1', type=str, #required=True,
                         help="prompt size, you can modify the template in run_ner_xxx.py by changing TEMPLATE_CLASSES ",
-                        choices=['1', '2', '3', '4'])
+                        choices=['0','1', '2', '3', '4'])
     parser.add_argument("--learning_rate", default=5e-5, type=float,#bert default = 5e-5
                         help="The initial learning rate for Adam.")
     parser.add_argument("--crf_learning_rate", default=5e-5, type=float,#bert default = 5e-5
