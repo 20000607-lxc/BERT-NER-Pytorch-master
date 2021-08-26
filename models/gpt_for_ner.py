@@ -279,11 +279,11 @@ class GPT2GenerateForNer(torch.nn.Module):
 
         # 第一个token
         sequence[:, 0, :] = sequence_output
-
         for round in range(1, max(counts)):
             sequence_output = sequence_output.unsqueeze(1)
-            # todo in this place, use the input ids as the context!
-            outputs = self.gpt2(inputs_embeds=inputs_embeds[:, self.template[0]+round-1:self.template[0]+round, :].unsqueeze(1),
+            # todo this implementation uses the input ids' hidden state as the context!
+            #  can also change into the directly use the input ids later!
+            outputs = self.gpt2(inputs_embeds=inputs[:, self.template[0]+round-1:self.template[0]+round, :],
                                 past_key_values=past_key_values, return_dict=None)
             sequence_output = outputs[0][..., -1, :]
             past_key_values = outputs.past_key_values
@@ -419,7 +419,6 @@ class BareGPT2(torch.nn.Module):
                 loss = loss_fct(logits.contiguous().view(-1, self.num_labels), labels.contiguous().view(-1))
             outputs = (loss,) + outputs
         return outputs  # (loss), scores, (hidden_states), (attentions)
-
 
 
 # class GPT2SoftmaxForNer(GPT2PreTrainedModel):

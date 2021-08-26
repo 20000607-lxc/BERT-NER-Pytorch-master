@@ -92,7 +92,7 @@ def get_argparse():
                         help="The maximum total input sequence length after tokenization. Sequences longer "
                              "than this will be truncated, sequences shorter will be padded.", )
 
-    parser.add_argument('--cuda', type=int, default=3, help='Avaiable GPU ID')
+    parser.add_argument('--cuda', type=int, default=2, help='Avaiable GPU ID')
     parser.add_argument("--do_train", action="store_true", default=True,
                         help="Whether to run training.")
     parser.add_argument("--evaluate_and_test_during_training", action="store_true", default=True,
