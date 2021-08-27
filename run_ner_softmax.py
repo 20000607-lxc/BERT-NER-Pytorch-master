@@ -50,7 +50,8 @@ TEMPLATE_CLASSES = {
     '1': (6, 6, 0),# use the prompt + input + prompt + input module, and cut the hidden state of the later input to classify
     #'2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
     '3': (12, 12, 0),
-    '0': (6,  1,  0)
+    '0': (6,  1,  0),
+    '-1': (6,  0,  0),
     #'4': (24, 24, 0),
     #'5': (24, 88, 0),
     #'6': (12, 32, 0)
