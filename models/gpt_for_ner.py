@@ -164,7 +164,6 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
 
 
 
-
 class GPT2GenerateForNer(torch.nn.Module):
     """
     循环生成下一位的hidden state
@@ -196,6 +195,7 @@ class GPT2GenerateForNer(torch.nn.Module):
         self.spell_length = sum(self.template)
         self.prompt_encoder = PromptEncoder(self.template, self.hidden_size, device)
         self.prompt_encoder = self.prompt_encoder.to(device)
+        self.cat = nn.Linear(config.hidden_size*2,config.hidden_size)
         print("****************init  GPT2GenerateForNer  ***********************")
         print("****************generate hidden state in a loop****************")
         print("***************** "+str(model_name) + " *********************")
@@ -283,7 +283,10 @@ class GPT2GenerateForNer(torch.nn.Module):
             sequence_output = sequence_output.unsqueeze(1)
             # todo this implementation uses the input ids' hidden state as the context!
             #  can also change into the directly use the input ids later!
-            outputs = self.gpt2(inputs_embeds=inputs[:, self.template[0]+round-1:self.template[0]+round, :],
+            # choice1: inputs[:, self.template[0]+round-1:self.template[0]+round, :]
+            # choice2: sequence_output
+            # choice3: self.cat(torch.cat((sequence_output, inputs[:, self.template[0]+round-1:self.template[0]+round, :]),dim=2))
+            outputs = self.gpt2(inputs_embeds=sequence_output,
                                 past_key_values=past_key_values, return_dict=None)
             sequence_output = outputs[0][..., -1, :]
             past_key_values = outputs.past_key_values
