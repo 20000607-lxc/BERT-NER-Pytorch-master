@@ -195,7 +195,8 @@ class GPT2GenerateForNer(torch.nn.Module):
         self.spell_length = sum(self.template)
         self.prompt_encoder = PromptEncoder(self.template, self.hidden_size, device)
         self.prompt_encoder = self.prompt_encoder.to(device)
-        self.cat = nn.Linear(config.hidden_size*2,config.hidden_size)
+        self.cat = nn.Linear(config.hidden_size*2, config.hidden_size)
+        # todo 加一个激活层看会不会好
         print("****************init  GPT2GenerateForNer  ***********************")
         print("****************generate hidden state in a loop****************")
         print("***************** "+str(model_name) + " *********************")
@@ -226,7 +227,6 @@ class GPT2GenerateForNer(torch.nn.Module):
         bz = queries.shape[0]
         queries_for_embedding = queries.clone()
         queries_for_embedding[(queries == self.pseudo_token_id)] = self.pseudo_token_id-1
-
         replace_embeds = self.prompt_encoder()
         raw_embeds = self.embeddings(queries_for_embedding)
 
@@ -286,6 +286,8 @@ class GPT2GenerateForNer(torch.nn.Module):
             # choice1: inputs[:, self.template[0]+round-1:self.template[0]+round, :]
             # choice2: sequence_output
             # choice3: self.cat(torch.cat((sequence_output, inputs[:, self.template[0]+round-1:self.template[0]+round, :]),dim=2))
+            # choice4: use the ids? it seems the same with choice1
+
             outputs = self.gpt2(inputs_embeds=sequence_output,
                                 past_key_values=past_key_values, return_dict=None)
             sequence_output = outputs[0][..., -1, :]
