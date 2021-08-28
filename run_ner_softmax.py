@@ -217,7 +217,7 @@ def train(args, train_dataset, model, tokenizer):
                     print(" ")
                     if args.local_rank == -1:
                         # Only evaluate when single GPU otherwise metrics may not average well
-                        evaluate(args, model, tokenizer)
+                        evaluate(args, model, tokenizer, args.model_type)
                 # if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0 and epoch == args.num_train_epochs-1:
                 #     # Log metrics
                 #     print(" in the last epoch, do testing  ")
@@ -256,16 +256,16 @@ def train(args, train_dataset, model, tokenizer):
             torch.cuda.empty_cache()
 
     print(" in the last epoch, do testing  ")
-    predict(args, model, tokenizer)
+    predict(args, model, tokenizer, args.model_type)
 
     return global_step, tr_loss / global_step
 
-def evaluate(args, model, tokenizer, prefix=''):
+def evaluate(args, model, tokenizer, prefix):
     if args.model_type == "chinese_pretrained_gpt2":
         metric = SeqEntityScore(args.id2label, markup=args.markup)
     else:
         metric = NewSeqEntityScore(args.id2label, markup=args.markup)
-    eval_output_dir = args.output_dir
+    eval_output_dir = os.path.join(args.output_file_dir, prefix)
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
     eval_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='dev', limit = EVAL_LIMIT)
@@ -285,7 +285,7 @@ def evaluate(args, model, tokenizer, prefix=''):
         os.makedirs(eval_output_dir)
     output_results = []
     labels = []
-    output_submit_file = os.path.join(eval_output_dir, prefix, args.output_file_name)
+    output_submit_file = os.path.join(eval_output_dir,  args.output_file_name)
 
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
     for step, batch in enumerate(eval_dataloader):
@@ -379,12 +379,12 @@ def evaluate(args, model, tokenizer, prefix=''):
         wandb.log(results)
     return results
 
-def predict(args, model, tokenizer, prefix = ''):
+def predict(args, model, tokenizer, prefix):
     if args.model_type == "chinese_pretrained_gpt2":
         metric = SeqEntityScore(args.id2label, markup=args.markup)
     else:
         metric = NewSeqEntityScore(args.id2label, markup=args.markup)
-    pred_output_dir = args.output_dir
+    pred_output_dir = os.path.join(args.output_file_dir, prefix)
     if not os.path.exists(pred_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(pred_output_dir)
 
@@ -399,7 +399,7 @@ def predict(args, model, tokenizer, prefix = ''):
     logger.info("  Batch size = %d", 1)
 
     output_results = []
-    output_submit_file = os.path.join(pred_output_dir, prefix, args.output_file_name)
+    output_submit_file = os.path.join(pred_output_dir,  args.output_file_name)
     pbar = ProgressBar(n_total=len(test_dataloader), desc="Predicting")
     for step, batch in enumerate(test_dataloader):
         model.eval()
@@ -485,7 +485,7 @@ def predict(args, model, tokenizer, prefix = ''):
 
     if args.task_name == "cluener":
         print("get the test results in file and submit ")
-        output_submit_file = os.path.join(pred_output_dir, prefix, "test_submit.json")
+        output_submit_file = os.path.join(pred_output_dir,  "test_submit.json")
         test_text = []
         with open(os.path.join(args.data_dir, "test.json"), 'r') as fr:
             for line in fr:

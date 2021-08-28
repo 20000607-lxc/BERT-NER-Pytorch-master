@@ -13,6 +13,10 @@ def get_argparse():
                              "the model predictions and checkpoints will be written."
                              " In my implementation, I mkdir the files listed in choices, you can mkdir your own output file",
                         choices=['outputs/cluener_output/gpt2', 'outputs/conll2003_output/gpt2', 'outputs/cner_output/gpt2', 'outputs/ontonote_output/gpt2', 'outputs/ontonote4_output/gpt2'] )
+    parser.add_argument("--output_file_dir", default='output_files/conll2003_output/', type=str, #required=True,
+                        help="The output directory where the model predictions and checkpoints will be written,",
+                        choices=['output_files/cluener_output/', 'output_files/conll2003_output/', 'output_files/cner_output/', 'output_files/ontonote_output/', 'output_files/ontonote4_output/'] )
+
     parser.add_argument("--model_type", default='generate', type=str, #required=True,
                         help="Model type selected ",
                         choices=['bert', 'albert', 'bare_gpt2', 'gpt2', 'generate',

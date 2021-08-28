@@ -288,7 +288,7 @@ class GPT2GenerateForNer(torch.nn.Module):
             # choice3: self.cat(torch.cat((sequence_output, inputs[:, self.template[0]+round-1:self.template[0]+round, :]),dim=2))
             # choice4: use the ids? it seems the same with choice1
 
-            outputs = self.gpt2(inputs_embeds=sequence_output,
+            outputs = self.gpt2(inputs_embeds=inputs[:, self.template[0]+round:self.template[0]+round+1, :],
                                 past_key_values=past_key_values, return_dict=None)
             sequence_output = outputs[0][..., -1, :]
             past_key_values = outputs.past_key_values
