@@ -63,10 +63,10 @@ TEMPLATE_CLASSES = {
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = 60#None
-EVAL_LIMIT = 20#None
-TEST_LIMIT = 20#None
-use_wandb = False
+TRAIN_LIMIT = None
+EVAL_LIMIT = None
+TEST_LIMIT = None
+use_wandb = True
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 

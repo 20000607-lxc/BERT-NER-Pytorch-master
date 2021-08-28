@@ -338,7 +338,7 @@ class GPT2generateForNer_LE(torch.nn.Module):
 
         input_state_attn = self.attn_linear(input_state).unsqueeze(2)
         input_state_attn = self.tanh(input_state_attn)# [bz, hs, 1]
-        weights = torch.bmm(label_embedding, input_state_attn).squeeze(1)# [bz, 5, hs] * [bz, hs, 1] = [bz, 5] 表示五类label的分数
+        weights = torch.bmm(label_embedding, input_state_attn).squeeze(2)# [bz, 5, hs] * [bz, hs, 1] = [bz, 5] 表示五类label的分数
         weights = self.softmax(weights)
 
         c_t = torch.bmm(weights.unsqueeze(1), label_embedding).squeeze(1)# [bz, 1, 5] * [bz, 5, hs] = [bz, hs]  =  sigma(c_i*label_i)
