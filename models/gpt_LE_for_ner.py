@@ -233,7 +233,6 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
 
 
 
-
 class GPT2generateForNer_LE(torch.nn.Module):
     """
     循环输出hidden state, 在每一步的output中加入label embedding
@@ -272,6 +271,9 @@ class GPT2generateForNer_LE(torch.nn.Module):
         self.label_embedding = self.label_embedding.to(self.device)
         self.attn_linear = nn.Linear(self.hidden_size, self.hidden_size)
         self.fc = nn.Linear(self.hidden_size, 1, bias=False)
+        self.tanh = nn.Tanh()
+        self.softmax = nn.Softmax()
+        self.linear_out = nn.Linear(2*self.hidden_size, self.hidden_size)
 
         self.cat = nn.Linear(config.hidden_size*2, config.hidden_size)
         # todo 加一个激活层看会不会好
@@ -320,7 +322,8 @@ class GPT2generateForNer_LE(torch.nn.Module):
                 raw_embeds[bidx, i+counts[bidx]+self.template[0], :] = replace_embeds[i+self.template[0], :]
         return raw_embeds
 
-    def attention(self, input_state, label_embedding, bz):
+
+    def attention(self, input_state, label_init, bz):
         """
         Args:
             input_state: [batch_size, hidden state]
@@ -329,24 +332,55 @@ class GPT2generateForNer_LE(torch.nn.Module):
         Returns:
             output_state:[batch_size, hidden state]
         """
-        input_state_attn = self.attn_linear(input_state)
-        input_state_expanded = input_state_attn.unsqueeze(1).expand(bz, self.num_entities, self.hidden_size).contiguous()  # B x 5 x hidden_dim
-        input_state_expanded = input_state_expanded.view(-1, self.hidden_size)     # B*5 x hidden_dim
+        label_embedding = torch.empty(bz, self.num_entities, self.hidden_size).to(self.device)# [bz, 5, hs]
+        for k in range(bz):
+            label_embedding[k, :, :] = label_init
 
-        label_embedding_fea = label_embedding.view(-1, self.hidden_size)
-        att_features = label_embedding_fea + input_state_expanded    # B*self.num_entities x hidden_dim
-        e = torch.tanh(att_features)
-        scores = self.fc(e)                                      # B*self.num_entities x 1
-        scores = scores.view(-1, self.num_entities)                              # B x self.num_entities
-        attn_dist_ = F.softmax(scores, dim=1)                    # B x self.num_entities
-        normalization_factor = attn_dist_.sum(1, keepdim=True)
-        attn_dist = attn_dist_ / normalization_factor
-        attn_dist = attn_dist.unsqueeze(1)                        # B x 1 x self.num_entities
-        output_state = torch.bmm(attn_dist, label_embedding)      # B x 1 x self.num_entities * self.num_entities x hidden_dim
+        input_state_attn = self.attn_linear(input_state).unsqueeze(2)
+        input_state_attn = self.tanh(input_state_attn)# [bz, hs, 1]
+        weights = torch.bmm(label_embedding, input_state_attn).squeeze(1)# [bz, 5, hs] * [bz, hs, 1] = [bz, 5] 表示五类label的分数
+        weights = self.softmax(weights)
 
-        output_state = output_state.squeeze(1)
-        output_state += input_state
-        return output_state
+        c_t = torch.bmm(weights.unsqueeze(1), label_embedding).squeeze(1)# [bz, 1, 5] * [bz, 5, hs] = [bz, hs]  =  sigma(c_i*label_i)
+        output = self.tanh(self.linear_out(torch.cat([c_t, input_state], 1)))
+
+        return output
+
+
+    # def old_attention(self, input_state, label_init, bz):
+    #     """
+    #     Args:
+    #         input_state: [batch_size, hidden state]
+    #         label_embedding: [batch_size, num_label_type, hidden state]
+    #
+    #     Returns:
+    #         output_state:[batch_size, hidden state]
+    #     """
+    #     label_embedding = torch.empty(bz, self.num_entities, self.hidden_size).to(self.device)
+    #     for k in range(bz):
+    #         label_embedding[k, :, :] = label_init
+    #
+    #     input_state_attn = self.attn_linear(input_state)
+    #     input_state_expanded = input_state_attn.unsqueeze(1).expand(bz, self.num_entities, self.hidden_size).contiguous()  # B x 5 x hidden_dim
+    #     input_state_expanded = input_state_expanded.view(-1, self.hidden_size)     # B*5 x hidden_dim
+    #
+    #     label_embedding_fea = label_embedding.view(-1, self.hidden_size)
+    #
+    #     #
+    #     att_features = label_embedding_fea + input_state_expanded    # B*self.num_entities x hidden_dim
+    #     e = torch.tanh(att_features)
+    #     scores = self.fc(e)                                      # B*self.num_entities x 1
+    #     scores = scores.view(-1, self.num_entities)                              # B x self.num_entities
+    #     attn_dist_ = F.softmax(scores, dim=1)                    # B x self.num_entities
+    #     normalization_factor = attn_dist_.sum(1, keepdim=True)
+    #     attn_dist = attn_dist_ / normalization_factor
+    #     attn_dist = attn_dist.unsqueeze(1)                        # B x 1 x self.num_entities
+    #     output_state = torch.bmm(attn_dist, label_embedding)      # B x 1 x self.num_entities   *   B x self.num_entities x hidden_dim
+    #
+    #     output_state = output_state.squeeze(1)
+    #     output_state += input_state
+    #     return output_state
+
 
     def add_label_embedding(self, sequence_output, label_init):
         """
@@ -356,11 +390,9 @@ class GPT2generateForNer_LE(torch.nn.Module):
             output: add label embedding to sequence_output  [batch_size, 1, 768]
         """
         bz = sequence_output.shape[0]
-        label_embedding = torch.empty(bz, self.num_entities, self.hidden_size).to(self.device)
-        for k in range(bz):
-            label_embedding[k, :, :] = label_init
-        new_sequence_output = self.attention(sequence_output, label_embedding, bz)
+        new_sequence_output = self.attention(sequence_output, label_init, bz)
         return new_sequence_output
+
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None,
                 position_ids=None, head_mask=None, labels=None):

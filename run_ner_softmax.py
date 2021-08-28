@@ -21,7 +21,7 @@ from models.transformers_master.models.gpt2.configuration_gpt2 import GPT2Config
 from models.transformers_master.models.bert.configuration_bert import BertConfig #new config
 from models.transformers_master.models.bart.configuration_bart import BartConfig
 from models.gpt_for_ner import GPT2SoftmaxForNer_fix, BareGPT2, GPT2GenerateForNer
-from models.gpt_LE_for_ner import GPT2SoftmaxForNer_LE# , GPT2GenerateForNer
+from models.gpt_LE_for_ner import GPT2SoftmaxForNer_LE, GPT2generateForNer_LE
 from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer, BareChineseGPT2, GPT2LMGenerateForNer
 from models.albert_for_ner import AlbertSoftmaxForNer
 from processors.utils_ner import CNerTokenizer, get_entities
@@ -46,6 +46,7 @@ MODEL_CLASSES = {
     'chinese_generate': (GPT2Config, GPT2LMGenerateForNer, CNerTokenizer),
 
     'label_embedding': (GPT2Config, GPT2SoftmaxForNer_LE, CNerTokenizer),
+    'generate_label_embedding': (GPT2Config, GPT2generateForNer_LE, CNerTokenizer),
 
      #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer)
 }
@@ -62,14 +63,15 @@ TEMPLATE_CLASSES = {
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = None
-EVAL_LIMIT = None
-TEST_LIMIT = None
+TRAIN_LIMIT = 60#None
+EVAL_LIMIT = 20#None
+TEST_LIMIT = 20#None
+use_wandb = False
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
 
-use_wandb = True
+
 use_sweep = False
 if use_sweep:
     sweep_config = {

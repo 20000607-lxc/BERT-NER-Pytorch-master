@@ -17,10 +17,11 @@ def get_argparse():
                         help="The output directory where the model predictions and checkpoints will be written,",
                         choices=['output_files/cluener_output/', 'output_files/conll2003_output/', 'output_files/cner_output/', 'output_files/ontonote_output/', 'output_files/ontonote4_output/'] )
 
-    parser.add_argument("--model_type", default='chinese_generate', type=str, #required=True,
+    parser.add_argument("--model_type", default='generate_label_embedding', type=str, #required=True,
                         help="Model type selected ",
                         choices=['bert', 'albert', 'bare_gpt2', 'gpt2', 'generate',
-                             'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'chinese_generate', 'label_embedding'] )
+                             'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
+                                 'chinese_generate', 'label_embedding'] )
     parser.add_argument("--note", default='', type=str,
                         help="the implementation details to remind")
     parser.add_argument("--save_model", default=False, action="store_true",
@@ -81,7 +82,7 @@ def get_argparse():
     # I set the tokenizer for chinese as bert-base-chinese in run_ner_xxx.py and cannot be modified by --tokenizer_name.
 
     # Other parameters: always use the default values and haven't changed yet.
-    parser.add_argument('--markup', default='bieso', type=str,
+    parser.add_argument('--markup', default='bio', type=str,
                         choices=['biso', 'bio', 'bieso'])
     parser.add_argument('--loss_type', default='ce', type=str,
                         choices=['lsr', 'focal', 'ce'])
