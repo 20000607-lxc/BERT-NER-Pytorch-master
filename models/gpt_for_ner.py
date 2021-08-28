@@ -197,6 +197,10 @@ class GPT2GenerateForNer(torch.nn.Module):
         self.prompt_encoder = self.prompt_encoder.to(device)
         self.cat = nn.Linear(config.hidden_size*2, config.hidden_size)
         # todo 加一个激活层看会不会好
+        self.mlp = nn.Sequential(nn.Linear(config.hidden_size*2, self.hidden_size),
+                                                 nn.ReLU(),
+                                                 nn.Linear(self.hidden_size, self.hidden_size))
+
         print("****************init  GPT2GenerateForNer  ***********************")
         print("****************generate hidden state in a loop****************")
         print("***************** "+str(model_name) + " *********************")
@@ -284,11 +288,15 @@ class GPT2GenerateForNer(torch.nn.Module):
             # todo this implementation uses the input ids' hidden state as the context!
             #  can also change into the directly use the input ids later!
             # choice1: inputs[:, self.template[0]+round-1:self.template[0]+round, :]
-            # choice2: sequence_output
-            # choice3: self.cat(torch.cat((sequence_output, inputs[:, self.template[0]+round-1:self.template[0]+round, :]),dim=2))
-            # choice4: use the ids? it seems the same with choice1
+            # choice2: inputs[:, self.template[0]+round:self.template[0]+round+1, :]
+            # choice3: sequence_output
+            # choice4: self.cat(torch.cat((inputs[:, self.template[0]+round:self.template[0]+round+1, :], inputs[:, self.template[0]+round-1:self.template[0]+round, :]),dim=2))
+            # choice5:  self.mlp(torch.cat((inputs[:, self.template[0]+round:self.template[0]+round+1, :], inputs[:, self.template[0]+round-1:self.template[0]+round, :]),dim=2))
+            # choice5: use the ids? it seems the same with choice1
+            input_this_step = self.cat(torch.cat((inputs[:, self.template[0]+round:self.template[0]+round+1, :]
+                                                  , inputs[:, self.template[0]+round-1:self.template[0]+round, :]), dim=2))
 
-            outputs = self.gpt2(inputs_embeds=inputs[:, self.template[0]+round:self.template[0]+round+1, :],
+            outputs = self.gpt2(inputs_embeds=input_this_step,
                                 past_key_values=past_key_values, return_dict=None)
             sequence_output = outputs[0][..., -1, :]
             past_key_values = outputs.past_key_values

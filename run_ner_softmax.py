@@ -22,7 +22,7 @@ from models.transformers_master.models.bert.configuration_bert import BertConfig
 from models.transformers_master.models.bart.configuration_bart import BartConfig
 from models.gpt_for_ner import GPT2SoftmaxForNer_fix, BareGPT2, GPT2GenerateForNer
 from models.gpt_LE_for_ner import GPT2SoftmaxForNer_LE# , GPT2GenerateForNer
-from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer, BareChineseGPT2
+from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer, BareChineseGPT2, GPT2LMGenerateForNer
 from models.albert_for_ner import AlbertSoftmaxForNer
 from processors.utils_ner import CNerTokenizer, get_entities
 from processors.ner_seq import convert_examples_to_features
@@ -37,12 +37,16 @@ import pprint
 MODEL_CLASSES = {
     #'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
     #'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
-    'gpt2': (GPT2Config, GPT2SoftmaxForNer_fix, CNerTokenizer),
-    "chinese_pretrained_gpt2": (GPT2Config, GPT2LMSoftmaxForNer, CNerTokenizer),
     'bare_gpt2': (GPT2Config, BareGPT2, CNerTokenizer),
+    'gpt2': (GPT2Config, GPT2SoftmaxForNer_fix, CNerTokenizer),
+    'generate': (GPT2Config, GPT2GenerateForNer, CNerTokenizer),
+
     'bare_chinese_gpt2':  (GPT2Config, BareChineseGPT2, CNerTokenizer),
+    "chinese_pretrained_gpt2": (GPT2Config, GPT2LMSoftmaxForNer, CNerTokenizer),
+    'chinese_generate': (GPT2Config, GPT2LMGenerateForNer, CNerTokenizer),
+
     'label_embedding': (GPT2Config, GPT2SoftmaxForNer_LE, CNerTokenizer),
-    'generate': (GPT2Config, GPT2GenerateForNer, CNerTokenizer),# todo not good! test later!
+
      #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer)
 }
 
@@ -64,8 +68,10 @@ TEST_LIMIT = None
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
-use_wandb = False
-if use_wandb:
+
+use_wandb = True
+use_sweep = False
+if use_sweep:
     sweep_config = {
         'method': 'random',# grid, random
         'metric': {
@@ -265,6 +271,7 @@ def evaluate(args, model, tokenizer, prefix):
         metric = SeqEntityScore(args.id2label, markup=args.markup)
     else:
         metric = NewSeqEntityScore(args.id2label, markup=args.markup)
+
     eval_output_dir = os.path.join(args.output_file_dir, prefix)
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
@@ -329,7 +336,7 @@ def evaluate(args, model, tokenizer, prefix):
 
         # to wirte results in the output file
         labels.append(batch[3])
-        if args.task_name in ['cluener','cner']:
+        if args.task_name in ['cluener','cner', 'ontonote4']:
             preds = preds[0][1:-1]# [CLS]XXXX[SEP]
         else:
             preds = preds[0]# 对于英文没有用[cls]和[sep] 因此不截取
@@ -416,6 +423,11 @@ def predict(args, model, tokenizer, prefix):
             input_lens = batch[4].cpu().numpy().tolist()
             out_label_ids = batch[3].cpu().numpy().tolist()
 
+            example = outputs[1]
+            example = example.tolist()
+            example = tokenizer.decode(example)
+            example = ' '.join(example)
+
         for i, label in enumerate(out_label_ids):
             temp_1 = []
             temp_2 = []
@@ -437,7 +449,7 @@ def predict(args, model, tokenizer, prefix):
         else:
             preds = preds[0]# 英文没有用[cls]和[sep] 因此不截取
 
-        # tags = [args.id2label[x] for x in preds]
+        tags = [args.id2label[x] for x in preds]
         if args.model_type == "chinese_pretrained_gpt2":
             label_entities = get_entities(preds, args.id2label, args.markup)
             #true_labels = batch[3].detach().cpu().numpy().tolist()[0]
@@ -451,6 +463,16 @@ def predict(args, model, tokenizer, prefix):
             json_d['entities'] = label_entities
             #json_d['true_entities'] = true_label_entities
             output_results.append(json_d)
+        else:
+            json_d = {}
+            json_d['id'] = step
+            #json_d['true_tag_seq'] = " ".join(true_labels)
+            json_d['pred_tag_seq'] = " ".join(tags)
+            json_d['example of the gpt2 output words'] = example
+            #json_d['entities'] = label_entities
+            #json_d['true_entities'] = true_label_entities
+            output_results.append(json_d)
+
 
         pbar(step)
 
@@ -483,7 +505,7 @@ def predict(args, model, tokenizer, prefix):
                 writer.write(json.dumps(record) + '\n')
 
 
-    if args.task_name == "cluener":
+    else :
         print("get the test results in file and submit ")
         output_submit_file = os.path.join(pred_output_dir,  "test_submit.json")
         test_text = []
@@ -579,11 +601,12 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
 
 def main():
     args = get_argparse().parse_args()
+    args.project = args.task_name +'_'+ args.model_type
     if args.model_type == "chinese_pretrained_gpt2":
         assert args.task_name in ['cluener', 'cner', 'ontonote4']
         assert args.markup == 'biso'# 中文一律采用biso
     if use_wandb:
-        wandb.init(config=args, project='gpt2_sweep_2_try', entity='li_xuechun')
+        wandb.init(config=args, project=args.project, entity='lxc')
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
     args.output_dir = args.output_dir + '{}'.format(args.model_type)
@@ -786,8 +809,8 @@ def main():
             model.to(args.device)
             predict(args, model, tokenizer, prefix=prefix)
 
-if use_wandb:
-    sweep_id = wandb.sweep(sweep_config,  project='gpt2_sweep_2_try', entity='li_xuechun')
+if use_sweep:
+    sweep_id = wandb.sweep(sweep_config,  project='gpt2_sequence_labeling_sweep', entity='lxc')
     wandb.agent(sweep_id, function=main)
 
 if __name__ == "__main__":
