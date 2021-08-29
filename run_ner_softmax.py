@@ -46,7 +46,7 @@ MODEL_CLASSES = {
     'chinese_generate': (GPT2Config, GPT2LMGenerateForNer, CNerTokenizer),
 
     'label_embedding': (GPT2Config, GPT2SoftmaxForNer_LE, CNerTokenizer),
-    'generate_label_embedding': (GPT2Config, GPT2generateForNer_LE, CNerTokenizer),
+    'generate_label_embedding': (GPT2Config, GPT2generateForNer_LE, CNerTokenizer),# add label embedding each step!
 
      #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer)
 }
@@ -269,7 +269,7 @@ def train(args, train_dataset, model, tokenizer):
     return global_step, tr_loss / global_step
 
 def evaluate(args, model, tokenizer, prefix):
-    if args.model_type == "chinese_pretrained_gpt2":
+    if args.model_type in [ "chinese_pretrained_gpt2", 'chinese_generate'] :
         metric = SeqEntityScore(args.id2label, markup=args.markup)
     else:
         metric = NewSeqEntityScore(args.id2label, markup=args.markup)
@@ -364,7 +364,7 @@ def evaluate(args, model, tokenizer, prefix):
     logger.info("\n")
     eval_loss = eval_loss / nb_eval_steps
 
-    if args.model_type == "chinese_pretrained_gpt2":
+    if args.model_type in ["chinese_pretrained_gpt2", 'chinese_generate']:
         eval_info, entity_info = metric.result()
         results = {f'{key}': value for key, value in eval_info.items()}
         results['loss'] = eval_loss
@@ -389,7 +389,7 @@ def evaluate(args, model, tokenizer, prefix):
     return results
 
 def predict(args, model, tokenizer, prefix):
-    if args.model_type == "chinese_pretrained_gpt2":
+    if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
         metric = SeqEntityScore(args.id2label, markup=args.markup)
     else:
         metric = NewSeqEntityScore(args.id2label, markup=args.markup)
@@ -455,7 +455,7 @@ def predict(args, model, tokenizer, prefix):
         true_labels = batch[3].detach().cpu().numpy().tolist()[0]
         for k in range(len(true_labels)):
             true_labels[k] = str(true_labels[k])
-        if args.model_type == "chinese_pretrained_gpt2":
+        if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
             label_entities = get_entities(preds, args.id2label, args.markup)
             #true_label_entities = get_entities(true_labels, args.id2label, args.markup)
             json_d = {}
@@ -482,7 +482,7 @@ def predict(args, model, tokenizer, prefix):
 
     logger.info("\n")
     if args.task_name != 'cluener':
-        if args.model_type == "chinese_pretrained_gpt2":
+        if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
             test_info, entity_info = metric.result()
             results = {f'{key}': value for key, value in test_info.items()}
             if use_wandb:
@@ -606,7 +606,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
 def main():
     args = get_argparse().parse_args()
     args.project = args.task_name +'_'+ args.model_type
-    if args.model_type == "chinese_pretrained_gpt2":
+    if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
         assert args.task_name in ['cluener', 'cner', 'ontonote4']
         assert args.markup == 'biso'# 中文一律采用biso
     if use_wandb:
