@@ -348,7 +348,7 @@ def evaluate(args, model, tokenizer, prefix):
         #true_label_entities = get_entities(true_labels, args.id2label, args.markup)
         json_d = {}
         json_d['id'] = step
-        #json_d['true_tag_seq'] = " ".join(true_labels)
+        # json_d['true_tag_seq'] = " ".join(true_labels)
         json_d['pred_tag_seq'] = " ".join(tags)
         json_d['example of the gpt2 output words'] = example
         #json_d['entities'] = label_entities
@@ -452,15 +452,17 @@ def predict(args, model, tokenizer, prefix):
             preds = preds[0]# 英文没有用[cls]和[sep] 因此不截取
 
         tags = [args.id2label[x] for x in preds]
+        true_labels = batch[3].detach().cpu().numpy().tolist()[0]
+        for k in range(len(true_labels)):
+            true_labels[k] = str(true_labels[k])
         if args.model_type == "chinese_pretrained_gpt2":
             label_entities = get_entities(preds, args.id2label, args.markup)
-            #true_labels = batch[3].detach().cpu().numpy().tolist()[0]
             #true_label_entities = get_entities(true_labels, args.id2label, args.markup)
             json_d = {}
             json_d['id'] = step
             #f = all_tokens[step]
             #json_d['token'] = f
-            #json_d['true_tag_seq'] = " ".join(true_labels)
+            json_d['true_tag_seq'] = " ".join(true_labels)
             # json_d['tag_seq'] = " ".join(tags)
             json_d['entities'] = label_entities
             #json_d['true_entities'] = true_label_entities
@@ -468,7 +470,7 @@ def predict(args, model, tokenizer, prefix):
         else:
             json_d = {}
             json_d['id'] = step
-            #json_d['true_tag_seq'] = " ".join(true_labels)
+            json_d['true_tag_seq'] = " ".join(true_labels)
             json_d['pred_tag_seq'] = " ".join(tags)
             json_d['example of the gpt2 output words'] = example
             #json_d['entities'] = label_entities

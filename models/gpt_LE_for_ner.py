@@ -276,7 +276,6 @@ class GPT2generateForNer_LE(torch.nn.Module):
         self.linear_out = nn.Linear(2*self.hidden_size, self.hidden_size)
 
         self.cat = nn.Linear(config.hidden_size*2, config.hidden_size)
-        # todo 加一个激活层看会不会好
         self.mlp = nn.Sequential(nn.Linear(config.hidden_size*2, self.hidden_size),
                                  nn.ReLU(),
                                  nn.Linear(self.hidden_size, self.hidden_size))
@@ -436,16 +435,9 @@ class GPT2generateForNer_LE(torch.nn.Module):
         # 第一个token
         new_sequence_output = self.add_label_embedding(sequence_output, label_init)
         sequence[:, 0, :] = new_sequence_output
-
         # loop
         for round in range(1, max(counts)):
-            # choice1: inputs[:, self.template[0]+round-1:self.template[0]+round, :]
-            # choice2: inputs[:, self.template[0]+round:self.template[0]+round+1, :]
-            # choice4: self.cat(torch.cat((inputs[:, self.template[0]+round:self.template[0]+round+1, :], inputs[:, self.template[0]+round-1:self.template[0]+round, :]),dim=2))
-            # choice5:  self.mlp(torch.cat((inputs[:, self.template[0]+round:self.template[0]+round+1, :], inputs[:, self.template[0]+round-1:self.template[0]+round, :]),dim=2))
-            input_this_step = self.cat(torch.cat((inputs[:, self.template[0]+round:self.template[0]+round+1, :]
-                                                  , inputs[:, self.template[0]+round-1:self.template[0]+round, :]), dim=2))
-
+            input_this_step =  inputs[:, self.template[0]+round-1:self.template[0]+round, :]
             outputs = self.gpt2(inputs_embeds=input_this_step,
                                 past_key_values=past_key_values, return_dict=None)
             sequence_output = outputs[0][..., -1, :]
