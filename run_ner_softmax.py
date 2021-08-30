@@ -420,7 +420,6 @@ def predict(args, model, tokenizer, prefix):
                         temp_1.append(args.id2label[out_label_ids[i][j]])
                         temp_2.append(preds[i][j])
 
-
         # used for write results in output file
         if args.task_name in ['cluener', 'cner', 'ontonote4']:
             preds = preds[0][1:-1]# [CLS]XXXX[SEP]
@@ -433,15 +432,15 @@ def predict(args, model, tokenizer, prefix):
             true_labels[k] = str(true_labels[k])
         if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
             label_entities = get_entities(preds, args.id2label, args.markup)
-            #true_label_entities = get_entities(true_labels, args.id2label, args.markup)
+            true_label_entities = get_entities(true_labels, args.id2label, args.markup)
             json_d = {}
             json_d['id'] = step
             #f = all_tokens[step]
             #json_d['token'] = f
             json_d['true_tag_seq'] = " ".join(true_labels)
-            # json_d['tag_seq'] = " ".join(tags)
+            json_d['tag_seq'] = " ".join(tags)
             json_d['entities'] = label_entities
-            #json_d['true_entities'] = true_label_entities
+            json_d['true_entities'] = true_label_entities
             output_results.append(json_d)
         else:
             json_d = {}
@@ -449,10 +448,7 @@ def predict(args, model, tokenizer, prefix):
             json_d['true_tag_seq'] = " ".join(true_labels)
             json_d['pred_tag_seq'] = " ".join(tags)
             json_d['example of the gpt2 output words'] = example
-            #json_d['entities'] = label_entities
-            #json_d['true_entities'] = true_label_entities
             output_results.append(json_d)
-
 
         pbar(step)
 
