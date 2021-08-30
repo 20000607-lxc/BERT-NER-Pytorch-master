@@ -22,7 +22,6 @@ class NewSeqEntityScore(object):
         # print(accuracy1)
 
     def reset(self):
-
         self.origins = []
         self.founds = []
 
@@ -38,7 +37,6 @@ class NewSeqEntityScore(object):
         '''
         labels_paths: [[],[],[],....]
         prcoed_paths: [[],[],[],.....]
-
         :param label_paths:
         :param pred_paths:
         :return:
@@ -50,8 +48,7 @@ class NewSeqEntityScore(object):
         assert len(label_paths) == len(pred_paths) == 1
         self.origins.extend(label_paths)
         self.founds.extend(pred_paths)
-        return classification_report([label_paths], [pred_paths])
-
+        return classification_report(label_paths, pred_paths) if label_paths != [[]] and pred_paths != [[]] else None
 
 
 class SeqEntityScore(object):

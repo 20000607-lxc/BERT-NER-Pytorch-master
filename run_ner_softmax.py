@@ -300,9 +300,8 @@ def evaluate(args, model, tokenizer, prefix):
             temp_1 = []
             temp_2 = []
             for j, m in enumerate(label):
-                if j == 0:
-                    continue
-                elif j == input_lens[i]-1:
+                # todo 对于中文，可以加上把头尾去掉，即j=0和j=len-1
+                if j == input_lens[i]:
                     temp_2 = [args.id2label[i] for i in temp_2]
                     classification_report = metric.update(pred_paths=[temp_2], label_paths=[temp_1])
                     json_d = {}
@@ -396,9 +395,7 @@ def predict(args, model, tokenizer, prefix):
             temp_1 = []
             temp_2 = []
             for j, m in enumerate(label):
-                if j == 0:
-                    continue
-                elif j == input_lens[i]-1:
+                if j == input_lens[i]:
                     json_d = {}
                     json_d['id'] = str(step) + '_' + str(i)
                     if args.task_name == 'cluener':
@@ -450,7 +447,7 @@ def predict(args, model, tokenizer, prefix):
 
 
     else :
-        print("get the test results in file to submit ")
+        print("for cluener, get the test results in file to submit ")
         output_submit_file = os.path.join(pred_output_dir,  "test_submit.json")
         test_text = []
         with open(os.path.join(args.data_dir, "test.json"), 'r') as fr:

@@ -22,7 +22,7 @@ def get_argparse():
                                  'output_files/cner_output/', 'output_files/ontonote_output/', 'output_files/ontonote4_output/',
                                  'output_files/ontonote4_output/bert'] )
 
-    parser.add_argument("--model_type", default='generate_label_embedding', type=str, #required=True,
+    parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
                         help="Model type selected ",
                         choices=['bert', 'albert', 'bare_gpt2', 'gpt2', 'generate',
                              'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
