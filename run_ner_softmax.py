@@ -67,10 +67,10 @@ TEMPLATE_CLASSES = {
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = None
-EVAL_LIMIT = None
-TEST_LIMIT = None
-use_wandb = True
+TRAIN_LIMIT = 60#None
+EVAL_LIMIT = 20#None
+TEST_LIMIT = 20#None
+use_wandb = False#True
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
@@ -242,6 +242,7 @@ def train(args, train_dataset, model, tokenizer):
     return global_step, tr_loss / global_step
 
 def evaluate(args, model, tokenizer, prefix):
+
     if args.model_type in [ "chinese_pretrained_gpt2", 'chinese_generate'] :
         metric = SeqEntityScore(args.id2label, markup=args.markup)
     else:
@@ -285,8 +286,8 @@ def evaluate(args, model, tokenizer, prefix):
         # convert the example into tokens and add into json_d
         example = outputs[2]
         example = example.tolist()
-        example = tokenizer.decode(example)
-        example = ' '.join(example)
+        example = [tokenizer.decode(example[i]) for i in range(len(example))]# list (len of bz)
+        input_tokens = [tokenizer.decode(batch[0][i]) for i in range(len(batch[0]))]
 
         if args.n_gpu > 1:
             tmp_eval_loss = tmp_eval_loss.mean()  # mean() to average on multi-gpu parallel evaluating
@@ -302,33 +303,21 @@ def evaluate(args, model, tokenizer, prefix):
                 if j == 0:
                     continue
                 elif j == input_lens[i]-1:
-                    metric.update(pred_paths=[temp_2], label_paths=[temp_1])
+                    temp_2 = [args.id2label[i] for i in temp_2]
+                    classification_report = metric.update(pred_paths=[temp_2], label_paths=[temp_1])
+                    json_d = {}
+                    json_d['id'] = str(step) + '_' + str(i)
+                    json_d['pred_tag_seq'] = " ".join(temp_2)
+                    json_d['true_tag_seq'] = " ".join(temp_1)
+                    json_d['original_input_token'] = " ".join(input_tokens[i])
+                    json_d['gpt2_output_token'] = " ".join(example[i])
+                    json_d['classification_report'] = classification_report if classification_report is not None else ''
+                    output_results.append(json_d)
                     break
                 else:
                     if out_label_ids[i][j] != -100:
                         temp_1.append(args.id2label[out_label_ids[i][j]])
                         temp_2.append(preds[i][j])
-
-
-        # to wirte results in the output file
-        labels.append(batch[3])
-        if args.task_name in ['cluener','cner', 'ontonote4']:
-            preds = preds[0][1:-1]# [CLS]XXXX[SEP]
-        else:
-            preds = preds[0]# 对于英文没有用[cls]和[sep] 因此不截取
-        tags = [args.id2label[x] for x in preds]
-        #label_entities = get_entities(preds, args.id2label, args.markup)
-        #true_labels = batch[3].detach().cpu().numpy().tolist()[0]
-        #true_label_entities = get_entities(true_labels, args.id2label, args.markup)
-        json_d = {}
-        json_d['id'] = step
-        # json_d['true_tag_seq'] = " ".join(true_labels)
-        json_d['pred_tag_seq'] = " ".join(tags)
-        json_d['example of the gpt2 output words'] = example
-        #json_d['entities'] = label_entities
-        #json_d['true_entities'] = true_label_entities
-        output_results.append(json_d)
-
         pbar(step)
 
     with open(output_submit_file, "w") as writer:
@@ -357,7 +346,6 @@ def evaluate(args, model, tokenizer, prefix):
         logger.info("***** Eval results %s *****", prefix)
         info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
         logger.info(info)
-
     if use_wandb:
         wandb.log(results)
     return results
@@ -395,16 +383,14 @@ def predict(args, model, tokenizer, prefix):
                 # XLM and RoBERTa don"t use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
             outputs = model(**inputs)
-
             logits = outputs[0]
             preds = np.argmax(logits.cpu().numpy(), axis=2).tolist()
             input_lens = batch[4].cpu().numpy().tolist()
             out_label_ids = batch[3].cpu().numpy().tolist()
 
             example = outputs[1]
-            example = example.tolist()
-            example = tokenizer.decode(example)
-            example = ' '.join(example)
+            example = [tokenizer.decode(example[i]) for i in range(len(example))]# list (len of bz)
+            input_tokens = [tokenizer.decode(batch[0][i]) for i in range(len(batch[0]))]
 
         for i, label in enumerate(out_label_ids):
             temp_1 = []
@@ -413,43 +399,25 @@ def predict(args, model, tokenizer, prefix):
                 if j == 0:
                     continue
                 elif j == input_lens[i]-1:
-                    metric.update(pred_paths=[temp_2], label_paths=[temp_1])
+                    json_d = {}
+                    json_d['id'] = str(step) + '_' + str(i)
+                    if args.task_name == 'cluener':
+                        pred_entities = get_entities(temp_2[1:-1], args.id2label, args.markup)
+                        json_d['pred_entities'] = pred_entities
+
+                    temp_2 = [args.id2label[i] for i in temp_2]
+                    classification_report = metric.update(pred_paths=[temp_2], label_paths=[temp_1])
+                    json_d['pred_tag_seq'] = " ".join(temp_2)
+                    json_d['true_tag_seq'] = " ".join(temp_1)
+                    json_d['original_input_token'] = " ".join(input_tokens[i])
+                    json_d['gpt2_output_token'] = " ".join(example[i])
+                    json_d['classification_report'] = classification_report if classification_report is not None else ''
+                    output_results.append(json_d)
                     break
                 else:
                     if out_label_ids[i][j] != -100:
                         temp_1.append(args.id2label[out_label_ids[i][j]])
                         temp_2.append(preds[i][j])
-
-        # used for write results in output file
-        if args.task_name in ['cluener', 'cner', 'ontonote4']:
-            preds = preds[0][1:-1]# [CLS]XXXX[SEP]
-        else:
-            preds = preds[0]# 英文没有用[cls]和[sep] 因此不截取
-
-        tags = [args.id2label[x] for x in preds]
-        true_labels = batch[3].detach().cpu().numpy().tolist()[0]
-        for k in range(len(true_labels)):
-            true_labels[k] = str(true_labels[k])
-        if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
-            label_entities = get_entities(preds, args.id2label, args.markup)
-            true_label_entities = get_entities(true_labels, args.id2label, args.markup)
-            json_d = {}
-            json_d['id'] = step
-            #f = all_tokens[step]
-            #json_d['token'] = f
-            json_d['true_tag_seq'] = " ".join(true_labels)
-            json_d['tag_seq'] = " ".join(tags)
-            json_d['entities'] = label_entities
-            json_d['true_entities'] = true_label_entities
-            output_results.append(json_d)
-        else:
-            json_d = {}
-            json_d['id'] = step
-            json_d['true_tag_seq'] = " ".join(true_labels)
-            json_d['pred_tag_seq'] = " ".join(tags)
-            json_d['example of the gpt2 output words'] = example
-            output_results.append(json_d)
-
         pbar(step)
 
     logger.info("\n")
@@ -482,7 +450,7 @@ def predict(args, model, tokenizer, prefix):
 
 
     else :
-        print("get the test results in file and submit ")
+        print("get the test results in file to submit ")
         output_submit_file = os.path.join(pred_output_dir,  "test_submit.json")
         test_text = []
         with open(os.path.join(args.data_dir, "test.json"), 'r') as fr:
@@ -493,7 +461,7 @@ def predict(args, model, tokenizer, prefix):
             json_d = {}
             json_d['id'] = x['id']
             json_d['label'] = {}
-            entities = y['entities']
+            entities = y['pred_entities']
             words = list(x['text'])
             if len(entities) != 0:
                 for subject in entities:
@@ -513,7 +481,7 @@ def predict(args, model, tokenizer, prefix):
         json_to_text(output_submit_file, test_submit)
 
 
-def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = None):
+def load_and_cache_examples(args, task, tokenizer, data_type='train', limit=None):
     if args.local_rank not in [-1, 0] and not evaluate:
         torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
     processor = processors[task]()

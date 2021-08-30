@@ -116,3 +116,33 @@ def markup_for_gpt2_english(markup, tokens,  label_ids, label_all_tokens):
                     new_label[i] = -100
 
     return markup, tokens, new_label, label_ids
+
+    # used for write results in output file
+    if args.task_name in ['cluener', 'cner', 'ontonote4']:
+        preds = preds[0][1:-1]# [CLS]XXXX[SEP]
+    else:
+        preds = preds[0]# 英文没有用[cls]和[sep] 因此不截取
+
+    tags = [args.id2label[x] for x in preds]
+    true_labels = batch[3].detach().cpu().numpy().tolist()[0]
+    for k in range(len(true_labels)):
+        true_labels[k] = str(true_labels[k])
+    if args.model_type in ["chinese_pretrained_gpt2", 'chinese_generate']:
+        label_entities = get_entities(preds, args.id2label, args.markup)
+        true_label_entities = get_entities(true_labels, args.id2label, args.markup)
+        json_d = {}
+        json_d['id'] = step
+        #f = all_tokens[step]
+        #json_d['token'] = f
+        json_d['true_tag_seq'] = " ".join(true_labels)
+        json_d['tag_seq'] = " ".join(tags)
+        json_d['entities'] = label_entities
+        json_d['true_entities'] = true_label_entities
+        output_results.append(json_d)
+    else:
+        json_d = {}
+        json_d['id'] = step
+        json_d['true_tag_seq'] = " ".join(true_labels)
+        json_d['pred_tag_seq'] = " ".join(tags)
+        json_d['example of the gpt2 output words'] = example
+        output_results.append(json_d)

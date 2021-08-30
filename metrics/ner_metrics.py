@@ -14,6 +14,7 @@ class NewSeqEntityScore(object):
         self.id2label = id2label
         self.markup = markup
         self.reset()
+
         # a = [['B-ORG']]
         # b =  [['B-ORG']]
         # c = [['B-ORG', ['O']]]
@@ -21,6 +22,7 @@ class NewSeqEntityScore(object):
         # print(accuracy1)
 
     def reset(self):
+
         self.origins = []
         self.founds = []
 
@@ -47,8 +49,9 @@ class NewSeqEntityScore(object):
         '''
         assert len(label_paths) == len(pred_paths) == 1
         self.origins.extend(label_paths)
-        pred_paths[0] = [self.id2label[i] for i in pred_paths[0]]
         self.founds.extend(pred_paths)
+        return classification_report([label_paths], [pred_paths])
+
 
 
 class SeqEntityScore(object):
@@ -100,14 +103,15 @@ class SeqEntityScore(object):
             the upper example is not right: for labels_paths and pred_paths are both list:1(only for one example at a time )
         '''
         for label_path, pre_path in zip(label_paths, pred_paths):
-
             assert len(label_paths) == len(pred_paths) == 1
-
             label_entities = get_entities(label_path, self.id2label, self.markup)
             pre_entities = get_entities(pre_path, self.id2label, self.markup)
             self.origins.extend(label_entities)
             self.founds.extend(pre_entities)
             self.rights.extend([pre_entity for pre_entity in pre_entities if pre_entity in label_entities])
+
+
+
 
 
 class SpanEntityScore(object):
