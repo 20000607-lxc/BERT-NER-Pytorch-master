@@ -35,7 +35,7 @@ import wandb
 import pprint
 
 MODEL_CLASSES = {
-    #'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
+    'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
     #'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
     'bare_gpt2': (GPT2Config, BareGPT2, CNerTokenizer),
     'gpt2': (GPT2Config, GPT2SoftmaxForNer_fix, CNerTokenizer),
@@ -575,8 +575,9 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
     dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids)
     return dataset
 
-def main(args):
-    args.project = args.task_name +'_'+ args.model_type
+def main():
+    args = get_argparse().parse_args()
+    args.project = args.task_name + '_' + args.model_type
     if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
         assert args.task_name in ['cluener', 'cner', 'ontonote4']
         assert args.markup == 'biso'# 中文一律采用biso
@@ -676,9 +677,10 @@ def main(args):
         else:
             # 英文采用与model一致的tokenizer
             tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name if args.tokenizer_name != '' else args.model_name_or_path, use_fast=False)
+
         # for bert or albert, load the model in the from_pretrained way!
         model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
-                                            config=config, device=args.device, template=TEMPLATE, model_name=args.model_name_or_path,
+                                            config=config, device=args.device, template=TEMPLATE,
                                             cache_dir=args.cache_dir if args.cache_dir else None,)
 
     if args.local_rank == 0:
@@ -815,11 +817,10 @@ sweep_config = {
 }
 
 
-
 if __name__ == "__main__":
-    args = get_argparse().parse_args()
-    main(args)
-    if args.use_sweep:
+    use_sweep = False
+    main()
+    if use_sweep:
         pprint.pprint(sweep_config)
         sweep_id = wandb.sweep(sweep_config,  project='gpt2_sequence_labeling_sweep', entity='lxc')
         wandb.agent(sweep_id, function=main)
