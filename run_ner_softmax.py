@@ -276,6 +276,7 @@ def evaluate(args, model, tokenizer, prefix):
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
         with torch.no_grad():
+            input_lens = batch[4]
             inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
@@ -286,8 +287,8 @@ def evaluate(args, model, tokenizer, prefix):
         # convert the example into tokens and add into json_d
         example = outputs[2]
         example = example.tolist()
-        example = [tokenizer.decode(example[i]) for i in range(len(example))]# list (len of bz)
-        input_tokens = [tokenizer.decode(batch[0][i]) for i in range(len(batch[0]))]
+        example = [tokenizer.decode(example[i][:input_lens[i]]) for i in range(len(example))]# list (len of bz)
+        input_tokens = [tokenizer.decode(batch[0][i][:input_lens[i]]) for i in range(len(batch[0]))]
 
         if args.n_gpu > 1:
             tmp_eval_loss = tmp_eval_loss.mean()  # mean() to average on multi-gpu parallel evaluating
@@ -377,6 +378,7 @@ def predict(args, model, tokenizer, prefix):
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
         with torch.no_grad():
+            input_lens = batch[4].cpu().numpy().tolist()
             inputs = {"input_ids": batch[0], "attention_mask": batch[1]}
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
@@ -388,8 +390,9 @@ def predict(args, model, tokenizer, prefix):
             out_label_ids = batch[3].cpu().numpy().tolist()
 
             example = outputs[1]
-            example = [tokenizer.decode(example[i]) for i in range(len(example))]# list (len of bz)
-            input_tokens = [tokenizer.decode(batch[0][i]) for i in range(len(batch[0]))]
+            example = [tokenizer.decode(example[i][:input_lens[i]]) for i in range(len(example))]# list (len of bz)
+            input_tokens = [tokenizer.decode(batch[0][i][:input_lens[i]]) for i in range(len(batch[0]))]
+
 
         for i, label in enumerate(out_label_ids):
             temp_1 = []
