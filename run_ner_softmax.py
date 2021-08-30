@@ -303,10 +303,14 @@ def evaluate(args, model, tokenizer, prefix):
             for j, m in enumerate(label):
                 # todo 对于中文，可以加上把头尾去掉，即j=0和j=len-1
                 if j == input_lens[i]:
-                    temp_2 = [args.id2label[i] for i in temp_2]
-                    classification_report = metric.update(pred_paths=[temp_2], label_paths=[temp_1])
                     json_d = {}
                     json_d['id'] = str(step) + '_' + str(i)
+                    if args.task_name == 'cluener':
+                        pred_entities = get_entities(temp_2[1:-1], args.id2label, args.markup)
+                        json_d['pred_entities'] = pred_entities
+
+                    temp_2 = [args.id2label[i] for i in temp_2]
+                    classification_report = metric.update(pred_paths=[temp_2], label_paths=[temp_1])
                     json_d['pred_tag_seq'] = " ".join(temp_2)
                     json_d['true_tag_seq'] = " ".join(temp_1)
                     json_d['original_input_token'] = " ".join(input_tokens[i])
@@ -378,7 +382,6 @@ def predict(args, model, tokenizer, prefix):
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
         with torch.no_grad():
-            input_lens = batch[4].cpu().numpy().tolist()
             inputs = {"input_ids": batch[0], "attention_mask": batch[1]}
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
@@ -392,7 +395,6 @@ def predict(args, model, tokenizer, prefix):
             example = outputs[1]
             example = [tokenizer.decode(example[i][:input_lens[i]]) for i in range(len(example))]# list (len of bz)
             input_tokens = [tokenizer.decode(batch[0][i][:input_lens[i]]) for i in range(len(batch[0]))]
-
 
         for i, label in enumerate(out_label_ids):
             temp_1 = []
@@ -448,8 +450,7 @@ def predict(args, model, tokenizer, prefix):
             for record in output_results:
                 writer.write(json.dumps(record) + '\n')
 
-
-    else :
+    else:
         print("for cluener, get the test results in file to submit ")
         output_submit_file = os.path.join(pred_output_dir,  "test_submit.json")
         test_text = []

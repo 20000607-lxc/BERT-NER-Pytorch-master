@@ -109,8 +109,6 @@ class SeqEntityScore(object):
 
 
 
-
-
 class SpanEntityScore(object):
     def __init__(self, id2label):
         self.id2label = id2label
