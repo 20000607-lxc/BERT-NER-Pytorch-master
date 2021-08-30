@@ -277,18 +277,7 @@ class GPT2LMGenerateForNer(torch.nn.Module):
         # 第一个token
         sequence[:, 0, :] = sequence_output
         for round in range(1, max(counts)):
-            sequence_output = sequence_output.unsqueeze(1)
-            # todo this implementation uses the input ids' hidden state as the context!
-            #  can also change into the directly use the input ids later!
-            # choice1: inputs[:, self.template[0]+round-1:self.template[0]+round, :]
-            # choice2: inputs[:, self.template[0]+round:self.template[0]+round+1, :]
-            # choice3: sequence_output
-            # choice4: self.cat(torch.cat((inputs[:, self.template[0]+round:self.template[0]+round+1, :], inputs[:, self.template[0]+round-1:self.template[0]+round, :]),dim=2))
-            # choice5:  self.mlp(torch.cat((inputs[:, self.template[0]+round:self.template[0]+round+1, :], inputs[:, self.template[0]+round-1:self.template[0]+round, :]),dim=2))
-            # choice5: use the ids? it seems the same with choice1
-            input_this_step = self.cat(torch.cat((inputs[:, self.template[0]+round:self.template[0]+round+1, :]
-                                                  , inputs[:, self.template[0]+round-1:self.template[0]+round, :]), dim=2))
-
+            input_this_step = inputs[:, self.template[0]+round-1:self.template[0]+round, :]
             outputs = self.gpt2(inputs_embeds=input_this_step,
                                 past_key_values=past_key_values, return_dict=None)
             sequence_output = outputs[0][..., -1, :]
@@ -319,7 +308,6 @@ class GPT2LMGenerateForNer(torch.nn.Module):
             outputs = (loss,) + outputs
 
         return outputs  # (loss), scores, (hidden_states), (attentions)
-
 
 
 class BareChineseGPT2(torch.nn.Module):

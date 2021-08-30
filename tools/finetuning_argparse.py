@@ -4,6 +4,8 @@ def get_argparse():
     parser = argparse.ArgumentParser()
     # Required parameters
 
+    parser.add_argument("--use_sweep", action="store_true", default=False,
+                        help="Whether to run sweep .")
     parser.add_argument("--task_name", default='conll2003', type=str, #required=True,
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote', 'ontonote4'] ")
     parser.add_argument("--data_dir", default='datasets/conll_03_english', type=str, #required=True,
@@ -69,7 +71,7 @@ def get_argparse():
 
     parser.add_argument("--template", default='1', type=str, #required=True,
                         help="prompt size, you can modify the template in run_ner_xxx.py by changing TEMPLATE_CLASSES ",
-                        choices=['-1', '0', '1', '2', '3', '4'])
+                        choices=['-1', '0', '1', '2', '3', '4', 'a', 'b', 'c', 'd'])
     parser.add_argument("--learning_rate", default=5e-5, type=float,#bert default = 5e-5
                         help="The initial learning rate for Adam.")
     parser.add_argument("--crf_learning_rate", default=5e-5, type=float,#bert default = 5e-5

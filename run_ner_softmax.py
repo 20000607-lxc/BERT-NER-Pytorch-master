@@ -59,7 +59,11 @@ TEMPLATE_CLASSES = {
     '-1': (6,  0,  0),
     #'4': (24, 24, 0),
     #'5': (24, 88, 0),
-    #'6': (12, 32, 0)
+    #'6': (12, 32, 0),
+    'a': (2, 2, 0),
+    'b': (4, 4, 0),
+    'c': (8, 8, 0),
+    'd': (16, 16, 0)
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
@@ -69,37 +73,6 @@ TEST_LIMIT = None
 use_wandb = True
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
-
-
-
-use_sweep = False
-if use_sweep:
-    sweep_config = {
-        'method': 'random',# grid, random
-        'metric': {
-            'name': 'f1',
-            'goal': 'maximize'
-        },
-        'parameters': {
-            'weight_decay': {
-                'values': [0.004, 0.005, 0.006, 0.008, 0.01, 0.012]
-            },
-            'learning_rate': {
-                'values': [2e-4, 1e-4, 7e-5, 6e-5, 5e-5, 4e-5, 3e-5]
-            },
-
-            'epochs': {
-                'values': [3]
-            }, # fix
-            'train_max_seq_length': {
-                'values':[64]
-            },
-            'eval_max_seq_length': {
-                'values': [64]
-            }
-        }
-    }
-    pprint.pprint(sweep_config)
 
 
 def train(args, train_dataset, model, tokenizer):
@@ -294,7 +267,8 @@ def evaluate(args, model, tokenizer, prefix):
         os.makedirs(eval_output_dir)
     output_results = []
     labels = []
-    output_submit_file = os.path.join(eval_output_dir,  args.output_file_name)
+    output_file_name = args.output_file_name+ str(args.learning_rate)+str(args.template)
+    output_submit_file = os.path.join(eval_output_dir,  output_file_name)
 
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
     for step, batch in enumerate(eval_dataloader):
@@ -408,7 +382,9 @@ def predict(args, model, tokenizer, prefix):
     logger.info("  Batch size = %d", 1)
 
     output_results = []
-    output_submit_file = os.path.join(pred_output_dir,  args.output_file_name)
+    output_file_name = args.output_file_name+ str(args.learning_rate)+str(args.template)
+    output_submit_file = os.path.join(pred_output_dir,  output_file_name)
+
     pbar = ProgressBar(n_total=len(test_dataloader), desc="Predicting")
     for step, batch in enumerate(test_dataloader):
         model.eval()
@@ -603,8 +579,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit = No
     dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids)
     return dataset
 
-def main():
-    args = get_argparse().parse_args()
+def main(args):
     args.project = args.task_name +'_'+ args.model_type
     if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
         assert args.task_name in ['cluener', 'cner', 'ontonote4']
@@ -813,9 +788,42 @@ def main():
             model.to(args.device)
             predict(args, model, tokenizer, prefix=prefix)
 
-if use_sweep:
-    sweep_id = wandb.sweep(sweep_config,  project='gpt2_sequence_labeling_sweep', entity='lxc')
-    wandb.agent(sweep_id, function=main)
+
+sweep_config = {
+    'method': 'random',# grid, random
+    'metric': {
+        'name': 'f1',
+        'goal': 'maximize'
+    },
+    'parameters': {
+        'weight_decay': {
+            'values': [0.01]
+        },
+        'template': {
+            'values': ['a', 'b', 'c', 'd']
+        },
+        'learning_rate': {
+            'values': [1e-4, 7e-5, 6e-5, 5e-5, 4e-5, 3e-5]
+        },
+
+        'epochs': {
+            'values': [3]
+        },# freeze value
+        'train_max_seq_length': {
+            'values': [64]
+        },
+        'eval_max_seq_length': {
+            'values': [64]
+        }
+    }
+}
+
+
 
 if __name__ == "__main__":
-    main()
+    args = get_argparse().parse_args()
+    main(args)
+    if args.use_sweep:
+        pprint.pprint(sweep_config)
+        sweep_id = wandb.sweep(sweep_config,  project='gpt2_sequence_labeling_sweep', entity='lxc')
+        wandb.agent(sweep_id, function=main)
