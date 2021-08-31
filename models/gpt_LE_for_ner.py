@@ -231,8 +231,6 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
 
 
 
-
-
 class GPT2generateForNer_LE(torch.nn.Module):
     """
     循环输出hidden state, 在每一步的output中加入label embedding
@@ -344,8 +342,6 @@ class GPT2generateForNer_LE(torch.nn.Module):
         output = self.tanh(self.linear_out(torch.cat([c_t, input_state], 1)))
 
         return output
-
-
     # def old_attention(self, input_state, label_init, bz):
     #     """
     #     Args:
@@ -379,7 +375,6 @@ class GPT2generateForNer_LE(torch.nn.Module):
     #     output_state = output_state.squeeze(1)
     #     output_state += input_state
     #     return output_state
-
 
     def add_label_embedding(self, sequence_output, label_init):
         """

@@ -68,7 +68,6 @@ TEMPLATE_CLASSES = {
 TRAIN_LIMIT = 60#None
 EVAL_LIMIT = 20#None
 TEST_LIMIT = 20#None
-use_wandb = False#True
 # modify the number of examples for train, eval, test
 # the default is None, meaning use all the data from files.
 
@@ -346,7 +345,7 @@ def evaluate(args, model, tokenizer, prefix):
         logger.info("***** Eval results %s *****", prefix)
         info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
         logger.info(info)
-    if use_wandb:
+    if args.use_wandb:
         wandb.log(results)
     return results
 
@@ -432,7 +431,7 @@ def predict(args, model, tokenizer, prefix):
         if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
             test_info, entity_info = metric.result()
             results = {f'{key}': value for key, value in test_info.items()}
-            if use_wandb:
+            if args.use_wandb:
                 wandb.log(results)
             logger.info("***** Test results %s *****", prefix)
             info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
@@ -449,7 +448,7 @@ def predict(args, model, tokenizer, prefix):
             info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
             logger.info(info)
 
-        if use_wandb:
+        if args.use_wandb:
             wandb.log(results)
         with open(output_submit_file, "w") as writer:
             for record in output_results:
@@ -553,11 +552,11 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit=None
 
 def main():
     args = get_argparse().parse_args()
-    args.project = args.task_name + '_' + args.model_type
+    args.project = 'sequence_labeling_gpt2' + args.task_name + '_' + args.model_type
     if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
         assert args.task_name in ['cluener', 'cner', 'ontonote4']
         assert args.markup == 'biso'# 中文一律采用biso
-    if use_wandb:
+    if args.use_wandb:
         wandb.init(config=args, project=args.project, entity='lxc')
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)

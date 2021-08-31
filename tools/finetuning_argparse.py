@@ -6,6 +6,8 @@ def get_argparse():
 
     parser.add_argument("--use_sweep", action="store_true", default=False,
                         help="Whether to run sweep .")
+    parser.add_argument("--use_wandb", action="store_true", default=False,
+                        help="Whether to run with wandb  .")
     parser.add_argument("--task_name", default='conll2003', type=str, #required=True,
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote', 'ontonote4'] ")
     parser.add_argument("--data_dir", default='datasets/conll_03_english', type=str, #required=True,
@@ -63,7 +65,6 @@ def get_argparse():
     # "gpt2-large"
     # "distilgpt2"
     # "gpt2"
-
     # pretrained_model_name_or_path: either:
     # - a string with the `shortcut name` of a pre-trained model to load from cache or download, e.g.: ``bert-base-uncased``.
     # - a path to a `directory` containing model weights saved using :func:`~transformers.PreTrainedModel.save_pretrained`, e.g.: ``./my_model_directory/``.
