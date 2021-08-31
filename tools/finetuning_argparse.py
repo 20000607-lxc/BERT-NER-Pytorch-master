@@ -4,6 +4,15 @@ def get_argparse():
     parser = argparse.ArgumentParser()
     # Required parameters
 
+    parser.add_argument("--train_limit", default=10, type=int,
+                        help="the total lines load from train.text(notice not the number of examples)")
+    parser.add_argument("--eval_limit", default=5, type=int,
+                        help="the total lines load from dev.text(notice not the number of examples)")
+    parser.add_argument("--test_limit", default=5, type=int,
+                        help="the total lines load from test.text(notice not the number of examples)")
+    parser.add_argument("--logging_steps", type=int, default=2,
+                        help="Log every X updates steps.")
+
     parser.add_argument("--use_sweep", action="store_true", default=False,
                         help="Whether to run sweep .")
     parser.add_argument("--use_wandb", action="store_true", default=False,
@@ -42,8 +51,7 @@ def get_argparse():
                         help="Path to pre-trained model or shortcut name")
     parser.add_argument('--label_all_tokens', action="store_true", default=False,
                         help='whether to label all the tokens, otherwise will label split tokens(except for the first part in a word) with -100')
-    parser.add_argument("--logging_steps", type=int, default=5,
-                        help="Log every X updates steps.")
+
     # model_name_or_path can only be selected in the following list:
     # bart: 'facebook/bart-large'
     # 'bert-base-uncased'

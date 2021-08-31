@@ -65,13 +65,6 @@ TEMPLATE_CLASSES = {
 }
 # modify the template for prompt my changing TEMPLATE_CLASSES
 
-TRAIN_LIMIT = 60#None
-EVAL_LIMIT = 20#None
-TEST_LIMIT = 20#None
-# modify the number of examples for train, eval, test
-# the default is None, meaning use all the data from files.
-
-
 def train(args, train_dataset, model, tokenizer):
     """ Train the model """
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
@@ -233,8 +226,8 @@ def train(args, train_dataset, model, tokenizer):
         if 'cuda' in str(args.device):
             torch.cuda.empty_cache()
 
-    print(" in the last epoch, do testing  ")
-    predict(args, model, tokenizer, args.model_type)
+        print(" at last for each epoch, do testing  ")
+        predict(args, model, tokenizer, args.model_type)
 
     return global_step, tr_loss / global_step
 
@@ -248,7 +241,7 @@ def evaluate(args, model, tokenizer, prefix):
     eval_output_dir = os.path.join(args.output_file_dir, prefix)
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
-    eval_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='dev', limit = EVAL_LIMIT)
+    eval_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='dev', limit=args.eval_limit)
     args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
     # Note that DistributedSampler samples randomly
     eval_sampler = SequentialSampler(eval_dataset) if args.local_rank == -1 else DistributedSampler(eval_dataset)
@@ -366,7 +359,7 @@ def predict(args, model, tokenizer, prefix):
     if not os.path.exists(pred_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(pred_output_dir)
 
-    test_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='test', limit = TEST_LIMIT)
+    test_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='test', limit=args.test_limit)
     # Note that DistributedSampler samples randomly
     test_sampler = SequentialSampler(test_dataset) if args.local_rank == -1 else DistributedSampler(test_dataset)
     test_dataloader = DataLoader(test_dataset, sampler=test_sampler, batch_size=1, collate_fn=collate_fn)
@@ -665,7 +658,7 @@ def main():
     logger.info("Training/evaluation parameters %s", args)
     # Training
     if args.do_train:
-        train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='train', limit=TRAIN_LIMIT)
+        train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='train', limit=args.train_limit)
         global_step, tr_loss = train(args, train_dataset, model, tokenizer)
         logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
 
@@ -776,11 +769,11 @@ sweep_config = {
             'values': ['a', 'b', 'c', 'd']
         },
         'learning_rate': {
-            'values': [1e-4, 7e-5, 6e-5, 5e-5, 4e-5, 3e-5]
+            'values': [1e-6, 5e-6, 1e-5, 5e-5, 1e-4]
         },
 
         'epochs': {
-            'values': [3]
+            'values': [3, 5]
         },# freeze value
         'train_max_seq_length': {
             'values': [64]
