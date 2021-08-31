@@ -139,7 +139,6 @@ def train(args, train_dataset, model, tokenizer):
     seed_everything(args.seed)  # Added here for reproductibility (even between python 2 and 3)
     for epoch in range(int(args.num_train_epochs)):
         pbar = ProgressBar(n_total=len(train_dataloader), desc='Training')
-
         for step, batch in enumerate(train_dataloader):
             if steps_trained_in_current_epoch > 0:
                 steps_trained_in_current_epoch -= 1
@@ -165,15 +164,18 @@ def train(args, train_dataset, model, tokenizer):
             if args.do_adv:
                 fgm.attack()
                 loss_adv = model(**inputs)[0]
-                if args.n_gpu>1:
+                if args.n_gpu > 1:
                     loss_adv = loss_adv.mean()
                 loss_adv.backward()
                 fgm.restore()
 
             pbar(step, {'loss': loss.item()})
+
+            if args.use_wandb:
+                wandb.log({'loss':loss.item()})
+
             tr_loss += loss.item()
             if (step + 1) % args.gradient_accumulation_steps == 0:
-
                 if args.fp16:
                     torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), args.max_grad_norm)
                 else:
@@ -343,11 +345,12 @@ def evaluate(args, model, tokenizer, prefix):
 def predict(args, model, tokenizer, prefix):
     # predict_wrong_type is a dict to record all the pred types(including right) for each entity type
     predict_wrong_type = {}
-    predict_wrong_type_in = {}
+
     for k in range(len(args.id2label)):
-        predict_wrong_type[args.id2label[k]] = predict_wrong_type_in
+        predict_wrong_type_inner = {}# 注意要初始化不同的内嵌字典！
+        predict_wrong_type[args.id2label[k]] = predict_wrong_type_inner
         for k in range(len(args.id2label)):
-            predict_wrong_type_in[args.id2label[k]] = 0
+            predict_wrong_type_inner[args.id2label[k]] = 0
 
     if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
         metric = SeqEntityScore(args.id2label, markup=args.markup)
@@ -441,11 +444,20 @@ def predict(args, model, tokenizer, prefix):
 
         if args.use_wandb:
             wandb.log(results)
+
+        json_d = {}
+        json_d['predict_wrong_type'] = "the following is the predict wrong types "
+        output_results.append(json_d)
+        for i in predict_wrong_type.keys():
+            json_d = {}
+            json_d[i] = predict_wrong_type[i]
+            output_results.append(json_d)
+
         with open(output_submit_file, "w") as writer:
             for record in output_results:
                 writer.write(json.dumps(record) + '\n')
         # 打印预测entity类别的结果
-        pprint.pprint(predict_wrong_type)
+        # pprint.pprint(predict_wrong_type)
 
     else:
         print("for cluener, get the test results in file to submit ")
@@ -543,7 +555,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit=None
 
 def main():
     args = get_argparse().parse_args()
-    args.project = 'sequence_labeling_gpt2'
+    args.project = 'sequence_labeling_gpt2' + args.task_name
     if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
         assert args.task_name in ['cluener', 'cner', 'ontonote4']
         assert args.markup == 'biso'# 中文一律采用biso
