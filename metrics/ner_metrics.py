@@ -1,4 +1,3 @@
-import torch
 from collections import Counter
 from processors.utils_ner import get_entities
 from seqeval.metrics import f1_score
@@ -32,7 +31,7 @@ class NewSeqEntityScore(object):
         print(classification_report(self.origins, self.founds))
         return {'precision': precision, 'recall': recall, 'f1': f1, 'acc': accuracy}
 
-    def update(self, label_paths, pred_paths):
+    def update(self, label_paths, pred_paths, pred_wrong_type=None):
         '''
         labels_paths: [[],[],[],....]
         prcoed_paths: [[],[],[],.....]
@@ -47,7 +46,10 @@ class NewSeqEntityScore(object):
         assert len(label_paths) == len(pred_paths) == 1
         self.origins.extend(label_paths)
         self.founds.extend(pred_paths)
-        # return classification_report(label_paths, pred_paths) if label_paths != [[]] and pred_paths != [[]] else None
+        if pred_wrong_type is not None:
+            for i in range(len(label_paths[0])):
+                if pred_paths[0][i] != label_paths[0][i]:
+                    pred_wrong_type[label_paths[0][i]][pred_paths[0][i]] += 1
 
 
 class SeqEntityScore(object):

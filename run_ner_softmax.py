@@ -16,10 +16,8 @@ from tools.common import seed_everything
 from tools.common import init_logger, logger
 from models.transformers import WEIGHTS_NAME,  AlbertConfig
 from models.bert_for_ner import BertSoftmaxForNer
-from models.BART_for_ner import BartSoftmaxForNer
 from models.transformers_master.models.gpt2.configuration_gpt2 import GPT2Config #new config
 from models.transformers_master.models.bert.configuration_bert import BertConfig #new config
-from models.transformers_master.models.bart.configuration_bart import BartConfig
 from models.gpt_for_ner import GPT2SoftmaxForNer_fix, BareGPT2, GPT2GenerateForNer
 from models.gpt_LE_for_ner import GPT2SoftmaxForNer_LE, GPT2generateForNer_LE
 from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer, BareChineseGPT2, GPT2LMGenerateForNer
@@ -36,7 +34,7 @@ import pprint
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
-    #'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
+     #'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
     'bare_gpt2': (GPT2Config, BareGPT2, CNerTokenizer),
     'gpt2': (GPT2Config, GPT2SoftmaxForNer_fix, CNerTokenizer),
     'generate': (GPT2Config, GPT2GenerateForNer, CNerTokenizer),
@@ -48,12 +46,12 @@ MODEL_CLASSES = {
     'label_embedding': (GPT2Config, GPT2SoftmaxForNer_LE, CNerTokenizer),
     'generate_label_embedding': (GPT2Config, GPT2generateForNer_LE, CNerTokenizer),# add label embedding each step!
 
-     #'bart': (BartConfig, BartSoftmaxForNer, CNerTokenizer)
 }
 
 TEMPLATE_CLASSES = {
     '1': (6, 6, 0),# use the prompt + input + prompt + input module, and cut the hidden state of the later input to classify
     #'2': (6, 32, 0),# use the prompt + input + prompt module, and cut the hidden state of the later prompt to classify
+    # '2'并不自然，不要采用这种做法
     '3': (12, 12, 0),
     '0': (6,  1,  0),
     '-1': (6,  0,  0),
@@ -263,12 +261,10 @@ def evaluate(args, model, tokenizer, prefix):
     logger.info("  Batch size = %d", args.eval_batch_size)
     eval_loss = 0.0
     nb_eval_steps = 0
-    eval_output_dir = args.output_dir
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
     output_results = []
-    labels = []
-    output_file_name = args.output_file_name+ str(args.learning_rate)+str(args.template)
+    output_file_name = args.output_file_name + str(args.learning_rate) + str(args.template)
     output_submit_file = os.path.join(eval_output_dir,  output_file_name)
 
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
@@ -297,12 +293,12 @@ def evaluate(args, model, tokenizer, prefix):
         preds = np.argmax(logits.cpu().numpy(), axis=2).tolist()
         input_lens = batch[4].cpu().numpy().tolist()
         out_label_ids = inputs['labels'].cpu().numpy().tolist()
+
         for i, label in enumerate(out_label_ids):
             temp_1 = []
             temp_2 = []
             for j, m in enumerate(label):
-                # todo 对于中文，可以加上把头尾去掉，即j=0和j=len-1
-                if j == input_lens[i]:
+                if j == input_lens[i]-1:
                     json_d = {}
                     json_d['id'] = str(step) + '_' + str(i)
                     if args.task_name == 'cluener':
@@ -310,7 +306,7 @@ def evaluate(args, model, tokenizer, prefix):
                         json_d['pred_entities'] = pred_entities
 
                     temp_2 = [args.id2label[i] for i in temp_2]
-                    metric.update(pred_paths=[temp_2], label_paths=[temp_1])
+                    metric.update(pred_paths=[temp_2], label_paths=[temp_1], pred_wrong_type=None)
                     json_d['pred_tag_seq'] = " ".join(temp_2)
                     json_d['true_tag_seq'] = " ".join(temp_1)
                     json_d['original_input_token'] = " ".join(input_tokens[i])
@@ -355,6 +351,14 @@ def evaluate(args, model, tokenizer, prefix):
     return results
 
 def predict(args, model, tokenizer, prefix):
+    # predict_wrong_type is a dict to record all the pred types(including right) for each entity type
+    predict_wrong_type = {}
+    predict_wrong_type_in = {}
+    for k in range(len(args.id2label)):
+        predict_wrong_type[args.id2label[k]] = predict_wrong_type_in
+        for k in range(len(args.id2label)):
+            predict_wrong_type_in[args.id2label[k]] = 0
+
     if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
         metric = SeqEntityScore(args.id2label, markup=args.markup)
     else:
@@ -374,13 +378,14 @@ def predict(args, model, tokenizer, prefix):
     logger.info("  Batch size = %d", 1)
 
     output_results = []
-    output_file_name = args.output_file_name+ str(args.learning_rate)+str(args.template)
+    output_file_name = args.output_file_name + str(args.learning_rate)+str(args.template)
     output_submit_file = os.path.join(pred_output_dir,  output_file_name)
 
     pbar = ProgressBar(n_total=len(test_dataloader), desc="Predicting")
     for step, batch in enumerate(test_dataloader):
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
+        # todo note: predict batch_size = 1
         with torch.no_grad():
             inputs = {"input_ids": batch[0], "attention_mask": batch[1]}
             if args.model_type != "distilbert":
@@ -396,30 +401,30 @@ def predict(args, model, tokenizer, prefix):
             example = [tokenizer.decode(example[i][:input_lens[i]]) for i in range(len(example))]# list (len of bz)
             input_tokens = [tokenizer.decode(batch[0][i][:input_lens[i]]) for i in range(len(batch[0]))]
 
-        for i, label in enumerate(out_label_ids):
-            temp_1 = []
-            temp_2 = []
-            for j, m in enumerate(label):
-                if j == input_lens[i]:
-                    json_d = {}
-                    json_d['id'] = str(step) + '_' + str(i)
-                    if args.task_name == 'cluener':
-                        pred_entities = get_entities(temp_2[1:-1], args.id2label, args.markup)
-                        json_d['pred_entities'] = pred_entities
+        # for test, batch_size = 1
+        temp_1 = []
+        temp_2 = []
+        for j, m in enumerate(out_label_ids[0]):
+            if j == input_lens[0]-1:
+                json_d = {}
+                json_d['id'] = str(step)
+                if args.task_name == 'cluener':
+                    pred_entities = get_entities(temp_2[1:-1], args.id2label, args.markup)
+                    json_d['pred_entities'] = pred_entities
 
-                    temp_2 = [args.id2label[i] for i in temp_2]
-                    metric.update(pred_paths=[temp_2], label_paths=[temp_1])
-                    json_d['pred_tag_seq'] = " ".join(temp_2)
-                    json_d['true_tag_seq'] = " ".join(temp_1)
-                    json_d['original_input_token'] = " ".join(input_tokens[i])
-                    json_d['gpt2_output_token'] = " ".join(example[i])
-                    # json_d['classification_report'] = classification_report if classification_report is not None else ''
-                    output_results.append(json_d)
-                    break
-                else:
-                    if out_label_ids[i][j] != -100:
-                        temp_1.append(args.id2label[out_label_ids[i][j]])
-                        temp_2.append(preds[i][j])
+                temp_2 = [args.id2label[i] for i in temp_2]
+                metric.update(pred_paths=[temp_2], label_paths=[temp_1], pred_wrong_type=predict_wrong_type)
+                json_d['pred_tag_seq'] = " ".join(temp_2)
+                json_d['true_tag_seq'] = " ".join(temp_1)
+                json_d['original_input_token'] = " ".join(input_tokens[0])
+                json_d['gpt2_output_token'] = " ".join(example[0])
+                # json_d['classification_report'] = classification_report if classification_report is not None else ''
+                output_results.append(json_d)
+                break
+            else:
+                if out_label_ids[0][j] != -100:
+                    temp_1.append(args.id2label[out_label_ids[0][j]])
+                    temp_2.append(preds[0][j])
         pbar(step)
 
     logger.info("\n")
@@ -449,6 +454,8 @@ def predict(args, model, tokenizer, prefix):
         with open(output_submit_file, "w") as writer:
             for record in output_results:
                 writer.write(json.dumps(record) + '\n')
+        # 打印预测entity类别的结果
+        pprint.pprint(predict_wrong_type)
 
     else:
         print("for cluener, get the test results in file to submit ")
