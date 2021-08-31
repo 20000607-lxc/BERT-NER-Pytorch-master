@@ -233,7 +233,7 @@ def train(args, train_dataset, model, tokenizer):
 
 def evaluate(args, model, tokenizer, prefix):
 
-    if args.model_type in [ "chinese_pretrained_gpt2", 'chinese_generate'] :
+    if args.task_name in ['cluener', 'cner', 'ontonote4']:
         metric = SeqEntityScore(args.id2label, markup=args.markup)
     else:
         metric = NewSeqEntityScore(args.id2label, markup=args.markup)
@@ -293,7 +293,7 @@ def evaluate(args, model, tokenizer, prefix):
                 if j == input_lens[i]-1:
                     json_d = {}
                     json_d['id'] = str(step) + '_' + str(i)
-                    if args.task_name == 'cluener':
+                    if args.task_name == 'cluener' or args.model_type=='bert':
                         pred_entities = get_entities(temp_2[1:-1], args.id2label, args.markup)
                         json_d['pred_entities'] = pred_entities
 
@@ -319,7 +319,7 @@ def evaluate(args, model, tokenizer, prefix):
     logger.info("\n")
     eval_loss = eval_loss / nb_eval_steps
 
-    if args.model_type in ["chinese_pretrained_gpt2", 'chinese_generate']:
+    if args.task_name in ['cluener', 'cner', 'ontonote4']:
         eval_info, entity_info = metric.result()
         results = {f'{key}': value for key, value in eval_info.items()}
         results['loss'] = eval_loss
@@ -401,7 +401,7 @@ def predict(args, model, tokenizer, prefix):
             if j == input_lens[0]-1:
                 json_d = {}
                 json_d['id'] = str(step)
-                if args.task_name == 'cluener':
+                if args.task_name == 'cluener' or args.model_type == 'bert':
                     pred_entities = get_entities(temp_2[1:-1], args.id2label, args.markup)
                     json_d['pred_entities'] = pred_entities
 
