@@ -310,12 +310,12 @@ def evaluate(args, model, tokenizer, prefix):
                         json_d['pred_entities'] = pred_entities
 
                     temp_2 = [args.id2label[i] for i in temp_2]
-                    classification_report = metric.update(pred_paths=[temp_2], label_paths=[temp_1])
+                    metric.update(pred_paths=[temp_2], label_paths=[temp_1])
                     json_d['pred_tag_seq'] = " ".join(temp_2)
                     json_d['true_tag_seq'] = " ".join(temp_1)
                     json_d['original_input_token'] = " ".join(input_tokens[i])
                     json_d['gpt2_output_token'] = " ".join(example[i])
-                    json_d['classification_report'] = classification_report if classification_report is not None else ''
+                    #json_d['classification_report'] = classification_report if classification_report is not None else ''
                     output_results.append(json_d)
                     break
                 else:
@@ -408,12 +408,12 @@ def predict(args, model, tokenizer, prefix):
                         json_d['pred_entities'] = pred_entities
 
                     temp_2 = [args.id2label[i] for i in temp_2]
-                    classification_report = metric.update(pred_paths=[temp_2], label_paths=[temp_1])
+                    metric.update(pred_paths=[temp_2], label_paths=[temp_1])
                     json_d['pred_tag_seq'] = " ".join(temp_2)
                     json_d['true_tag_seq'] = " ".join(temp_1)
                     json_d['original_input_token'] = " ".join(input_tokens[i])
                     json_d['gpt2_output_token'] = " ".join(example[i])
-                    json_d['classification_report'] = classification_report if classification_report is not None else ''
+                    # json_d['classification_report'] = classification_report if classification_report is not None else ''
                     output_results.append(json_d)
                     break
                 else:
