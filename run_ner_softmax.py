@@ -172,7 +172,7 @@ def train(args, train_dataset, model, tokenizer):
             pbar(step, {'loss': loss.item()})
 
             if args.use_wandb:
-                wandb.log({'loss':loss.item()})
+                wandb.log({'loss': loss.item()})
 
             tr_loss += loss.item()
             if (step + 1) % args.gradient_accumulation_steps == 0:
