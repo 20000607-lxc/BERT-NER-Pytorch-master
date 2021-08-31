@@ -45,7 +45,6 @@ MODEL_CLASSES = {
 
     'label_embedding': (GPT2Config, GPT2SoftmaxForNer_LE, CNerTokenizer),
     'generate_label_embedding': (GPT2Config, GPT2generateForNer_LE, CNerTokenizer),# add label embedding each step!
-
 }
 
 TEMPLATE_CLASSES = {
@@ -220,7 +219,6 @@ def train(args, train_dataset, model, tokenizer):
                         torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
                         torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
                         logger.info("Saving optimizer and scheduler states to %s", output_dir)
-
 
         logger.info("\n")
         if 'cuda' in str(args.device):
