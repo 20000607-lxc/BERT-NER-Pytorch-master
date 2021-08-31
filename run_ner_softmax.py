@@ -552,7 +552,7 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit=None
 
 def main():
     args = get_argparse().parse_args()
-    args.project = 'sequence_labeling_gpt2' + args.task_name + '_' + args.model_type
+    args.project = 'sequence_labeling_gpt2' + '_' + args.task_name + '_' + args.model_type
     if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
         assert args.task_name in ['cluener', 'cner', 'ontonote4']
         assert args.markup == 'biso'# 中文一律采用biso
