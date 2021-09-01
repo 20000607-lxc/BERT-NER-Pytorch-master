@@ -232,7 +232,6 @@ def train(args, train_dataset, model, tokenizer):
     return global_step, tr_loss / global_step
 
 def evaluate(args, model, tokenizer, prefix):
-
     if args.task_name in ['cluener', 'cner', 'ontonote4']:
         metric = SeqEntityScore(args.id2label, markup=args.markup)
     else:
