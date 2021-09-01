@@ -34,7 +34,7 @@ def iob_iobes(tags):
 def markup_for_gpt2_english(tokens,  label_ids, label_all_tokens):
     j = 0
     new_label = [0] * len(tokens)
-    for i in range(len(tokens)):
+    for i in range(len(tokens)): # b, 's  --> Gb, ', s
         if 'Ġ' in tokens[i]:
             new_label[i] = label_ids[j]
             j = j+1
@@ -43,6 +43,7 @@ def markup_for_gpt2_english(tokens,  label_ids, label_all_tokens):
                 new_label[i] = new_label[i-1]
             else:
                 new_label[i] = -100# todo note：the convention is -100 not O!
+    assert j == len(label_ids)# 保证没有转换错误
     return tokens, new_label, label_ids
 
 
@@ -132,7 +133,7 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                 if type(example.text_a) == list:
                     new_text = ' '.join(example.text_a)
                     tokens = tokenizer.tokenize(' ' + new_text)
-                    sum_length_of_example += len(tokens)
+                    sum_length_of_example += len(example.text_a)
                 else:
                     raise(NotImplementedError)
                 if len(tokens) == 0:# for the empty tokens list: pass!
@@ -222,7 +223,7 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
 
                 if type(example.text_a) == list:
                     new_text = ' '.join(example.text_a)
-                    tokens = tokenizer.tokenize(new_text)
+
                 else:
                     raise(NotImplementedError)
                 label_ids = [label_map[x] for x in example.labels]
@@ -233,19 +234,34 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                         flag = 0
                 the_no_entity_number += flag
 
-                # align the label_ids with tokens
-                new_label = [0] * len(tokens)
-                j = 0
-                for i in range(len(tokens)):
-                    if '##' not in tokens[i]:
-                        new_label[i] = label_ids[j]
-                        j = j+1
-                        if j == len(label_ids):
-                            # ids that cannot be converted should be passed, such examples include:
-                            # [' 's ', ...]
-                            break# todo something wrong here!
-                    else:
-                        new_label[i] = 0# new_label[i-1]
+                tokens = []
+                new_label = []
+
+                # align the label_ids with tokens (仿照别人发布的bert ner
+                # https://github.com/kyzhouhzau/BERT-NER/blob/master/BERT_NER.py 每个word单独tokenize之后拼接）
+                for i in range(len(example.text_a)):
+                    token = tokenizer.tokenize(example.text_a[i])
+                    tokens.extend(token)
+                    for j, _ in enumerate(token):
+                        if j == 0:
+                            new_label.append(label_ids[i])
+                        else:
+                            new_label.append(-100)
+                assert len(tokens) == len(new_label)
+
+                # new_label = [0] * len(tokens)
+                # j = 0
+                # for i in range(len(tokens)):
+                #     if '##' not in tokens[i]:
+                #         new_label[i] = label_ids[j]
+                #         j = j+1
+                #         if j == len(label_ids):
+                #             # something wrong here!
+                #             # ids that cannot be converted should be passed, such examples include:
+                #             # [' 's ', ...]
+                #             break
+                #     else:
+                #         new_label[i] = -100# new_label[i-1]
 
                 # Account for [CLS] and [SEP] with "- 2".
                 special_tokens_count = 2
