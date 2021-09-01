@@ -20,7 +20,7 @@ class BertSoftmaxForNer(BertPreTrainedModel):
         self.LMBert = BertLMHeadModel.from_pretrained('bert-base-cased')
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
-        self.loss_type = 'ce'#config.loss_type
+        self.loss_type = 'ce'
 
         self.init_weights()
 
@@ -32,12 +32,10 @@ class BertSoftmaxForNer(BertPreTrainedModel):
         logits = self.classifier(sequence_output)
 
         outputs2 = self.LMBert(input_ids=input_ids, attention_mask=attention_mask.to(self.device).half())
-        example = torch.argsort(outputs2[0], dim=2, descending=True)
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, :, 0]
         outputs = (example,)+outputs[2:]
 
         outputs = (logits,) + outputs  # add hidden states and attention if they are here
-
-
 
 
         if labels is not None:

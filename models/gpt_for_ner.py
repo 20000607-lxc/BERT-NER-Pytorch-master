@@ -122,19 +122,17 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
 
         # decode the output ids to see if there is some strange patterns
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
-        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+counts[0]+1:, 0]
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts):, 0]
 
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
         sequence = torch.zeros(bz, bx, self.hidden_size).to(self.device)
 
         for bdix in range(bz):
+            # example:
+            # inputs = [p,p,2,2,2,p,2,2,2]
+            # outputs= 后一截[2,2,2]对应的hidden state
             place = sum(self.template)+counts[bdix]
-            # if self.template[0] == self.template[1]:
-            #     place = sum(self.template)+counts[bdix]
-            # else:
-            #     place = self.template[0] + counts[bdix]# 采用第二个prompt对应的hs
-                # place = 2 * self.template[0] + counts[bdix] + 1 不得行 差好多
             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
             # todo 只截取没有pad的id对应的input
 
@@ -273,7 +271,7 @@ class GPT2GenerateForNer(torch.nn.Module):
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
 
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
-        example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts):, 0]
 
         sequence_output = outputs[0][..., -1, :]# [batch_size, 768]
         past_key_values = outputs.past_key_values

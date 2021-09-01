@@ -34,7 +34,7 @@ def get_argparse():
                                  'output_files/cner_output/', 'output_files/ontonote_output/', 'output_files/ontonote4_output/',
                                  'output_files/ontonote4_output/bert', ] )
 
-    parser.add_argument("--model_type", default='bert', type=str, #required=True,
+    parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
                         help="Model type selected ",
                         choices=['bert', 'albert', 'bare_gpt2', 'gpt2', 'generate',
                              'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
@@ -43,11 +43,11 @@ def get_argparse():
                         help="the implementation details to remind")
     parser.add_argument("--save_model", default=False, action="store_true",
                         help="Whether to save the model checkpoints, currently, there is no need to save the checkpoints.")
-    parser.add_argument("--model_name_or_path", default='bert-base-cased',
+    parser.add_argument("--model_name_or_path", default='gpt2',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name. ",
                         choices=['gpt2', 'gpt2-large','gpt2-medium','bert-base-chinese', 'bert-base-cased'])
-    parser.add_argument("--output_file_name", default='.json',
+    parser.add_argument("--output_file_name", default='test.json',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name")
     parser.add_argument('--label_all_tokens', action="store_true", default=False,
@@ -112,7 +112,7 @@ def get_argparse():
                         help="The maximum total input sequence length after tokenization. Sequences longer "
                              "than this will be truncated, sequences shorter will be padded.", )
 
-    parser.add_argument('--cuda', type=int, default=2, help='Avaiable GPU ID')
+    parser.add_argument('--cuda', type=int, default=3, help='Avaiable GPU ID')
     parser.add_argument("--do_train", action="store_true", default=True,
                         help="Whether to run training.")
     parser.add_argument("--evaluate_and_test_during_training", action="store_true", default=True,

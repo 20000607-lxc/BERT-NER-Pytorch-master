@@ -3437,23 +3437,6 @@ original_input_token = input sequence
 {"id": "3431", "pred_tag_seq": "B-ORG O O O O O O", "true_tag_seq": "B-ORG O O O O O O", "original_input_token": "  T e n e r i f e   1 5   5   4   6   2 3   1 7   1 9", "gpt2_output_token": "i f e   1 5   5   4   6   2 3   1 7   1 9 \n"}
 {"id": "3432", "pred_tag_seq": "B-ORG O O O O O O", "true_tag_seq": "B-ORG O O O O O O", "original_input_token": "  E s p a n y o l   1 5   4   4   7   1 7   2 0   1 6", "gpt2_output_token": "o l   1 5   4   4   7   1 7   2 0   1 6 \n"}
 {"id": "3433", "pred_tag_seq": "B-ORG O O O O O O", "true_tag_seq": "B-ORG O O O O O O", "original_input_token": "  O v i e d o   1 5   4   4   7   1 7   2 1   1 6", "gpt2_output_token": "o   1 5   4   4   7   1 7   2 1   1 6 \n"}
-
-对照数据集
-改 input token 去掉空格
-gpt2 output token的
-
-input query = prompt1 + input + prompt2 + (input)
-original:  Trump is the president of USA
-tokenized: [bos] Trump is the president of US A
-output:    Teh is the president of US
-expected:  per o  o     o      o  loc？(x) Seq2Seq
-expected： Trump is the president of US A (普通的gpt fine tune)
-
-A( attention mask = 0)对应的输出是什么？  attention = 0 的输出是什么
-
-传统的gpt2对应的attention mask是什么？是否不用mask？（即A对应的mask= 1）
-
-
 {"id": "3434", "pred_tag_seq": "B-ORG I-ORG O O O O O O", "true_tag_seq": "B-ORG O O O O O O O", "original_input_token": "  S p o r t i n g   G i j o n   1 5   4   4   7   1 5   2 2   1 6", "gpt2_output_token": "i j o n   1 5   4   4   7   1 5   2 2   1 6 \n"}
 {"id": "3435", "pred_tag_seq": "B-ORG O O O O O O", "true_tag_seq": "B-ORG O O O O O O", "original_input_token": "  L o g r o n e s   1 5   4   3   8   1 1   3 3   1 5", "gpt2_output_token": ",   4   3   8   1 1   3 3   1 5 \n"}
 {"id": "3436", "pred_tag_seq": "B-ORG O O O O O O", "true_tag_seq": "B-ORG O O O O O O", "original_input_token": "  Z a r a g o z a   1 5   2   8   5   1 8   2 3   1 4", "gpt2_output_token": "z a   1 5   2   8   5   1 8   2 3   1 4 \n"}
@@ -3483,4 +3466,3 @@ A( attention mask = 0)对应的输出是什么？  attention = 0 的输出是什
 {"B-ORG": {"O": 31, "B-LOC": 57, "I-LOC": 0, "B-PER": 46, "I-PER": 0, "B-MISC": 35, "I-MISC": 1, "B-ORG": 0, "I-ORG": 9}}
 {"I-ORG": {"O": 19, "B-LOC": 2, "I-LOC": 27, "B-PER": 0, "I-PER": 13, "B-MISC": 1, "I-MISC": 9, "B-ORG": 8, "I-ORG": 0}}
 
-seqeval : misc+org对应的以上
