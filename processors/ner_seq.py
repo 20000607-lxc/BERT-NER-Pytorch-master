@@ -43,7 +43,7 @@ def markup_for_gpt2_english(tokens,  label_ids, label_all_tokens):
                 new_label[i] = new_label[i-1]
             else:
                 new_label[i] = -100# note：the convention is -100 not O!
-    assert j == len(label_ids)# 保证没有转换错误
+    assert j == len(label_ids)# 保证label ids中所有的id都已转换到new_label中
     return tokens, new_label, label_ids
 
 
