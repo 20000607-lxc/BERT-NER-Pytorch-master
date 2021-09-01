@@ -17,10 +17,10 @@ class BertSoftmaxForNer(BertPreTrainedModel):
         super(BertSoftmaxForNer, self).__init__(config)
         self.num_labels = config.num_labels
         self.bert = BertModel(config)
-        self.LMBert = BertLMHeadModel.from_pretrained('bert-base-cased')
+        self.LMBert = BertLMHeadModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
-        self.loss_type = 'ce'
+        self.loss_type = 'ce'# config.loss_type
 
         self.init_weights()
 
@@ -41,11 +41,11 @@ class BertSoftmaxForNer(BertPreTrainedModel):
         if labels is not None:
             assert self.loss_type in ['lsr', 'focal', 'ce']
             if self.loss_type == 'lsr':
-                loss_fct = LabelSmoothingCrossEntropy(ignore_index=0)
+                loss_fct = LabelSmoothingCrossEntropy()
             elif self.loss_type == 'focal':
-                loss_fct = FocalLoss(ignore_index=0)
+                loss_fct = FocalLoss()
             else:
-                loss_fct = CrossEntropyLoss(ignore_index=0)
+                loss_fct = CrossEntropyLoss()
             # Only keep active parts of the loss
             if attention_mask is not None:
                 active_loss = attention_mask.view(-1) == 1
@@ -56,7 +56,6 @@ class BertSoftmaxForNer(BertPreTrainedModel):
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             outputs = (loss,) + outputs
         return outputs  # (loss), scores, (hidden_states), (attentions)
-
 
 
 

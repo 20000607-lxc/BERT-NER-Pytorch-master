@@ -141,11 +141,12 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
 
         outputs = (logits,) + outputs # add hidden states and attention if they are here
         if labels is not None:
+            # 所有loss的默认ignore index 都为-100
             assert self.loss_type in ['lsr', 'focal', 'ce']
             if self.loss_type == 'lsr':
-                loss_fct = LabelSmoothingCrossEntropy(ignore_index=0)
+                loss_fct = LabelSmoothingCrossEntropy()
             elif self.loss_type == 'focal':
-                loss_fct = FocalLoss(ignore_index=0)
+                loss_fct = FocalLoss()
             else:
                 loss_fct = CrossEntropyLoss()
             # Only keep active parts of the loss
