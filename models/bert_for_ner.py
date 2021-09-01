@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .layers.crf import CRF
-from .transformers_master.models.bert.modeling_bert import BertPreTrainedModel
+from .transformers_master.models.bert.modeling_bert import BertPreTrainedModel, BertLMHeadModel
 from .transformers_master.models.bert.modeling_bert import BertModel
 from .layers.linears import PoolerEndLogits, PoolerStartLogits
 from torch.nn import CrossEntropyLoss
@@ -17,9 +17,11 @@ class BertSoftmaxForNer(BertPreTrainedModel):
         super(BertSoftmaxForNer, self).__init__(config)
         self.num_labels = config.num_labels
         self.bert = BertModel(config)
+        self.LMBert = BertLMHeadModel.from_pretrained('bert-base-cased')
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
         self.loss_type = 'ce'#config.loss_type
+
         self.init_weights()
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None,
@@ -27,8 +29,17 @@ class BertSoftmaxForNer(BertPreTrainedModel):
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask.to(self.device).half())# token_type_ids=token_type_ids 全都是0 不要他了
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
-        logits = self.classifier(sequence_output) # logits：每个词的label分数
-        outputs = (logits,) + outputs[2:]  # add hidden states and attention if they are here
+        logits = self.classifier(sequence_output)
+
+        outputs2 = self.LMBert(input_ids=input_ids, attention_mask=attention_mask.to(self.device).half())
+        example = torch.argsort(outputs2[0], dim=2, descending=True)
+        outputs = (example,)+outputs[2:]
+
+        outputs = (logits,) + outputs  # add hidden states and attention if they are here
+
+
+
+
         if labels is not None:
             assert self.loss_type in ['lsr', 'focal', 'ce']
             if self.loss_type == 'lsr':

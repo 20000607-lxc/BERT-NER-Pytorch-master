@@ -34,7 +34,7 @@ def get_argparse():
                                  'output_files/cner_output/', 'output_files/ontonote_output/', 'output_files/ontonote4_output/',
                                  'output_files/ontonote4_output/bert', ] )
 
-    parser.add_argument("--model_type", default='gpt2', type=str, #required=True,
+    parser.add_argument("--model_type", default='bert', type=str, #required=True,
                         help="Model type selected ",
                         choices=['bert', 'albert', 'bare_gpt2', 'gpt2', 'generate',
                              'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
@@ -43,7 +43,7 @@ def get_argparse():
                         help="the implementation details to remind")
     parser.add_argument("--save_model", default=False, action="store_true",
                         help="Whether to save the model checkpoints, currently, there is no need to save the checkpoints.")
-    parser.add_argument("--model_name_or_path", default='gpt2',
+    parser.add_argument("--model_name_or_path", default='bert-base-cased',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name. ",
                         choices=['gpt2', 'gpt2-large','gpt2-medium','bert-base-chinese', 'bert-base-cased'])
@@ -91,7 +91,7 @@ def get_argparse():
                         help="The initial learning rate for crf and linear layer.")
     parser.add_argument("--weight_decay", default=0.01, type=float,#bert default =  0.01
                         help="Weight decay if we apply some.")
-    parser.add_argument("--tokenizer_name", default='gpt2', type=str,
+    parser.add_argument("--tokenizer_name", default='bert-base-cased', type=str,
                         help="Pretrained tokenizer name or path if not the same as model_name", )
     # config name 和 tokenizer name 若为空则默认与 model_name_or_path一致,
     # I set the tokenizer for chinese as bert-base-chinese in run_ner_xxx.py and cannot be modified by --tokenizer_name.

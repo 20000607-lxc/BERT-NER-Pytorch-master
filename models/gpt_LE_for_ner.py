@@ -14,6 +14,8 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
     """
     one step 输出input 对应的 hidden state
     """
+    # todo change into the new attention computation!!!!!!
+
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
         self.num_labels = config.num_labels
