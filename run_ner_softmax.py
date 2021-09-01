@@ -301,8 +301,8 @@ def evaluate(args, model, tokenizer, prefix):
                     metric.update(pred_paths=[temp_2], label_paths=[temp_1], pred_wrong_type=None)
                     json_d['pred_tag_seq'] = " ".join(temp_2)
                     json_d['true_tag_seq'] = " ".join(temp_1)
-                    json_d['original_input_token'] = "".join(input_tokens[i])
-                    json_d['gpt2_output_token'] = "".join(example[i])
+                    json_d['original_input_token'] = input_tokens[i]
+                    json_d['gpt2_output_token'] = example[i]
                     #json_d['classification_report'] = classification_report if classification_report is not None else ''
                     output_results.append(json_d)
                     break
@@ -409,8 +409,8 @@ def predict(args, model, tokenizer, prefix):
                 metric.update(pred_paths=[temp_2], label_paths=[temp_1], pred_wrong_type=predict_wrong_type)
                 json_d['pred_tag_seq'] = " ".join(temp_2)
                 json_d['true_tag_seq'] = " ".join(temp_1)
-                json_d['original_input_token'] = " ".join(input_tokens[0])
-                json_d['gpt2_output_token'] = " ".join(example[0])
+                json_d['original_input_token'] = input_tokens[0]
+                json_d['gpt2_output_token'] = example[0]
                 # json_d['classification_report'] = classification_report if classification_report is not None else ''
                 output_results.append(json_d)
                 break
