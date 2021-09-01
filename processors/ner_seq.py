@@ -34,7 +34,7 @@ def iob_iobes(tags):
 def markup_for_gpt2_english(tokens,  label_ids, label_all_tokens):
     j = 0
     new_label = [0] * len(tokens)
-    for i in range(len(tokens)): # b, 's  --> Gb, ', s
+    for i in range(len(tokens)):
         if 'Ġ' in tokens[i]:
             new_label[i] = label_ids[j]
             j = j+1
@@ -42,7 +42,7 @@ def markup_for_gpt2_english(tokens,  label_ids, label_all_tokens):
             if label_all_tokens:
                 new_label[i] = new_label[i-1]
             else:
-                new_label[i] = -100# todo note：the convention is -100 not O!
+                new_label[i] = -100# note：the convention is -100 not O!
     assert j == len(label_ids)# 保证没有转换错误
     return tokens, new_label, label_ids
 
@@ -132,7 +132,7 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                     logger.info("Writing example %d of %d", ex_index, len(examples))
                 if type(example.text_a) == list:
                     new_text = ' '.join(example.text_a)
-                    tokens = tokenizer.tokenize(' ' + new_text)
+                    tokens = tokenizer.tokenize(' ' + new_text)# 在每句话开头加上空格，保证第一个单词可以被tokenized as G开头
                     sum_length_of_example += len(example.text_a)
                 else:
                     raise(NotImplementedError)
