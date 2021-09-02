@@ -1,4 +1,4 @@
-gpt2 conll2003 results from test, after first training epoch
+gpt2 conll2003 final results from test
 query = prompt1+input+prompt2+input
 original_input_token = input sequence
 指截取第二个input对应位置的hidden state --> gpt2LMheadModel --> gpt2_output_token
