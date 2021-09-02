@@ -34,17 +34,20 @@ import pprint
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
-     #'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
+
     'bare_gpt2': (GPT2Config, BareGPT2, CNerTokenizer),
     'gpt2': (GPT2Config, GPT2SoftmaxForNer_fix, CNerTokenizer),
-    'generate': (GPT2Config, GPT2GenerateForNer, CNerTokenizer),
 
     'bare_chinese_gpt2':  (GPT2Config, BareChineseGPT2, CNerTokenizer),
     "chinese_pretrained_gpt2": (GPT2Config, GPT2LMSoftmaxForNer, CNerTokenizer),
-    'chinese_generate': (GPT2Config, GPT2LMGenerateForNer, CNerTokenizer),
 
     'label_embedding': (GPT2Config, GPT2SoftmaxForNer_LE, CNerTokenizer),
-    'generate_label_embedding': (GPT2Config, GPT2generateForNer_LE, CNerTokenizer),# add label embedding each step!
+
+    # 暂时不要尝试
+    #'generate': (GPT2Config, GPT2GenerateForNer, CNerTokenizer),
+    #'chinese_generate': (GPT2Config, GPT2LMGenerateForNer, CNerTokenizer),
+    #'generate_label_embedding': (GPT2Config, GPT2generateForNer_LE, CNerTokenizer),# add label embedding each step!
+    #'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
 }
 
 TEMPLATE_CLASSES = {
