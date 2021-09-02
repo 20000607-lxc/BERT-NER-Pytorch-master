@@ -17,6 +17,8 @@ def get_argparse():
                         help="Whether to run sweep .")
     parser.add_argument("--use_random", action="store_true", default=False,
                         help="Whether to randomly add ** around half of the entities in the trian dataset .")
+    parser.add_argument("--duplicate_train_data", action="store_true", default=True,
+                        help="Whether to duplicate the train data and add ** around all the entities in the trian dataset .")
     parser.add_argument("--use_wandb", action="store_true", default=False,
                         help="Whether to run with wandb  .")
     parser.add_argument("--task_name", default='conll2003', type=str, #required=True,
@@ -93,7 +95,7 @@ def get_argparse():
                         help="The initial learning rate for crf and linear layer.")
     parser.add_argument("--weight_decay", default=0.01, type=float,#bert default =  0.01
                         help="Weight decay if we apply some.")
-    parser.add_argument("--tokenizer_name", default='bert-base-cased', type=str,
+    parser.add_argument("--tokenizer_name", default='gpt2', type=str,
                         help="Pretrained tokenizer name or path if not the same as model_name", )
     # config name 和 tokenizer name 若为空则默认与 model_name_or_path一致,
     # I set the tokenizer for chinese as bert-base-chinese in run_ner_xxx.py and cannot be modified by --tokenizer_name.

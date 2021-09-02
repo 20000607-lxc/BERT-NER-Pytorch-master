@@ -521,7 +521,8 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit=None
         else:
             ENGLISH = True
         # gpt2tokenizer 没有sep_token  pad_token cls_token 因此都是None
-        features, count = convert_examples_to_features(use_random=args.use_random, english=ENGLISH, markup=args.markup,
+        features, count = convert_examples_to_features(duplicate_train_data=args.duplicate_train_data,
+                                                use_random=args.use_random, english=ENGLISH, markup=args.markup,
                                                 label_all_tokens=args.label_all_tokens,
                                                 task_name=data_type,
                                                 tokenizer_name=args.tokenizer_name if args.tokenizer_name!='' else args.model_name_or_path,
