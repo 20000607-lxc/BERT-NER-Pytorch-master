@@ -537,12 +537,12 @@ def convert_examples_to_features(use_random, english, markup, label_all_tokens, 
                 input_ids = ([pad_token] * padding_length) + input_ids
                 input_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + input_mask
                 segment_ids = ([pad_token_segment_id] * padding_length) + segment_ids
-                label_ids = ([pad_token] * padding_length) + label_ids
+                label_ids = ([-100] * padding_length) + label_ids
             else:
                 input_ids += [pad_token] * padding_length
                 input_mask += [0 if mask_padding_with_zero else 1] * padding_length
                 segment_ids += [pad_token_segment_id] * padding_length
-                label_ids += [pad_token] * padding_length
+                label_ids += [-100] * padding_length
 
             assert len(input_ids) == max_seq_length
             assert len(input_mask) == max_seq_length
