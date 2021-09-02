@@ -408,7 +408,7 @@ def predict(args, model, tokenizer, prefix):
                     json_d['pred_entities'] = pred_entities
 
                 temp_2 = [args.id2label[i] for i in temp_2]
-                metric.update(pred_paths=[temp_2], label_paths=[temp_1], pred_wrong_type=predict_wrong_type)
+                metric.update(pred_paths=[temp_2], label_paths=[temp_1], pred_wrong_type=predict_wrong_type, json_d=json_d)
                 json_d['pred_tag_seq'] = " ".join(temp_2)
                 json_d['true_tag_seq'] = " ".join(temp_1)
                 json_d['original_input_token'] = input_tokens[0]

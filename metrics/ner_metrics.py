@@ -31,7 +31,7 @@ class NewSeqEntityScore(object):
         print(classification_report(self.origins, self.founds))
         return {'precision': precision, 'recall': recall, 'f1': f1, 'acc': accuracy}
 
-    def update(self, label_paths, pred_paths, pred_wrong_type=None):
+    def update(self, label_paths, pred_paths, pred_wrong_type=None, json_d=None):
         '''
         labels_paths: [[],[],[],....]
         prcoed_paths: [[],[],[],.....]
@@ -50,6 +50,11 @@ class NewSeqEntityScore(object):
             for i in range(len(label_paths[0])):
                 if pred_paths[0][i] != label_paths[0][i]:
                     pred_wrong_type[label_paths[0][i]][pred_paths[0][i]] += 1
+                    if 'MISC' in pred_wrong_type[label_paths[0]]:
+                        json_d['pred_wrong for MISC'] = '1'
+                    if 'ORG' in pred_wrong_type[label_paths[0]]:
+                        json_d['pred_wrong for ORG']  = '1'
+
 
 
 class SeqEntityScore(object):
