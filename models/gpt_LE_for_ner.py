@@ -14,7 +14,6 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
     """
     one step 输出input 对应的 hidden state
     """
-
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
         self.device = device
