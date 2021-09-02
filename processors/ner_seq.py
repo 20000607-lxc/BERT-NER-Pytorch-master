@@ -588,15 +588,6 @@ def convert_examples_to_features(use_random,duplicate_train_data, english, marku
                 assert len(input_mask) == max_seq_length
                 assert len(segment_ids) == max_seq_length
 
-                # if ex_index < 5:
-                #     logger.info("*** Example ***")
-                #     logger.info("guid: %s", example.guid)
-                #     logger.info("tokens: %s", " ".join([str(x) for x in tokens]))
-                #     logger.info("input_ids: %s", " ".join([str(x) for x in input_ids]))
-                #     logger.info("input_mask: %s", " ".join([str(x) for x in input_mask]))
-                #     logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
-                #     logger.info("label_ids: %s", " ".join([str(x) for x in new_label]))
-
                 input_len = min(len(new_label), max_seq_length)
                 features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
                                               segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
@@ -1107,7 +1098,6 @@ class OntonoteProcessor(DataProcessor):
                     labels.append(x)
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
-
 
 ner_processors = {
     "cner": CnerProcessor,
