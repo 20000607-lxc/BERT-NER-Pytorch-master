@@ -4,6 +4,7 @@ import logging
 import os
 import copy
 import json
+import random
 from .utils_ner import DataProcessor
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,6 @@ def collate_fn(batch):
     all_token_type_ids = all_token_type_ids[:, :max_len]
     all_labels = all_labels[:,:max_len]
     return all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_lens
-
 # from transformers import AutoTokenizer
 # tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
 
@@ -123,6 +123,8 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
     label_map = {label: i for i, label in enumerate(label_list)}
     features = []
     sum_length_of_example = 0
+    tokenizer_name = 'random add **'
+
     if english:
         if 'gpt2' in tokenizer_name:
             print("gpt2_english tokenizer ")
@@ -150,6 +152,132 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                         break
                 the_no_entity_number += flag
 
+                # align the label_ids with tokens
+                tokens, new_label, label_ids, j = markup_for_gpt2_english(tokens, label_ids, label_all_tokens)
+                # truncate
+                special_tokens_count = 0
+                if len(tokens) > max_seq_length - special_tokens_count:
+                    tokens = tokens[: (max_seq_length - special_tokens_count)]
+                    new_label = new_label[: (max_seq_length - special_tokens_count)]
+                segment_ids = [sequence_a_segment_id] * len(tokens)
+
+                # # todo 1 仿照bert在input的前面后面加上特殊的fix-token（不随continuous prompt变化）目前看结果没什么变化 那就去掉吧
+                # new_label += [label_map['O']]
+                # segment_ids += [0]
+                # if cls_token_at_end:
+                #     new_label += [label_map['O']]
+                #     segment_ids += [0]
+                # else:
+                #     new_label = [label_map['O']] + new_label
+                #     segment_ids = [0] + segment_ids
+                # gpt2 tokenizer 不添加cls和sep 且special_tokens_count=0
+
+                pad_token = 0
+                input_ids = tokenizer.convert_tokens_to_ids(tokens)
+                # input_ids += [102]
+                # input_ids = [101]+input_ids
+
+                # The mask has 1 for real tokens and 0 for padding tokens. Only real tokens are attended to.
+                input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
+
+                input_len = len(new_label)
+
+                # Zero-pad up to the sequence length.
+                padding_length = max_seq_length - len(input_ids)
+                if pad_on_left:
+                    input_ids = ([pad_token] * padding_length) + input_ids
+                    input_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + input_mask
+                    segment_ids = ([pad_token_segment_id] * padding_length) + segment_ids
+                    new_label = ([pad_token] * padding_length) + new_label
+                else:
+                    input_ids += [pad_token] * padding_length
+                    input_mask += [0 if mask_padding_with_zero else 1] * padding_length
+                    segment_ids += [pad_token_segment_id] * padding_length
+                    new_label += [pad_token] * padding_length
+
+                assert len(input_ids) == max_seq_length
+                assert len(input_mask) == max_seq_length
+                assert len(segment_ids) == max_seq_length
+
+                # if ex_index < 5:
+                #     logger.info("*** Example ***")
+                #     logger.info("guid: %s", example.guid)
+                #     logger.info("tokens: %s", " ".join([str(x) for x in tokens]))
+                #     logger.info("input_ids: %s", " ".join([str(x) for x in input_ids]))
+                #     logger.info("input_mask: %s", " ".join([str(x) for x in input_mask]))
+                #     logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
+                #     logger.info("label_ids: %s", " ".join([str(x) for x in new_label]))
+
+                if j == len(label_ids):# 保证label ids中所有的id都已转换到new_label中
+                    features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
+                                                  segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
+                else:
+                    count += 1
+
+            print("****************  the total no entity example number: "+str(the_no_entity_number)+'  ******************')
+            print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index) + ' ******************')
+            return features, count
+
+        elif 'random add **' in tokenizer_name and task_name == 'train':
+            all_random_samples = random.sample(range(0, len(examples)), len(examples)//2)# 产生一半
+            print("only for train dataset, gpt2_english tokenizer random add ** around half of the entities, randomly chosen each epoch!  ")
+            for (ex_index, example) in enumerate(examples):
+                if ex_index % 10000 == 0:
+                    logger.info("Writing example %d of %d", ex_index, len(examples))
+                if type(example.text_a) != list:
+                    raise(NotImplementedError)
+
+                if len(example.labels) == 0:
+                    count += 1
+                    continue
+
+                random_labels = [example.labels[m] for m in range(len(example.labels))]
+                random_text = [example.text_a[m] for m in range(len(example.text_a))]
+                shift_place = 0
+
+                if ex_index in all_random_samples:
+                    for k in range(1, len(example.labels)-1):
+                        if example.labels[k] != 'O':
+                            if example.labels[k-1] == 'O':
+                                random_text.insert(k+shift_place, '*')
+                                random_labels.insert(k+shift_place, 'O')
+                                shift_place += 1
+                            if example.labels[k+1] == 'O':
+                                random_text.insert(k+1+shift_place, '*')
+                                random_labels.insert(k+1+shift_place, 'O')
+                                shift_place += 1
+
+                    if example.labels[0] != 'O':
+                        random_text.insert(0, '*')
+                        random_labels.insert(0, 'O')
+
+                    if example.labels[-1] != 'O':
+                        random_text.append('*')
+                        random_labels.append('O')
+                    else:
+                        if len(example.labels) >= 2 and example.labels[-2] != 'O':
+                            random_text.insert(-1, '*')
+                            random_labels.insert(-1, 'O')
+
+                new_text = ' '.join(random_text)
+                tokens = tokenizer.tokenize(' ' + new_text)# 在每句话开头加上空格，保证第一个单词可以被tokenized as G开头
+                sum_length_of_example += len(random_text)
+
+                if len(tokens) == 0:# for the empty tokens list: pass!
+                    count += 1# count such abnormal tokens
+                    continue
+
+                if markup == 'bieso':
+                    random_labels = iob_iobes(random_labels)
+
+                label_ids = [label_map[x] for x in random_labels]
+                flag = 1
+                for i in label_ids:
+                    if i != 0:
+                        flag = 0# 表示该example含有entity
+                        break
+
+                the_no_entity_number += flag
                 # align the label_ids with tokens
                 tokens, new_label, label_ids, j = markup_for_gpt2_english(tokens, label_ids, label_all_tokens)
 
@@ -216,6 +344,12 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
             print("****************  the total no entity example number: "+str(the_no_entity_number)+'  ******************')
             print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index) + ' ******************')
             return features, count
+
+
+
+
+
+
 
         elif "bert" or 'Bert' in tokenizer_name:
             print('bert english tokenizer')
