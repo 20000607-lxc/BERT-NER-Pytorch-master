@@ -347,8 +347,6 @@ def convert_examples_to_features(use_random, english, markup, label_all_tokens, 
             return features, count
 
 
-
-
         elif "bert" or 'Bert' in tokenizer_name:
             print('bert english tokenizer')
             for (ex_index, example) in enumerate(examples):
@@ -366,7 +364,6 @@ def convert_examples_to_features(use_random, english, markup, label_all_tokens, 
                     if i != 0:
                         flag = 0
                 the_no_entity_number += flag
-
                 tokens = []
                 new_label = []
 
@@ -437,7 +434,6 @@ def convert_examples_to_features(use_random, english, markup, label_all_tokens, 
                     input_mask += [0 if mask_padding_with_zero else 1] * padding_length
                     segment_ids += [pad_token_segment_id] * padding_length
                     new_label += [-100] * padding_length
-                    # todo should be label_map['X']? what is the difference?
 
                 assert len(input_ids) == max_seq_length
                 assert len(input_mask) == max_seq_length
