@@ -214,9 +214,9 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         if labels is not None:
             assert self.loss_type in ['lsr', 'focal', 'ce']
             if self.loss_type == 'lsr':
-                loss_fct = LabelSmoothingCrossEntropy(ignore_index=0)
+                loss_fct = LabelSmoothingCrossEntropy()
             elif self.loss_type == 'focal':
-                loss_fct = FocalLoss(ignore_index=0)
+                loss_fct = FocalLoss()
             else:
                 loss_fct = CrossEntropyLoss()
             # Only keep active parts of the loss
@@ -451,9 +451,9 @@ class GPT2generateForNer_LE(torch.nn.Module):
         if labels is not None:
             assert self.loss_type in ['lsr', 'focal', 'ce']
             if self.loss_type == 'lsr':
-                loss_fct = LabelSmoothingCrossEntropy(ignore_index=0)
+                loss_fct = LabelSmoothingCrossEntropy()
             elif self.loss_type == 'focal':
-                loss_fct = FocalLoss(ignore_index=0)
+                loss_fct = FocalLoss()
             else:
                 loss_fct = CrossEntropyLoss()
             # Only keep active parts of the loss

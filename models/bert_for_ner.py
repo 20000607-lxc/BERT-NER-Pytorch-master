@@ -162,11 +162,11 @@ class BertPromptForNer(BertPreTrainedModel):
         if labels is not None:
             assert self.loss_type in ['lsr', 'focal', 'ce']
             if self.loss_type == 'lsr':
-                loss_fct = LabelSmoothingCrossEntropy(ignore_index=0)
+                loss_fct = LabelSmoothingCrossEntropy()
             elif self.loss_type == 'focal':
-                loss_fct = FocalLoss(ignore_index=0)
+                loss_fct = FocalLoss()
             else:
-                loss_fct = CrossEntropyLoss(ignore_index=0)
+                loss_fct = CrossEntropyLoss()
             # Only keep active parts of the loss
             if attention_mask is not None:
                 active_loss = attention_mask.view(-1) == 1
