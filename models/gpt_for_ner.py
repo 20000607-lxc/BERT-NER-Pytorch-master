@@ -122,7 +122,7 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
 
         # decode the output ids to see if there is some strange patterns
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
-        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts):, 0]
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts):, 0].to(self.device)
 
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
@@ -272,7 +272,7 @@ class GPT2GenerateForNer(torch.nn.Module):
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
 
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
-        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts):, 0]
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts):, 0].to(self.device)
 
         sequence_output = outputs[0][..., -1, :]# [batch_size, 768]
         past_key_values = outputs.past_key_values
@@ -403,7 +403,7 @@ class BareGPT2(torch.nn.Module):
         outputs = self.gpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
         # decode the output ids to see if there is some patterns
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
-        example = torch.argsort(outputs2[0], dim=2, descending=True)[0, counts[0]+1:, 0]
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts):, 0].to(self.device)
 
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
