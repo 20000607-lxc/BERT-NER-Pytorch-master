@@ -50,10 +50,10 @@ class NewSeqEntityScore(object):
             for i in range(len(label_paths[0])):
                 if pred_paths[0][i] != label_paths[0][i]:
                     pred_wrong_type[label_paths[0][i]][pred_paths[0][i]] += 1
-                    if 'MISC' in pred_wrong_type[label_paths[0]]:
-                        json_d['pred_wrong for MISC'] = '1'
-                    if 'ORG' in pred_wrong_type[label_paths[0]]:
-                        json_d['pred_wrong for ORG']  = '1'
+                    if 'MISC' in label_paths[0][i]:
+                        json_d['***pred MISC wrong***'] = '1'
+                    if 'ORG' in label_paths[0][i]:
+                        json_d['***pred ORG wrong***']  = '1'
 
 
 
