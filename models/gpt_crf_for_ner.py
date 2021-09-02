@@ -15,19 +15,19 @@ class GPT2CrfForNer(torch.nn.Module):
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
         self.num_labels = config.num_labels
+        self.device = device
         if model_name == None:
             model_name = 'gpt2'
-        self.gpt2 = New_GPT2.from_pretrained(model_name)# 可以接受inputs_embeds和input_ids
-        self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name)
+        self.gpt2 = New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
+        self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name).to(self.device)
 
-        self.dropout = nn.Dropout(config.resid_pdrop)
-        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
+        self.dropout = nn.Dropout(config.resid_pdrop).to(self.device)
+        self.classifier = nn.Linear(config.hidden_size, config.num_labels).to(self.device)
         self.loss_type = 'ce'
-        self.device = device
-        self.embeddings = GPT2LMHeadModel.from_pretrained('gpt2').base_model.get_input_embeddings()
+        self.embeddings = GPT2LMHeadModel.from_pretrained('gpt2').base_model.get_input_embeddings().to(self.device)
 
-        self.crf = CRF(num_tags=config.num_labels, batch_first=True)
-        self.lstmcrf = NNCRF(config=config, device=device, num_tags=config.num_labels, batch_first=True)
+        self.crf = CRF(num_tags=config.num_labels, batch_first=True).to(self.device)
+        self.lstmcrf = NNCRF(config=config, device=device, num_tags=config.num_labels, batch_first=True).to(self.device)
 
         self.pseudo_token_id = 50257# prompt word的id
 
@@ -42,7 +42,7 @@ class GPT2CrfForNer(torch.nn.Module):
                                   num_layers=2,
                                   dropout=0.0,
                                   bidirectional=True,
-                                  batch_first=True)
+                                  batch_first=True).to(self.device)
 
         print("init GPT2CrfForNer ")
 

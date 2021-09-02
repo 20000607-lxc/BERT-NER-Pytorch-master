@@ -13,24 +13,24 @@ class GPT2LMSoftmaxForNer(torch.nn.Module):
     """
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
+        self.device = device
         self.num_labels = config.num_labels
-        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model# 21128 768 donnt use it anymore!!!
-        self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall")
+        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.to(self.device)# 21128 768 donnt use it anymore!!!
+        self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").to(self.device)
         #self.gpt2 = New_GPT2.from_pretrained('gpt2') #50257 768  this model is much better !!!
 
-        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings()# 21128 768
+        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings().to(self.device)# 21128 768
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
 
         self.pseudo_token_id = 21128
-        self.dropout = nn.Dropout(config.resid_pdrop)
+        self.dropout = nn.Dropout(config.resid_pdrop).to(self.device)
         self.loss_type = 'ce'
-        self.device = device
 
         # embedding是GPT2LMHeadModel的embedding
         # self.embeddings.weight.requires_grad = False
         self.hidden_size =  self.embeddings.embedding_dim
-        self.classifier = nn.Linear(self.hidden_size, config.num_labels)
+        self.classifier = nn.Linear(self.hidden_size, config.num_labels).to(self.device)
         self.template = template
 
         self.pad_token_id = 0
@@ -159,12 +159,13 @@ class GPT2LMGenerateForNer(torch.nn.Module):
     """
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
+        self.device = device
         self.num_labels = config.num_labels
-        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model# 21128 768 donnt use it anymore!!!
-        self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall")
+        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.to(self.device)# 21128 768 donnt use it anymore!!!
+        self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").to(self.device)
         #self.gpt2 = New_GPT2.from_pretrained('gpt2') #50257 768  this model is much better !!!
 
-        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings()# 21128 768
+        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings().to(self.device)# 21128 768
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
 
@@ -173,9 +174,9 @@ class GPT2LMGenerateForNer(torch.nn.Module):
         # perform fine_tuning
         self.device = device
 
-        self.dropout = nn.Dropout(config.resid_pdrop)
-        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
-        self.linear = nn.Linear(2*config.hidden_size, config.hidden_size)
+        self.dropout = nn.Dropout(config.resid_pdrop).to(self.device)
+        self.classifier = nn.Linear(config.hidden_size, config.num_labels).to(self.device)
+        self.linear = nn.Linear(2*config.hidden_size, config.hidden_size).to(self.device)
         self.loss_type = 'ce'
 
         self.hidden_size = self.embeddings.embedding_dim
@@ -186,11 +187,11 @@ class GPT2LMGenerateForNer(torch.nn.Module):
         self.prompt_encoder = self.prompt_encoder.to(device)
 
 
-        self.cat = nn.Linear(config.hidden_size*2, config.hidden_size)
+        self.cat = nn.Linear(config.hidden_size*2, config.hidden_size).to(self.device)
         # todo 加一个激活层看会不会好
         self.mlp = nn.Sequential(nn.Linear(config.hidden_size*2, self.hidden_size),
                                  nn.ReLU(),
-                                 nn.Linear(self.hidden_size, self.hidden_size))
+                                 nn.Linear(self.hidden_size, self.hidden_size)).to(self.device)
 
         print("****************init  GPT2LM GenerateForNer  ***********************")
         print("****************generate hidden state in a loop****************")
@@ -318,25 +319,25 @@ class BareChineseGPT2(torch.nn.Module):
 
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
+        self.device = device
         self.num_labels = config.num_labels
-        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model# 21128 768 donnt use it anymore!!!
-        self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall")
+        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.to(self.device)# 21128 768 donnt use it anymore!!!
+        self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").to(self.device)
 
         #self.gpt2 = New_GPT2.from_pretrained('gpt2') #50257 768  this model is much better !!!
 
-        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings()# 21128 768
+        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings().to(self.device)# 21128 768
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
 
         self.pseudo_token_id = 21128
-        self.dropout = nn.Dropout(config.resid_pdrop)
+        self.dropout = nn.Dropout(config.resid_pdrop).to(self.device)
         self.loss_type = 'ce'
-        self.device = device
 
         # embedding是GPT2LMHeadModel的embedding
         # self.embeddings.weight.requires_grad = False
         self.hidden_size =  self.embeddings.embedding_dim
-        self.classifier = nn.Linear(self.hidden_size, config.num_labels)
+        self.classifier = nn.Linear(self.hidden_size, config.num_labels).to(self.device)
         self.template = template
 
         self.pad_token_id = 0

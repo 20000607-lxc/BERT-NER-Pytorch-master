@@ -66,12 +66,12 @@ class BertPromptForNer(BertPreTrainedModel):
     def __init__(self, config, device, template):
         super(BertSoftmaxForNer, self).__init__(config)
         self.num_labels = config.num_labels
-        self.bert = BertModel(config)
-        self.embeddings = self.bert.get_input_embeddings()
+        self.bert = BertModel(config).to(device)
+        self.embeddings = self.bert.get_input_embeddings().to(device)
         # self.embeddings.weight.requires_grad = False
 
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
+        self.dropout = nn.Dropout(config.hidden_dropout_prob).to(device)
+        self.classifier = nn.Linear(config.hidden_size, config.num_labels).to(device)
         self.loss_type = 'ce'#config.loss_type
         self.init_weights()
 

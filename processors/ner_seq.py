@@ -43,8 +43,7 @@ def markup_for_gpt2_english(tokens,  label_ids, label_all_tokens):
                 new_label[i] = new_label[i-1]
             else:
                 new_label[i] = -100# note：the convention is -100 not O!
-    assert j == len(label_ids)# 保证label ids中所有的id都已转换到new_label中
-    return tokens, new_label, label_ids
+    return tokens, new_label, label_ids, j
 
 
 class InputExample(object):
@@ -152,7 +151,7 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                 the_no_entity_number += flag
 
                 # align the label_ids with tokens
-                tokens, new_label, label_ids = markup_for_gpt2_english(tokens, label_ids, label_all_tokens)
+                tokens, new_label, label_ids, j = markup_for_gpt2_english(tokens, label_ids, label_all_tokens)
 
                 # truncate
                 special_tokens_count = 0
@@ -208,8 +207,11 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                 #     logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
                 #     logger.info("label_ids: %s", " ".join([str(x) for x in new_label]))
 
-                features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
-                                              segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
+                if j == len(label_ids):# 保证label ids中所有的id都已转换到new_label中
+                    features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
+                                                  segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
+                else:
+                    count += 1
 
             print("****************  the total no entity example number: "+str(the_no_entity_number)+'  ******************')
             print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index) + ' ******************')

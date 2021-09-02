@@ -16,26 +16,26 @@ class GPT2LMcrfForNer(torch.nn.Module):
 
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
+        self.device = device
         self.num_labels = config.num_labels
-        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model# 21128 768 donnt use it anymore!!!
-        self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall")
+        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.to(self.device)# 21128 768 donnt use it anymore!!!
+        self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").to(self.device)
 
         #self.gpt2 = New_GPT2.from_pretrained('gpt2') #50257 768  this model is much better !!!
 
-        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings()# 21128 768
+        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings().to(self.device)# 21128 768
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
 
         self.pseudo_token_id = 21128
-        self.dropout = nn.Dropout(config.resid_pdrop)
+        self.dropout = nn.Dropout(config.resid_pdrop).to(self.device)
         self.loss_type = 'ce'
-        self.device = device
-        self.crf = CRF(num_tags=config.num_labels, batch_first=True)
+        self.crf = CRF(num_tags=config.num_labels, batch_first=True).to(self.device)
 
         # embedding是GPT2LMHeadModel的embedding
         # self.embeddings.weight.requires_grad = False
         self.hidden_size =  self.embeddings.embedding_dim
-        self.classifier = nn.Linear(self.hidden_size, config.num_labels)
+        self.classifier = nn.Linear(self.hidden_size, config.num_labels).to(self.device)
         self.template = template
 
         self.pad_token_id = 0
@@ -160,25 +160,25 @@ class BareChineseGPT2(torch.nn.Module):
 
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
+        self.device = device
         self.num_labels = config.num_labels
-        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model# 21128 768 donnt use it anymore!!!
-        self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall")
+        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.to(self.device)# 21128 768 donnt use it anymore!!!
+        self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").to(self.device)
 
         #self.gpt2 = New_GPT2.from_pretrained('gpt2') #50257 768  this model is much better !!!
 
-        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings()# 21128 768
+        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings().to(self.device)# 21128 768
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
 
         self.pseudo_token_id = 21128
-        self.dropout = nn.Dropout(config.resid_pdrop)
+        self.dropout = nn.Dropout(config.resid_pdrop).to(self.device)
         self.loss_type = 'ce'
-        self.device = device
 
         # embedding是GPT2LMHeadModel的embedding
         # self.embeddings.weight.requires_grad = False
         self.hidden_size =  self.embeddings.embedding_dim
-        self.classifier = nn.Linear(self.hidden_size, config.num_labels)
+        self.classifier = nn.Linear(self.hidden_size, config.num_labels).to(self.device)
         self.template = template
 
         self.pad_token_id = 0

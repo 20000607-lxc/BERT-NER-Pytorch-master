@@ -18,24 +18,24 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
 
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
+        self.device = device
         self.num_labels = config.num_labels
         if model_name == None:# 用于load gpt2-large
             model_name = 'gpt2'
-        self.gpt2 = New_GPT2.from_pretrained(model_name)# 可以接受inputs_embeds和input_ids
-        self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name)
+        self.gpt2 = New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
+        self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name).to(self.device)
 
-        self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings()#embedding是GPT2LMHeadModel的embedding
+        self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings().to(self.device)#embedding是GPT2LMHeadModel的embedding
 
         # self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
         # perform fine_tuning
 
-        self.dropout = nn.Dropout(config.resid_pdrop)
-        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
-        self.linear = nn.Linear(2*config.hidden_size, config.hidden_size)
+        self.dropout = nn.Dropout(config.resid_pdrop).to(self.device)
+        self.classifier = nn.Linear(config.hidden_size, config.num_labels).to(self.device)
+        self.linear = nn.Linear(2*config.hidden_size, config.hidden_size).to(self.device)
         self.loss_type = 'ce'
-        self.device = device
 
         self.pseudo_token_id = 50257# prompt word 的id
         self.hidden_size = self.embeddings.embedding_dim
@@ -239,22 +239,22 @@ class GPT2generateForNer_LE(torch.nn.Module):
     """
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
+        self.device = device
         self.num_labels = config.num_labels
         if model_name == None:# 用于load gpt2-large
             model_name = 'gpt2'
-        self.gpt2 = New_GPT2.from_pretrained(model_name)# 可以接受inputs_embeds和input_ids
-        self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name)
-        self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings()#embedding是GPT2LMHeadModel的embedding
+        self.gpt2 = New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
+        self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name).to(self.device)
+        self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings().to(self.device)#embedding是GPT2LMHeadModel的embedding
 
         # self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
 
-        self.dropout = nn.Dropout(config.resid_pdrop)
-        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
-        self.linear = nn.Linear(2*config.hidden_size, config.hidden_size)
+        self.dropout = nn.Dropout(config.resid_pdrop).to(self.device)
+        self.classifier = nn.Linear(config.hidden_size, config.num_labels).to(self.device)
+        self.linear = nn.Linear(2*config.hidden_size, config.hidden_size).to(self.device)
         self.loss_type = 'ce'
-        self.device = device
 
         self.pseudo_token_id = 50257# prompt word 的id
         self.hidden_size = self.embeddings.embedding_dim
@@ -267,18 +267,18 @@ class GPT2generateForNer_LE(torch.nn.Module):
 
         self.num_entities = 9# todo for conll2003 区分bio or bieso
 
-        self.label_embedding = LabelEmbeder([self.num_entities], self.hidden_size, device)
+        self.label_embedding = LabelEmbeder([self.num_entities], self.hidden_size, device).to(self.device)
         self.label_embedding = self.label_embedding.to(self.device)
-        self.attn_linear = nn.Linear(self.hidden_size, self.hidden_size)
-        self.fc = nn.Linear(self.hidden_size, 1, bias=False)
-        self.tanh = nn.Tanh()
-        self.softmax = nn.Softmax()
-        self.linear_out = nn.Linear(2*self.hidden_size, self.hidden_size)
+        self.attn_linear = nn.Linear(self.hidden_size, self.hidden_size).to(self.device)
+        self.fc = nn.Linear(self.hidden_size, 1, bias=False).to(self.device)
+        self.tanh = nn.Tanh().to(self.device)
+        self.softmax = nn.Softmax().to(self.device)
+        self.linear_out = nn.Linear(2*self.hidden_size, self.hidden_size).to(self.device)
 
-        self.cat = nn.Linear(config.hidden_size*2, config.hidden_size)
+        self.cat = nn.Linear(config.hidden_size*2, config.hidden_size).to(self.device)
         self.mlp = nn.Sequential(nn.Linear(config.hidden_size*2, self.hidden_size),
                                  nn.ReLU(),
-                                 nn.Linear(self.hidden_size, self.hidden_size))
+                                 nn.Linear(self.hidden_size, self.hidden_size)).to(self.device)
 
         print("***************** init GPT2SoftmaxForNer with label embedding *********************")
         print("**************** generate hidden state in a loop ****************")
