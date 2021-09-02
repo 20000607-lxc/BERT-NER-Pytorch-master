@@ -108,7 +108,7 @@ def collate_fn(batch):
 # from transformers import AutoTokenizer
 # tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
 
-def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
+def convert_examples_to_features(use_random, english, markup, label_all_tokens, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
                                  cls_token_at_end=False, cls_token="[CLS]", cls_token_segment_id=1,
                                  sep_token="[SEP]", pad_on_left=False, pad_token=0, pad_token_segment_id=0,
                                  sequence_a_segment_id=0, mask_padding_with_zero=True,):
@@ -123,7 +123,8 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
     label_map = {label: i for i, label in enumerate(label_list)}
     features = []
     sum_length_of_example = 0
-    tokenizer_name = 'random add **'
+    if use_random:
+        tokenizer_name = 'random add **' if task_name == 'train' else 'gpt2'
 
     if english:
         if 'gpt2' in tokenizer_name:
@@ -188,12 +189,12 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                     input_ids = ([pad_token] * padding_length) + input_ids
                     input_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + input_mask
                     segment_ids = ([pad_token_segment_id] * padding_length) + segment_ids
-                    new_label = ([pad_token] * padding_length) + new_label
+                    new_label = ([-100] * padding_length) + new_label
                 else:
                     input_ids += [pad_token] * padding_length
                     input_mask += [0 if mask_padding_with_zero else 1] * padding_length
                     segment_ids += [pad_token_segment_id] * padding_length
-                    new_label += [pad_token] * padding_length
+                    new_label += [-100] * padding_length
 
                 assert len(input_ids) == max_seq_length
                 assert len(input_mask) == max_seq_length
@@ -315,12 +316,12 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                     input_ids = ([pad_token] * padding_length) + input_ids
                     input_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + input_mask
                     segment_ids = ([pad_token_segment_id] * padding_length) + segment_ids
-                    new_label = ([pad_token] * padding_length) + new_label
+                    new_label = ([-100] * padding_length) + new_label
                 else:
                     input_ids += [pad_token] * padding_length
                     input_mask += [0 if mask_padding_with_zero else 1] * padding_length
                     segment_ids += [pad_token_segment_id] * padding_length
-                    new_label += [pad_token] * padding_length
+                    new_label += [-100] * padding_length
 
                 assert len(input_ids) == max_seq_length
                 assert len(input_mask) == max_seq_length
@@ -348,9 +349,6 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
 
 
 
-
-
-
         elif "bert" or 'Bert' in tokenizer_name:
             print('bert english tokenizer')
             for (ex_index, example) in enumerate(examples):
@@ -359,7 +357,6 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
 
                 if type(example.text_a) == list:
                     new_text = ' '.join(example.text_a)
-
                 else:
                     raise(NotImplementedError)
                 label_ids = [label_map[x] for x in example.labels]
@@ -434,12 +431,13 @@ def convert_examples_to_features(english, markup, label_all_tokens, tokenizer_na
                     input_ids = ([pad_token] * padding_length) + input_ids
                     input_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + input_mask
                     segment_ids = ([pad_token_segment_id] * padding_length) + segment_ids
-                    new_label = ([pad_token] * padding_length) + new_label
+                    new_label = ([-100] * padding_length) + new_label
                 else:
                     input_ids += [pad_token] * padding_length
                     input_mask += [0 if mask_padding_with_zero else 1] * padding_length
                     segment_ids += [pad_token_segment_id] * padding_length
-                    new_label += [pad_token] * padding_length
+                    new_label += [-100] * padding_length
+                    # todo should be label_map['X']? what is the difference?
 
                 assert len(input_ids) == max_seq_length
                 assert len(input_mask) == max_seq_length
