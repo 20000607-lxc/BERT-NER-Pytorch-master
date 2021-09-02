@@ -48,13 +48,11 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         self.num_entities = 9# todo for conll2003 区分bio or bieso
 
         self.label_embedding = LabelEmbeder([self.num_entities], self.hidden_size, device).to(self.device)
-        self.label_embedding = self.label_embedding.to(self.device)
         self.attn_linear = nn.Linear(self.hidden_size, self.hidden_size).to(self.device)
         self.fc = nn.Linear(self.hidden_size, 1, bias=False).to(self.device)
         self.tanh = nn.Tanh().to(self.device)
         self.softmax = nn.Softmax().to(self.device)
         self.linear_out = nn.Linear(2*self.hidden_size, self.hidden_size).to(self.device)
-
 
         print("***************** init GPT2SoftmaxForNer with label embedding *********************")
 
