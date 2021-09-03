@@ -108,7 +108,7 @@ def collate_fn(batch):
 # from transformers import AutoTokenizer
 # tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
 
-def convert_examples_to_features(use_random,duplicate_train_data, english, markup, label_all_tokens, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
+def convert_examples_to_features(use_random, duplicate_train_data, english, markup, label_all_tokens, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
                                  cls_token_at_end=False, cls_token="[CLS]", cls_token_segment_id=1,
                                  sep_token="[SEP]", pad_on_left=False, pad_token=0, pad_token_segment_id=0,
                                  sequence_a_segment_id=0, mask_padding_with_zero=True,):
@@ -123,10 +123,13 @@ def convert_examples_to_features(use_random,duplicate_train_data, english, marku
     label_map = {label: i for i, label in enumerate(label_list)}
     features = []
     sum_length_of_example = 0
-    if use_random:
-        tokenizer_name = 'random add **' if task_name == 'train' else 'gpt2'
-    if duplicate_train_data:
-        tokenizer_name = 'duplicate train data and add **' if task_name == 'train' else 'gpt2'
+    if task_name == 'train':
+        if use_random:
+            tokenizer_name = 'random add **'
+        elif duplicate_train_data:
+            tokenizer_name = 'duplicate train data and add **'
+    else:
+        tokenizer_name = 'gpt2'
 
     if english:
         if 'gpt2' in tokenizer_name:
@@ -150,7 +153,7 @@ def convert_examples_to_features(use_random,duplicate_train_data, english, marku
                 label_ids = [label_map[x] for x in example.labels]
                 flag = 1
                 for i in label_ids:
-                    if i != 0:
+                    if i != label_map['O']:
                         flag = 0# 表示该example含有entity
                         break
                 the_no_entity_number += flag
@@ -276,7 +279,7 @@ def convert_examples_to_features(use_random,duplicate_train_data, english, marku
                 label_ids = [label_map[x] for x in random_labels]
                 flag = 1
                 for i in label_ids:
-                    if i != 0:
+                    if i != label_map['O']:
                         flag = 0# 表示该example含有entity
                         break
 
@@ -309,7 +312,6 @@ def convert_examples_to_features(use_random,duplicate_train_data, english, marku
 
                 # The mask has 1 for real tokens and 0 for padding tokens. Only real tokens are attended to.
                 input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
-
                 input_len = len(new_label)
 
                 # Zero-pad up to the sequence length.
@@ -324,7 +326,6 @@ def convert_examples_to_features(use_random,duplicate_train_data, english, marku
                     input_mask += [0 if mask_padding_with_zero else 1] * padding_length
                     segment_ids += [pad_token_segment_id] * padding_length
                     new_label += [-100] * padding_length
-
                 assert len(input_ids) == max_seq_length
                 assert len(input_mask) == max_seq_length
                 assert len(segment_ids) == max_seq_length
@@ -337,17 +338,14 @@ def convert_examples_to_features(use_random,duplicate_train_data, english, marku
                 #     logger.info("input_mask: %s", " ".join([str(x) for x in input_mask]))
                 #     logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
                 #     logger.info("label_ids: %s", " ".join([str(x) for x in new_label]))
-
                 if j == len(label_ids):# 保证label ids中所有的id都已转换到new_label中
                     features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
                                                   segment_ids=segment_ids, label_ids=new_label))# tokens = tokens
                 else:
                     count += 1
-
             print("****************  the total no entity example number: "+str(the_no_entity_number)+'  ******************')
             print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index) + ' ******************')
             return features, count
-
 
         elif 'duplicate train data and add **' in tokenizer_name and task_name == 'train':
             print("only for train dataset, gpt2_english tokenizer random add ** around half of the entities, randomly chosen each epoch!  ")
@@ -448,7 +446,7 @@ def convert_examples_to_features(use_random,duplicate_train_data, english, marku
                 label_ids = [label_map[x] for x in random_labels]
                 flag = 1
                 for i in label_ids:
-                    if i != 0:
+                    if i != label_map['O']:
                         flag = 0# 表示该example含有entity
                         break
                 the_no_entity_number += flag
@@ -510,7 +508,7 @@ def convert_examples_to_features(use_random,duplicate_train_data, english, marku
 
                 flag = 1
                 for i in label_ids:
-                    if i != 0:
+                    if i != label_map['O']:
                         flag = 0
                 the_no_entity_number += flag
                 tokens = []
@@ -613,7 +611,7 @@ def convert_examples_to_features(use_random,duplicate_train_data, english, marku
 
             flag = 1
             for i in label_ids:
-                if i != 0:
+                if i != ['O']:
                     flag = 0# 表示该example含有entity
                     break
             the_no_entity_number += flag
