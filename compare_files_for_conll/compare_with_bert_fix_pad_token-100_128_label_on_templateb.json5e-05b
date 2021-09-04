@@ -1,3 +1,6 @@
+note： 所有的空格是我人为加的，为了对照方便， 并不是模型产生的！！
+
+
 {"id": "0", "pred_tag_seq": "B-PER I-PER", "true_tag_seq": "B-PER I-PER", "original_input_token": " Nadim Ladki", "gpt2_output_token": "im,ki,"}
 {"id": "1", "pred_tag_seq": "B-LOC O B-LOC I-LOC I-LOC", "true_tag_seq": "B-LOC O B-LOC I-LOC I-LOC", "original_input_token": " AL, United Arab Emirates 1996", "gpt2_output_token": ", the Arab Emirates,,"}
 {"id": "2", "pred_tag_seq": "B-LOC O O O O O B-MISC I-MISC O O O O O O O B-LOC O O O I-MISC O O O O", "true_tag_seq": "B-LOC O O O O O B-MISC I-MISC O O O O O O O B-LOC O O O O O O O O", "original_input_token": " Japan began the defence of their Asian Cup title with a lucky 2 win against Syria in a Group C championship match on Friday.", "gpt2_output_token": "'s the defence of their Asian Cup title with a lucky 2 win against Syria in a Group C championship match on Friday.\n"}
@@ -142,8 +145,16 @@
 {"id": "141", "pred_tag_seq": "O O B-PER O O", "true_tag_seq": "O O B-PER O O", "original_input_token": " SOCCER  BLINKER BAN LIFTED.", "gpt2_output_token": "CCER B BLINKER BAN LIFTED.."}
 {"id": "142", "pred_tag_seq": "B-LOC", "true_tag_seq": "B-LOC", "original_input_token": " LONDON 1996", "gpt2_output_token": "., the"}
 {"id": "143", "pred_tag_seq": "B-MISC O B-PER I-PER O O O O O O B-ORG O O O O O O O O B-ORG I-ORG O O B-ORG O O", "true_tag_seq": "B-MISC O B-PER I-PER O O O O O O B-ORG O O O O O O O O B-ORG I-ORG O O B-ORG O O", "original_input_token": " Dutch forward Reggie Blinker had his indefinite suspension lifted by FIFA on Friday and was set to make his Sheffield Wednesday comeback against Liverpool on Saturday.", "gpt2_output_token": " forward J Blinker has his indefinite suspension lifted by FIFA on Friday and was set to make his Sheffield Wednesday comeback against Liverpool on Saturday.\n"}
-{"id": "144", "***pred ORG wrong***": "1", "pred_tag_seq": "B-PER O O O O O O O O B-ORG O O O O O O O O O O O O O O O B-ORG O O O O O B-ORG", "true_tag_seq": "B-PER O O O O O O O O B-ORG O O O O O O O O O O O O O B-ORG O B-ORG O O O O O B-ORG", "original_input_token": " Blinker missed his club's last two games after FIFA slapped a worldwide ban on him for appearing to sign contracts for both Wednesday and Udinese while he was playing for Feyenoord.", "gpt2_output_token": "inker, the club'ss last two games after the slapped a worldwide ban on him for appearing to sign contracts for both Wednesday and Udinese while he was playing for theenoord.\n"}
-{"id": "145", "***pred ORG wrong***": "1", "pred_tag_seq": "B-ORG O O O O O O O O B-LOC O O O O O B-MISC O O O O O O O O O O O", "true_tag_seq": "B-ORG O O O O O O O O B-LOC O O O O O B-ORG O O O O O O O O O O O", "original_input_token": " FIFA's players'status committee, meeting in Barcelona, decided that although the Udinese document was basically valid, it could not be legally protected.", "gpt2_output_token": "'s players'status committee, meeting in the, decided that the the documentinese document was basically valid, it could not be legally protected.\n"}
+{"id": "144", "***pred ORG wrong***": "1",
+"pred_tag_seq": "B-PER O O O O O O O O B-ORG O O O O O O O O O O O O O O O B-ORG O O O O O B-ORG",
+ "true_tag_seq": "B-PER O O O O O O O O B-ORG O O O O O O O O O O O O O B-ORG O B-ORG O O O O O B-ORG",
+ "original_input_token": " Blinker missed his club's  last two games after FIFA slapped a worldwide ban on him for appearing to sign contracts for both Wednesday and Udinese while he was playing for Feyenoord.",
+  "gpt2_output_token":      "inker    ,   the club'ss last two games after the  slapped a worldwide ban on him for appearing to sign contracts for both Wednesday and Udinese while he was playing for theenoord.\n"}
+{"id": "145", "***pred ORG wrong***": "1",
+"pred_tag_seq": "B-ORG O O O O O O O O B-LOC O O O O O B-MISC O O O O O O O O O O O",
+"true_tag_seq": "B-ORG O O O O O O O O B-LOC O O O O O B-ORG O O O O O O O O O O O",
+"original_input_token": " FIFA's players'status committee, meeting in Barcelona, decided that although the Udinese       document was basically valid, it could not be legally protected.",
+ "gpt2_output_token": "       's players'status committee, meeting in the      , decided that      the the documentinese document was basically valid, it could not be legally protected.\n"}
 {"id": "146", "pred_tag_seq": "O O O O B-MISC O O O O O O O O B-ORG O O O O O O O O", "true_tag_seq": "O O O O B-MISC O O O O O O O O B-ORG O O O O O O O O", "original_input_token": " The committee said the Italian club had violated regulations by failing to inform Feyenoord, with whom the player was under contract.", "gpt2_output_token": " committee said the Italian club had not the by failing to inform theenoord, with whom the player was under contract.\n"}
 {"id": "147", "***pred MISC wrong***": "1", "pred_tag_seq": "B-PER O O O B-MISC O O O O O O O O O O B-ORG O O O O O O B-ORG", "true_tag_seq": "B-PER O O O B-MISC O O O O O O O O O O B-MISC O O O O O O B-ORG", "original_input_token": " Blinker was fined 75,000 Swiss francs ( $ 57,600 ) for failing to inform the Engllsh club of his previous commitment to Udinese.", "gpt2_output_token": "inker was the $,000 Swiss francs ( $ 57,600 ) for failing to inform the Engllsh club of his previous commitment to theinese.\n"}
 {"id": "148", "***pred ORG wrong***": "1", "pred_tag_seq": "O O B-PER O O O O O O O O", "true_tag_seq": "O O B-ORG O B-PER O O O O O O", "original_input_token": " SOCCER  LEEDS'BOWYER FINED FOR PART IN FAST FRACAS.", "gpt2_output_token": "CCER \u00a0EDS'BOWYER FINED FOR PART IN FAST FRACAS.."}
@@ -222,7 +233,11 @@
 {"id": "221", "pred_tag_seq": "O O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER", "true_tag_seq": "O O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER", "original_input_token": " Defenders  Dan Petrescu, Daniel Prodan, Anton Dobos, Cornel Papura, Liviu Ciobotariu, Tibor Selymess, Iulian Filipescu.", "gpt2_output_token": " of\u00a0 Petrescu, Daniel Prodan, Anton Dobos, Cornel Papura, Iiu Ciobotariu, Tibor Selymess, Iulian Filipescu.,"}
 {"id": "222", "pred_tag_seq": "O O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER", "true_tag_seq": "O O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER", "original_input_token": " Midfielders  Gheorghe Hagi, Gheorghe Popescu, Constantin Galca, Valentin Stefan, Basarab Panduru, Dorinel Munteanu, Ovidiu Stinga.", "gpt2_output_token": "fielders  Gheorghe Hagi, Gheorghe Popescu, Constantin Galca, Valentin Stefan, Basarab Panduru, Dorinel Munteanu, Ovidiu Stinga.\n"}
 {"id": "223", "pred_tag_seq": "O O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER", "true_tag_seq": "O O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER", "original_input_token": " Forwards  Ioan Vladoiu, Gheorghe Craioveanu, Ionel Danciulescu, Viorel Ion.", "gpt2_output_token": "wards  Ioan Vladoiu, Gheorghe Craioveanu, Ionel Danciulescu, Iorel Ion.\n"}
-{"id": "224", "***pred ORG wrong***": "1", "pred_tag_seq": "B-PER", "true_tag_seq": "B-ORG", "original_input_token": " REUTER", "gpt2_output_token": "UTER the"}
+{"id": "224", "***pred ORG wrong***": "1",
+"pred_tag_seq": "B-PER", "true_tag_seq": "B-ORG",
+（这个也是很典型的往后移动了一个token）
+ "original_input_token": " REUTER",
+  "gpt2_output_token": "     UTER the"}
 {"id": "225", "pred_tag_seq": "O O B-MISC O O", "true_tag_seq": "O O B-MISC O O", "original_input_token": " SOCCER  BRAZILIAN CHAMPIONSHIP RESULTS.", "gpt2_output_token": "CCER \u00a0ZILIAN CHAMPIONSHIP RESULTS.."}
 {"id": "226", "pred_tag_seq": "B-LOC I-LOC I-LOC", "true_tag_seq": "B-LOC I-LOC I-LOC", "original_input_token": " RIO DE JANEIRO 1996", "gpt2_output_token": "IO DE JANEIRO, a"}
 {"id": "227", "pred_tag_seq": "O O", "true_tag_seq": "O O", "original_input_token": " Results of Brazilian", "gpt2_output_token": " of the,"}
@@ -317,7 +332,12 @@
 {"id": "316", "pred_tag_seq": "O", "true_tag_seq": "O", "original_input_token": " Teams :", "gpt2_output_token": ". the"}
 {"id": "317", "pred_tag_seq": "B-LOC O B-PER I-PER O O O O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O O", "true_tag_seq": "B-LOC O B-PER I-PER O O O O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O O", "original_input_token": " Australia  Mark Taylor ( captain ), Mark Waugh, Ricky Ponting, Greg Blewett, Michael Bevan, Stuart Law, Tom Moody, Ian Healy, Paul Reiffel, Shane Warne, Jason Gillespie, Glenn McGrath 12th man.", "gpt2_output_token": "  Mark Taylor ( captain ), Mark Waugh, Ricky Ponting, Greg Blewett, Michael Bevan, Stuart Law, Tom Moody, Ian Healy, Paul Reiffel, Shane Warne, Jason Gillespie, Glenn McGrath\nth man.."}
 {"id": "318", "pred_tag_seq": "B-LOC I-LOC O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O O O O B-PER I-PER O O", "true_tag_seq": "B-LOC I-LOC O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O B-PER I-PER O O O O B-PER I-PER O O", "original_input_token": " West Indies  Sherwin Campbell, Robert Samuels, Brian Lara, Shivnarine Chanderpaul, Carl Hooper, Jimmy Adams, Junior Murray, Nixon McLean, Kenneth Benjamin, Curtly Ambrose, Courtney Walsh ( captain ), Roland Holder 12th man.", "gpt2_output_token": " Indies \u00a0win Campbell, Robert Samuels, Brian Lara, Shivnarine Chanderpaul, Carl Hooper, Jimmy Adams, Junior Murray, Nixon McLean, Kenneth Benjamin, Curtly Ambrose, Courtney Walsh ( captain ), Roland Holder 12th man.."}
-{"id": "319", "***pred MISC wrong***": "1", "pred_tag_seq": "O O O I-MISC I-MISC O", "true_tag_seq": "O O B-MISC I-MISC I-MISC O", "original_input_token": " BADMINTON  WORLD GRAND PRIX RESULTS.", "gpt2_output_token": "MINTON  World GRAND PRIX RESULTS.\n"}
+{"id": "319", "***pred MISC wrong***": "1",
+"pred_tag_seq": "O O O I-MISC I-MISC O",
+"true_tag_seq": "O O B-MISC I-MISC I-MISC O",
+（没有开头的BAD） 如果有开头的bad可能就不会预测成小写的world？
+"original_input_token": " BADMINTON  WORLD GRAND PRIX RESULTS.",
+"gpt2_output_token":        "MINTON  World GRAND PRIX RESULTS.\n"}
 {"id": "320", "pred_tag_seq": "B-LOC", "true_tag_seq": "B-LOC", "original_input_token": " BALI 1996", "gpt2_output_token": "I, the"}
 {"id": "321", "pred_tag_seq": "O O O O O O O O O B-MISC I-MISC I-MISC O O O O", "true_tag_seq": "O O O O O O O O O B-MISC I-MISC I-MISC O O O O", "original_input_token": " Results in last of the group matches at the World Grand Prix badminton finals on Friday :", "gpt2_output_token": " in the of the group matches at the World Grand Prix badminton finals on Friday : the"}
 {"id": "322", "pred_tag_seq": "O O", "true_tag_seq": "O O", "original_input_token": " Men's singles", "gpt2_output_token": "'s singles,"}
@@ -353,10 +373,28 @@
 {"id": "352", "pred_tag_seq": "B-ORG O O O O O O O O", "true_tag_seq": "B-ORG O O O O O O O O", "original_input_token": " NHL ICE HOCKEY  STANDINGS AFTER THURSDAY 'S GAMES.", "gpt2_output_token": " H HOCKEY  STANDINGS  THURSDAY 'S GAMES.."}
 {"id": "353", "pred_tag_seq": "B-LOC I-LOC", "true_tag_seq": "B-LOC I-LOC", "original_input_token": " NEW YORK 1996", "gpt2_output_token": " YORK, the"}
 {"id": "354", "pred_tag_seq": "O O B-ORG", "true_tag_seq": "O O B-ORG", "original_input_token": " Standings of National Hockey", "gpt2_output_token": "ings of the Hockey,"}
-{"id": "355", "***pred ORG wrong***": "1", "pred_tag_seq": "O O O O O O O O O", "true_tag_seq": "B-ORG O O O O O O O O", "original_input_token": " League teams after games played on Thursday ( tabulate under", "gpt2_output_token": " of, the played on Thursday ( tabulate under the"}
-{"id": "356", "pred_tag_seq": "O O O O O O O O O O O O O O", "true_tag_seq": "O O O O O O O O O O O O O O", "original_input_token": " won, lost, tied, goals for, goals against, points ) :", "gpt2_output_token": " the won, goals, goals for, points against, points ) : the"}
-{"id": "357", "pred_tag_seq": "B-MISC I-MISC", "true_tag_seq": "O O", "original_input_token": " EASTERN CONFERENCE", "gpt2_output_token": "-TERN CONFERENCE,"}
-{"id": "358", "pred_tag_seq": "B-MISC I-MISC", "true_tag_seq": "O O", "original_input_token": " NORTHEAST DIVISION", "gpt2_output_token": "THAST DIVISION,"}
+{"id": "355", "***pred ORG wrong***": "1",
+ "pred_tag_seq": "O O O O O O O O O",
+ "true_tag_seq": "B-ORG O O O O O O O O",
+ "original_input_token": " League teams after games played on Thursday ( tabulate under",
+  "gpt2_output_token":     "         of   ,     the played on Thursday ( tabulate under the"}
+{"id": "356", "pred_tag_seq": "O O O O O O O O O O O O O O",
+"true_tag_seq": "O O O O O O O O O O O O O O",
+"original_input_token": " won ,    lost, tied,  goals for, goals  against, points ) :",
+ "gpt2_output_token": "       the  won , goals, goals for, points against, points ) : the"}
+{"id": "357",
+"pred_tag_seq": "B-MISC I-MISC",
+"true_tag_seq": "O O",
+ "original_input_token": " EASTERN CONFERENCE",
+       "gpt2_output_token": "-TERN CONFERENCE,"}
+{"id": "358",
+ "pred_tag_seq": "B-MISC I-MISC",
+ "true_tag_seq": "O O",
+ "original_input_token": " NORTHEAST DIVISION",
+         "gpt2_output_token": "THAST DIVISION,"}
+
+
+
 {"id": "359", "pred_tag_seq": "O O O O O", "true_tag_seq": "O O O O O", "original_input_token": " W L T GF GA PTS", "gpt2_output_token": " L T GF GA T\n"}
 {"id": "360", "pred_tag_seq": "B-ORG O O O O O", "true_tag_seq": "B-ORG O O O O O", "original_input_token": " HARTFORD 12 7 6 77 76 30", "gpt2_output_token": "ARTFORD 12 7 6 77 76 30\n"}
 {"id": "361", "pred_tag_seq": "B-ORG O O O O O", "true_tag_seq": "B-ORG O O O O O", "original_input_token": " BUFFALO 13 12 1 77 76 27", "gpt2_output_token": "FFALO 13 12 1 77 76 27\n"}
@@ -393,13 +431,21 @@
 {"id": "392", "pred_tag_seq": "B-ORG O O O O O", "true_tag_seq": "B-ORG O O O O O", "original_input_token": " ANAHEIM 9 14 4 73 86 22", "gpt2_output_token": "AHEIM 9 14 4 73 86 22 ;"}
 {"id": "393", "pred_tag_seq": "O O O", "true_tag_seq": "O O O", "original_input_token": " FRIDAY, DECEMBER 6", "gpt2_output_token": "IDAY, DECEMBER 6,"}
 {"id": "394", "pred_tag_seq": "B-ORG O B-LOC", "true_tag_seq": "B-ORG O B-LOC", "original_input_token": " ANAHEIM AT BUFFALO", "gpt2_output_token": "AHEIM AT BFFALO,"}
-{"id": "395", "***pred ORG wrong***": "1", "pred_tag_seq": "B-ORG O B-LOC I-LOC", "true_tag_seq": "B-ORG O B-ORG I-ORG", "original_input_token": " TORONTO AT NY RANGERS", "gpt2_output_token": "ONTO, R RANGERS \u2014"}
+{"id": "395", "***pred ORG wrong***": "1",
+ "pred_tag_seq": "B-ORG O B-LOC I-LOC",
+ "true_tag_seq": "B-ORG O B-ORG I-ORG",
+  "original_input_token": " TORONTO    AT NY RANGERS",
+            "gpt2_output_token": "ONTO ,   R RANGERS \u2014"}
 {"id": "396", "pred_tag_seq": "B-ORG O B-LOC", "true_tag_seq": "B-ORG O B-LOC", "original_input_token": " PITTSBURGH AT WASHINGTON", "gpt2_output_token": "TSBURGH at WASHINGTON,"}
 {"id": "397", "pred_tag_seq": "B-ORG O B-LOC", "true_tag_seq": "B-ORG O B-LOC", "original_input_token": " MONTREAL AT CHICAGO", "gpt2_output_token": "TREAL AT CHICAGO,"}
 {"id": "398", "pred_tag_seq": "B-ORG O B-LOC", "true_tag_seq": "B-ORG O B-LOC", "original_input_token": " PHILADELPHIA AT DALLAS", "gpt2_output_token": "ILADELPHIA at DALLAS and"}
 {"id": "399", "pred_tag_seq": "B-ORG I-ORG O B-LOC", "true_tag_seq": "B-ORG I-ORG O B-LOC", "original_input_token": " ST LOUIS AT COLORADO", "gpt2_output_token": ".OUIS AT COLORADO,"}
 {"id": "400", "pred_tag_seq": "B-ORG O B-LOC", "true_tag_seq": "B-ORG O B-LOC", "original_input_token": " OTTAWA AT EDMONTON", "gpt2_output_token": "TAWA AT EDMONTON,"}
-{"id": "401", "***pred ORG wrong***": "1", "pred_tag_seq": "O O O O O O O", "true_tag_seq": "B-ORG O O O O O O", "original_input_token": " NHL ICE HOCKEY  THURSDAY 'S RESULTS.", "gpt2_output_token": " H HOCKEY  THURSDAY 'S RESULTS.\n"}
+{"id": "401", "***pred ORG wrong***": "1",
+ "pred_tag_seq": "O O O O O O O",
+ "true_tag_seq": "B-ORG O O O O O O",
+ "original_input_token": " NHL ICE HOCKEY  THURSDAY 'S RESULTS.",
+          "gpt2_output_token": " H HOCKEY  THURSDAY 'S RESULTS.\n"}
 {"id": "402", "pred_tag_seq": "O O O B-MISC", "true_tag_seq": "O O O B-MISC", "original_input_token": " [ CORRECTED 08:40 GMT ]", "gpt2_output_token": " SRECTED 08:40 GMT ] the"}
 {"id": "403", "pred_tag_seq": "B-LOC I-LOC", "true_tag_seq": "B-LOC I-LOC", "original_input_token": " NEW YORK 1996", "gpt2_output_token": " YORK, the"}
 {"id": "404", "pred_tag_seq": "O O O O B-ORG O B-ORG O O O O O O O O B-ORG I-ORG O B-ORG I-ORG", "true_tag_seq": "O O O O B-ORG O B-ORG O O O O O O O O B-ORG I-ORG O B-ORG I-ORG", "original_input_token": " ( Corrects headline from NBA to NHL and corrects team name in second result from La Clippers to Ny Islanders.", "gpt2_output_token": " Corrects the from NHL to NHL and corrects team name in second result from La Clippers to Ny Islanders. )"}
@@ -428,7 +474,11 @@
 {"id": "427", "pred_tag_seq": "O O O O O B-ORG O B-PER I-PER O O B-PER O O O O O O O O O O O O O O O O O O O O", "true_tag_seq": "O O O O O B-LOC O B-PER I-PER O O B-PER O O O O O O O O O O O O O O O O O O O O", "original_input_token": " A 39 interference penalty against Philadelphia's Troy Vincent set up Faulk's first score around left end that capped an 80 march 5:17 into the game and the rout was on.", "gpt2_output_token": ". interference penalty against the's Troy Vincent set up thek's first score around left end that capped an 80 march 5:17 into the game and the rout was on.."}
 {"id": "428", "pred_tag_seq": "B-ORG O B-PER I-PER O O O O O O O O O", "true_tag_seq": "B-ORG O B-PER I-PER O O O O O O O O O", "original_input_token": " Eagles quarterback Ty Detmer was 17 for 182 yards before he was benched.", "gpt2_output_token": " had,rodmer was the for the yards before he was benched.\n"}
 {"id": "429", "pred_tag_seq": "B-PER I-PER O O O O B-MISC O O O O O O O O O O O O O O O O O O O", "true_tag_seq": "B-PER I-PER O O O O O O O O O O O O O O O O O O O O O O O O", "original_input_token": " Ricky Watters, who leads the NFC in rushing, left the game after getting kneed to the helmet after gaining 33 yards on seven carries.", "gpt2_output_token": " Gters is who has the NFC in rushing, left the game after getting kneed to the helmet after gaining 33 yards on seven carries.\n"}
-{"id": "430", "***pred ORG wrong***": "1", "pred_tag_seq": "O O O O O O O O", "true_tag_seq": "B-ORG O O O O O O O", "original_input_token": " NBA BASKETBALL  STANDINGS AFTER THURSDAY 'S GAMES.", "gpt2_output_token": " BASKETBALL  STANDINGS. THURSDAY 'S GAMES.."}
+{"id": "430", "***pred ORG wrong***": "1",
+"pred_tag_seq": "O O O O O O O O",
+"true_tag_seq": "B-ORG O O O O O O O",
+"original_input_token": " NBA BASKETBALL  STANDINGS AFTER THURSDAY 'S GAMES.",
+，      "gpt2_output_token": " BASKETBALL  STANDINGS .     THURSDAY 'S GAMES.."}
 {"id": "431", "pred_tag_seq": "B-LOC I-LOC", "true_tag_seq": "B-LOC I-LOC", "original_input_token": " NEW YORK 1996", "gpt2_output_token": " YORK, the"}
 {"id": "432", "pred_tag_seq": "O O", "true_tag_seq": "O O", "original_input_token": " Standings of National", "gpt2_output_token": "ings of the\n"}
 {"id": "433", "pred_tag_seq": "B-ORG I-ORG O O O O O", "true_tag_seq": "B-ORG I-ORG O O O O O", "original_input_token": " Basketball Association teams after games played on Thursday", "gpt2_output_token": " Association is, the played on Friday,"}
@@ -560,7 +610,11 @@
 {"id": "559", "pred_tag_seq": "B-PER O O O O O B-ORG I-ORG O O O O O O O O O B-MISC I-MISC O B-ORG I-ORG", "true_tag_seq": "B-PER O O O O O B-ORG I-ORG O O O O O O O O O B-MISC I-MISC O B-ORG I-ORG", "original_input_token": " Pace, a junior, helped Ohio State to a 10 record and a berth in the Rose Bowl against Arizona State.", "gpt2_output_token": " was a junior, helped the State to a 10 record and a berth in the Rose Bowl against the State.\n"}
 {"id": "560", "pred_tag_seq": "O O O O O O O O O O O O O O O O O O", "true_tag_seq": "O O O O O O O O O O O O O O O O O O", "original_input_token": " He was the most dominant offensive lineman in the country and also played defensive line in goal situations.", "gpt2_output_token": " was the most dominant offensive lineman in the country and also played defensive line in the situations.\n"}
 {"id": "561", "pred_tag_seq": "O O O B-ORG O O O O O O O O O O O O O", "true_tag_seq": "O O O B-PER O O O O O O O O O O O O O", "original_input_token": " Last year, Pace became the first sophomore to win the award since its inception in 1970.", "gpt2_output_token": " year, the was the first to to win the award since its inception in 1970.\n"}
-{"id": "562", "***pred ORG wrong***": "1", "pred_tag_seq": "O O O O O O B-ORG I-ORG O O B-PER I-PER O B-ORG I-ORG O O B-PER I-PER O O O B-PER I-PER O B-LOC", "true_tag_seq": "B-PER O O O O O B-ORG I-ORG O O B-PER I-PER O B-ORG I-ORG O O B-PER I-PER O O O B-PER I-PER O B-ORG", "original_input_token": " Pace outdistanced three senior finalists  Virginia Tech defensive end Cornell Brown, Arizona State offensive tackle Juan Roque and defensive end Jared Tomich of Nebraska.", "gpt2_output_token": " outdistanced the senior finalists  Virginia Tech defensive end D Brown, Arizona State offensive tackle Juan Roque and defensive end Jared Tomich of Nebraska.\n"}
+{"id": "562", "***pred ORG wrong***": "1",
+"pred_tag_seq": "O O O O O O B-ORG I-ORG O O B-PER I-PER O B-ORG I-ORG O O B-PER I-PER O O O B-PER I-PER O B-LOC",
+"true_tag_seq": "B-PER O O O O O B-ORG I-ORG O O B-PER I-PER O B-ORG I-ORG O O B-PER I-PER O O O B-PER I-PER O B-ORG",
+"original_input_token": " Pace outdistanced three senior finalists  Virginia Tech defensive end Cornell Brown, Arizona State offensive tackle Juan Roque and defensive end Jared Tomich of Nebraska.",
+        "gpt2_output_token": " outdistanced the   senior finalists  Virginia Tech defensive end D       Brown, Arizona State offensive tackle Juan Roque and defensive end Jared Tomich of Nebraska.\n"}
 {"id": "563", "pred_tag_seq": "O B-MISC I-MISC O O O O O O O O O O O O O O O O O O O O O O O O B-PER I-PER O O O O O B-ORG I-ORG I-ORG", "true_tag_seq": "O B-MISC I-MISC O O O O O O O O O O O O O O O O O O O O O O O O B-PER I-PER O O O O O B-ORG I-ORG I-ORG", "original_input_token": " The Lombardi Award is presented to the college lineman who, in addition to outstanding effort on the field, best exemplifies the characteristics and discipline of Vince Lombardi, legendary coach of the Green Bay Packers.", "gpt2_output_token": " Lombardi Award is presented to the college lineman who, in addition to outstanding effort on the field, best exemplifies the characteristics and discipline of the Lombardi, legendary coach of the Green Bay Packers.\n"}
 {"id": "564", "pred_tag_seq": "O O B-MISC O O O O O", "true_tag_seq": "O O B-MISC O O O O O", "original_input_token": " SOCCER  DUTCH FIRST DIVISION RESULTS / STANDINGS.", "gpt2_output_token": "CCER D DIVCH FIRST DIVISION RESULTS / STANDINGS.\n"}
 {"id": "565", "pred_tag_seq": "B-LOC", "true_tag_seq": "B-LOC", "original_input_token": " AMSTERDAM 1996", "gpt2_output_token": "STERDAM, the"}
