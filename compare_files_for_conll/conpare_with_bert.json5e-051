@@ -2,6 +2,9 @@ gpt2 conll2003 final results from test
 query = prompt1+input+prompt2+input
 original_input_token = input sequence
 指截取第二个input对应位置的hidden state --> gpt2LMheadModel --> gpt2_output_token
+不要看这个file了， 这个截取的方式是有问题的（向后偏移了一位！）
+
+
 
 {"id": "0", "pred_tag_seq": "B-PER I-PER", "true_tag_seq": "B-PER I-PER", "original_input_token": "  N a d i m   L a d k i", "gpt2_output_token": ", k i ,"}
 {"id": "1", "pred_tag_seq": "B-LOC O B-LOC I-LOC I-LOC", "true_tag_seq": "B-LOC O B-LOC I-LOC I-LOC", "original_input_token": "  A L ,   U n i t e d   A r a b   E m i r a t e s   1 9 9 6", "gpt2_output_token": "  t h e   A r a b   E m i r a t e s , ,"}
