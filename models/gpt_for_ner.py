@@ -122,7 +122,8 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
 
         # decode the output ids to see if there is some strange patterns
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
-        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts):, 0].to(self.device)
+        # todo shift left 1
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts)-1:, 0].to(self.device)
 
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
@@ -132,7 +133,9 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
             # example:
             # inputs = [p,p,2,2,2,p,2,2,2]
             # outputs= 后一截[2,2,2]对应的hidden state
-            place = sum(self.template)+counts[bdix]
+
+            # todo shift left 1
+            place = sum(self.template)+counts[bdix]-1
             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
             # todo 只截取没有pad的id对应的input
 
