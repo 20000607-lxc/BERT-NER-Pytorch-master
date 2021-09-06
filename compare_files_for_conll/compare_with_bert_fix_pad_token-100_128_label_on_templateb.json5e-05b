@@ -1,8 +1,12 @@
 note： 所有的空格是我人为加的，为了对照方便， 并不是模型产生的！！
 
 
-{"id": "0", "pred_tag_seq": "B-PER I-PER", "true_tag_seq": "B-PER I-PER", "original_input_token": " Nadim Ladki", "gpt2_output_token": "im,ki,"}
-{"id": "1", "pred_tag_seq": "B-LOC O B-LOC I-LOC I-LOC", "true_tag_seq": "B-LOC O B-LOC I-LOC I-LOC", "original_input_token": " AL, United Arab Emirates 1996", "gpt2_output_token": ", the Arab Emirates,,"}
+{"id": "0", "pred_tag_seq": "B-PER I-PER", "true_tag_seq": "B-PER I-PER",
+ "original_input_token": " Nadim Ladki",
+       "gpt2_output_token": "im,ki,"}
+{"id": "1", "pred_tag_seq": "B-LOC O B-LOC I-LOC I-LOC", "true_tag_seq": "B-LOC O B-LOC I-LOC I-LOC",
+"original_input_token": " AL, United Arab Emirates 1996",
+         "gpt2_output_token": ", the Arab Emirates,,"}
 {"id": "2", "pred_tag_seq": "B-LOC O O O O O B-MISC I-MISC O O O O O O O B-LOC O O O I-MISC O O O O", "true_tag_seq": "B-LOC O O O O O B-MISC I-MISC O O O O O O O B-LOC O O O O O O O O", "original_input_token": " Japan began the defence of their Asian Cup title with a lucky 2 win against Syria in a Group C championship match on Friday.", "gpt2_output_token": "'s the defence of their Asian Cup title with a lucky 2 win against Syria in a Group C championship match on Friday.\n"}
 {"id": "3", "pred_tag_seq": "O B-LOC O O O O O O O O O O O O O O O O O O O O O B-LOC", "true_tag_seq": "O B-LOC O O O O O O O O O O O O O O O O O O O O O B-LOC", "original_input_token": " But China saw their luck desert them in the second match of the group, crashing to a surprise 2 defeat to newcomers Uzbekistan.", "gpt2_output_token": " the's their luck in them in the first match of the group, crashing to a surprise 2 defeat to newcomers Uzbekistan.\n"}
 {"id": "4", "pred_tag_seq": "B-LOC O O O O O O O O O O O O O O O B-MISC O B-PER I-PER O O O O O O O O O O O O O O B-MISC O O O O O O", "true_tag_seq": "B-LOC O O O O O O O O O O O O O O O B-MISC O B-PER I-PER O O O O O O O O O O O O O O B-MISC O O O O O O", "original_input_token": " China controlled most of the match and saw several chances missed until the 78th minute when Uzbek striker Igor Shkvyrin took advantage of a misdirected defensive header to lob the ball over the advancing Chinese keeper and into an empty net.", "gpt2_output_token": "'s the of the match and saw several chances missed until the 78th minute when the striker Igor Shkvyrin took advantage of a misdirected defensive header to lob the ball over the advancing Chinese keeper and into an empty net.\n"}

@@ -92,7 +92,7 @@ class SeqEntityScore(object):
         # 计算指标的方式不是example(input sequence)-level ，而是entity-level
         return {'acc': precision, 'recall': recall, 'f1': f1}, class_info
 
-    def update(self, label_paths, pred_paths):
+    def update(self, label_paths, pred_paths, pred_wrong_type=None, json_d=None):
         '''
         labels_paths: [[],[],[],....]
         pred_paths: [[],[],[],.....]

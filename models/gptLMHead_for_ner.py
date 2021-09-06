@@ -119,12 +119,12 @@ class GPT2LMSoftmaxForNer(torch.nn.Module):
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
 
         # example is computed by GPT2LMhead model
-        example = torch.argsort(outputs2[0], dim=2, descending=True)[0, sum(self.template)+counts[0]+1:, 0]
+        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts)-1:, 0]
         sequence_output = self.dropout(sequence_output)
         sequence = torch.zeros(bz, bx, self.hidden_size).to(self.device)
 
         for bdix in range(bz):
-            place = sum(self.template)+counts[bdix]
+            place = sum(self.template)+counts[bdix]-1
             sequence[bdix, :counts[bdix], :] = sequence_output[bdix, place:place+counts[bdix], :]
             # todo 只截取没有pad的id对应的input
 

@@ -587,7 +587,7 @@ def main():
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda", args.cuda)
         # torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-        args.n_gpu = 1 #目前只采用1个GPU训练
+        args.n_gpu = 1 #todo 目前只采用1个GPU训练
         # torch.cuda.device_count()
     else:  # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         torch.cuda.set_device(args.local_rank)
