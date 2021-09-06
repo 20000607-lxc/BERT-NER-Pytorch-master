@@ -17,7 +17,7 @@ def get_argparse():
                         help="Whether to run sweep .")
     parser.add_argument("--use_random", action="store_true", default=False,
                         help="Whether to randomly add ** around half of the entities in the trian dataset .")
-    parser.add_argument("--duplicate_train_data", action="store_true", default=True,
+    parser.add_argument("--duplicate_train_data", action="store_true", default=False,
                         help="Whether to duplicate the train data and add ** around all the entities in the trian dataset .")
     parser.add_argument("--use_wandb", action="store_true", default=False,
                         help="Whether to run with wandb  .")
