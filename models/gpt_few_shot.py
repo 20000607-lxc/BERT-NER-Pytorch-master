@@ -120,7 +120,7 @@ class GPT2SoftmaxForNer_few_shot(torch.nn.Module):
         outputs2 = self.LMgpt2.lm_head(outputs[0])
         # todo shift left 1
 
-        example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts)-1:, 0].to(self.device)
+        example = torch.argsort(outputs2, dim=2, descending=True)[:, sum(self.template)+max(counts)-1:, 0].to(self.device)
 
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
@@ -135,7 +135,7 @@ class GPT2SoftmaxForNer_few_shot(torch.nn.Module):
             # todo shift left 1 and 只截取没有pad的id对应的input
             place = sum(self.template)+counts[bdix]-1
             sequence[bdix, :counts[bdix], :]    = sequence_output[bdix, place:place+counts[bdix], :]
-            word_logits[bdix, :counts[bdix], :] = outputs2[0][bdix, place:place+counts[bdix], :]
+            word_logits[bdix, :counts[bdix], :] = outputs2[bdix, place:place+counts[bdix], :]
 
 
         logits = self.classifier(sequence)#logits：每个词的labels分数
@@ -155,11 +155,13 @@ class GPT2SoftmaxForNer_few_shot(torch.nn.Module):
             if attention_mask is not None:
                 active_loss = attention_mask.contiguous().view(-1) == 1
                 active_logits = logits.contiguous().view(-1, self.num_labels)[active_loss]
-                active_logits2 = logits.contiguous().view(-1, self.num_labels)[active_loss]
                 active_labels = labels.contiguous().view(-1)[active_loss]
-                active_inputs = input_ids.contiguous().view(-1)[active_loss]
                 loss1 = loss_fct(active_logits, active_labels)
+
+                active_logits2 = word_logits.contiguous().view(-1, 50257)[active_loss]
+                active_inputs = input_ids.contiguous().view(-1)[active_loss]
                 loss2 = loss_fct(active_logits2, active_inputs)
+
                 loss = loss1 + loss2
             else:
                 loss = loss_fct(logits.contiguous().view(-1, self.num_labels), labels.contiguous().view(-1))
