@@ -38,11 +38,11 @@ def get_argparse():
                                  'output_files/cner_output/', 'output_files/ontonote_output/', 'output_files/ontonote4_output/',
                                  'output_files/ontonote4_output/bert', ])
 
-    parser.add_argument("--model_type", default='label_embedding', type=str, #required=True,
+    parser.add_argument("--model_type", default='few_shot', type=str, #required=True,
                         help="Model type selected ",
                         choices=['bert', 'albert', 'bare_gpt2', 'gpt2', 'generate',
                              'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
-                                 'chinese_generate', 'label_embedding'])
+                                 'chinese_generate', 'label_embedding','few_shot'])
     parser.add_argument("--note", default='', type=str,
                         help="the implementation details to remind")
     parser.add_argument("--save_model", default=False, action="store_true",
@@ -50,7 +50,7 @@ def get_argparse():
     parser.add_argument("--model_name_or_path", default='gpt2',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name. ",
-                        choices=['gpt2', 'gpt2-large','gpt2-medium','bert-base-chinese', 'bert-base-cased'])
+                        choices=['gpt2', 'gpt2-large','gpt2-medium', 'bert-base-chinese', 'bert-base-cased'])
     parser.add_argument("--output_file_name", default='test.json',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name")

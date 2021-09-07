@@ -166,6 +166,7 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
 
 
 
+
 class GPT2GenerateForNer(torch.nn.Module):
     """
     循环生成下一位的hidden state
