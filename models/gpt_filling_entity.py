@@ -118,7 +118,6 @@ class GPT2SoftmaxForNer_few_shot(torch.nn.Module):
 
         # decode the output ids to see if there is some strange patterns
         outputs2 = self.LMgpt2.lm_head(outputs[0])
-        # todo shift left 1
 
         example = torch.argsort(outputs2, dim=2, descending=True)[:, sum(self.template)+max(counts)-1:, 0].to(self.device)
 

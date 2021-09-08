@@ -47,6 +47,14 @@ def markup_for_gpt2_english(tokens,  label_ids, label_all_tokens):
     return tokens, new_label, label_ids, j
 
 
+def remove_entity(tokens, entity_place, replace_token):
+    removed_entity_token = [i for i in tokens]
+    for i in entity_place:
+        removed_entity_token[i] = replace_token
+    return removed_entity_token
+
+
+
 class InputExample(object):
     """A single training/test example for token classification."""
     def __init__(self, guid, text_a, labels):
@@ -73,13 +81,14 @@ class InputExample(object):
 
 class InputFeatures(object):
     """A single set of features of data."""
-    def __init__(self, input_ids, input_mask, input_len,segment_ids, label_ids, tokens=None):
+    def __init__(self, input_ids, input_mask, input_len,segment_ids, label_ids, removed_input_ids=None,tokens=None):
         self.input_ids = input_ids
         self.input_mask = input_mask
         self.segment_ids = segment_ids
         self.label_ids = label_ids
         self.input_len = input_len
         self.tokens = tokens
+        self.removed_input_ids = removed_input_ids
 
     def __repr__(self):
         return str(self.to_json_string())
@@ -98,13 +107,17 @@ def collate_fn(batch):
     batch should be a list of (sequence, target, length) tuples...
     Returns a padded tensor of sequences sorted from longest to shortest,
     """
-    all_input_ids, all_attention_mask, all_token_type_ids, all_lens, all_labels = map(torch.stack, zip(*batch))
+    all_input_ids, all_attention_mask, all_token_type_ids, all_lens, all_labels, all_remove_input_ids = map(torch.stack, zip(*batch))
     max_len = max(all_lens).item()
     all_input_ids = all_input_ids[:, :max_len]
     all_attention_mask = all_attention_mask[:, :max_len]
     all_token_type_ids = all_token_type_ids[:, :max_len]
     all_labels = all_labels[:,:max_len]
-    return all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_lens
+    if all_remove_input_ids[0] != None:
+        all_remove_input_ids = all_remove_input_ids[:, :max_len]
+    return all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_lens, all_remove_input_ids
+
+
 # from transformers import AutoTokenizer
 # tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
 
@@ -131,7 +144,17 @@ def convert_examples_to_features(use_random, duplicate_train_data, english, mark
     else:
         tokenizer_name = 'gpt2'
 
+
+
+    tokenizer_name = 'for filling entity'
+
+
+
+
     if english:
+
+        replace_token = tokenizer.tokenize((' *'))
+
         if 'gpt2' in tokenizer_name:
             print("gpt2_english tokenizer ")
             for (ex_index, example) in enumerate(examples):
@@ -492,6 +515,92 @@ def convert_examples_to_features(use_random, duplicate_train_data, english, mark
             print("****************  the total no entity example number: "+str(the_no_entity_number)+'  ******************')
             print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index) + ' ******************')
             return features, count
+
+
+
+        elif 'for filling entity' in tokenizer_name and task_name == 'train':
+            print("gpt2_english tokenizer for filling in the entities in sequences ")
+            for (ex_index, example) in enumerate(examples):
+                if ex_index % 10000 == 0:
+                    logger.info("Writing example %d of %d", ex_index, len(examples))
+                if type(example.text_a) == list:
+                    new_text = ' '.join(example.text_a)
+                    tokens = tokenizer.tokenize(' ' + new_text)# 在每句话开头加上空格，保证第一个单词可以被tokenized as G开头
+                    sum_length_of_example += len(example.text_a)
+                else:
+                    raise(NotImplementedError)
+                if len(tokens) == 0:# for the empty tokens list: pass!
+                    count += 1# count such abnormal tokens
+                    continue
+
+                if markup == 'bieso':
+                    example.labels = iob_iobes(example.labels)
+
+                label_ids = [label_map[x] for x in example.labels]
+                flag = 1
+                for i in label_ids:
+                    if i != label_map['O']:
+                        flag = 0# 表示该example含有entity
+                        break
+                the_no_entity_number += flag
+
+                # align the label_ids with tokens
+                tokens, new_label, label_ids, j = markup_for_gpt2_english(tokens, label_ids, label_all_tokens)
+
+                entity_place = [k for k in range(len(new_label)) if new_label[k] != label_map['O']]
+
+                # replace entity with special token, such as *, or special
+                # todo removed_entity_tokens对应的attention 需要修改吗？好像是不用的 mask掉的应该只有pad token
+                removed_entity_tokens = remove_entity(tokens, entity_place, replace_token)
+
+                # truncate
+                special_tokens_count = 0
+                if len(tokens) > max_seq_length - special_tokens_count:
+                    tokens = tokens[: (max_seq_length - special_tokens_count)]
+                    removed_entity_tokens = removed_entity_tokens[: (max_seq_length - special_tokens_count)]
+                    new_label = new_label[: (max_seq_length - special_tokens_count)]
+                segment_ids = [sequence_a_segment_id] * len(tokens)
+
+                pad_token = 0
+                input_ids = tokenizer.convert_tokens_to_ids(tokens)
+                removed_input_ids = tokenizer.convert_tokens_to_ids(removed_entity_tokens)
+
+                # The mask has 1 for real tokens and 0 for padding tokens. Only real tokens are attended to.
+                input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
+
+                input_len = len(new_label)
+
+                # Zero-pad up to the sequence length.
+                padding_length = max_seq_length - len(input_ids)
+                if pad_on_left:
+                    input_ids = ([pad_token] * padding_length) + input_ids
+                    removed_input_ids = ([pad_token] * padding_length) + removed_input_ids
+                    input_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + input_mask
+                    segment_ids = ([pad_token_segment_id] * padding_length) + segment_ids
+                    new_label = ([-100] * padding_length) + new_label
+                else:
+                    input_ids += [pad_token] * padding_length
+                    removed_input_ids = ([pad_token] * padding_length) + removed_input_ids
+                    input_mask += [0 if mask_padding_with_zero else 1] * padding_length
+                    segment_ids += [pad_token_segment_id] * padding_length
+                    new_label += [-100] * padding_length
+
+                assert len(input_ids) == max_seq_length
+                assert len(removed_input_ids) == max_seq_length
+                assert len(input_mask) == max_seq_length
+                assert len(segment_ids) == max_seq_length
+
+
+                if j == len(label_ids):# 保证label ids中所有的id都已转换到new_label中
+                    features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
+                                                  segment_ids=segment_ids, label_ids=new_label, removed_input_ids=removed_input_ids))# tokens = tokens
+                else:
+                    count += 1
+
+            print("****************  the total no entity example number: "+str(the_no_entity_number)+'  ******************')
+            print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index) + ' ******************')
+            return features, count
+
 
 
         elif "bert" or 'Bert' in tokenizer_name:

@@ -19,7 +19,7 @@ from models.bert_for_ner import BertSoftmaxForNer
 from models.transformers_master.models.gpt2.configuration_gpt2 import GPT2Config #new config
 from models.transformers_master.models.bert.configuration_bert import BertConfig #new config
 from models.gpt_for_ner import GPT2SoftmaxForNer_fix, BareGPT2, GPT2GenerateForNer
-from models.gpt_few_shot import GPT2SoftmaxForNer_few_shot
+from models.gpt_filling_entity import GPT2SoftmaxForNer_few_shot
 from models.gpt_LE_for_ner import GPT2SoftmaxForNer_LE, GPT2generateForNer_LE
 from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer, BareChineseGPT2, GPT2LMGenerateForNer
 from models.albert_for_ner import AlbertSoftmaxForNer
@@ -557,7 +557,12 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit=None
     all_segment_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long)
     all_label_ids = torch.tensor([f.label_ids for f in features], dtype=torch.long)
     all_lens = torch.tensor([f.input_len for f in features], dtype=torch.long)
-    dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids)
+
+    if features[0].remove_input_ids != None:
+        all_remove_input_ids = torch.tensor([f.remove_input_ids for f in features], dtype=torch.long)
+        dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids, all_remove_input_ids)
+    else:
+        dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids)
     return dataset
 
 def main():
