@@ -152,7 +152,7 @@ def train(args, train_dataset, model, tokenizer):
                 continue
             model.train()
             batch = tuple(t.to(args.device) for t in batch)
-            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3], "removed_input_ids":batch[-1]}
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don't use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
@@ -271,7 +271,7 @@ def evaluate(args, model, tokenizer, prefix):
         batch = tuple(t.to(args.device) for t in batch)
         with torch.no_grad():
             input_lens = batch[4]
-            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3],  "removed_input_ids":batch[-1]}
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
@@ -386,7 +386,7 @@ def predict(args, model, tokenizer, prefix):
         batch = tuple(t.to(args.device) for t in batch)
         # todo note: predict batch_size = 1
         with torch.no_grad():
-            inputs = {"input_ids": batch[0], "attention_mask": batch[1]}
+            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "removed_input_ids": batch[-1]}
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)

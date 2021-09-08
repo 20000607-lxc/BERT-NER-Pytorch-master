@@ -109,6 +109,15 @@ class GPT2SoftmaxForNer_filling_entity(torch.nn.Module):
         counts = []
         queries = []
         for i in range(bz):
+            # todo choice:
+            #  (1) eval 的时候也是用removed input ids , test 的时候给input ids
+            #  (2) 一直用removed
+
+            # if labels == None:
+            #     query, count = self.get_query(input_ids[i], prompt_tokens, input_ids[i])
+            # else:
+
+
             query, count = self.get_query(input_ids[i], prompt_tokens, removed_input_ids[i])
             counts.append(count)
             queries.append(torch.LongTensor(query).squeeze(0))
