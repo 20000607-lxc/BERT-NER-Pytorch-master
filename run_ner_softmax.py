@@ -558,9 +558,9 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit=None
     all_label_ids = torch.tensor([f.label_ids for f in features], dtype=torch.long)
     all_lens = torch.tensor([f.input_len for f in features], dtype=torch.long)
 
-    if features[0].remove_input_ids != None:
-        all_remove_input_ids = torch.tensor([f.remove_input_ids for f in features], dtype=torch.long)
-        dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids, all_remove_input_ids)
+    if features[0].removed_input_ids != None:
+        all_removed_input_ids = torch.tensor([f.removed_input_ids for f in features], dtype=torch.long)
+        dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids, all_removed_input_ids)
     else:
         dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids)
     return dataset

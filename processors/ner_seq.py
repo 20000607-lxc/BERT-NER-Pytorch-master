@@ -50,7 +50,7 @@ def markup_for_gpt2_english(tokens,  label_ids, label_all_tokens):
 def remove_entity(tokens, entity_place, replace_token):
     removed_entity_token = [i for i in tokens]
     for i in entity_place:
-        removed_entity_token[i] = replace_token
+        removed_entity_token[i] = replace_token[0]
     return removed_entity_token
 
 
@@ -112,7 +112,7 @@ def collate_fn(batch):
     all_input_ids = all_input_ids[:, :max_len]
     all_attention_mask = all_attention_mask[:, :max_len]
     all_token_type_ids = all_token_type_ids[:, :max_len]
-    all_labels = all_labels[:,:max_len]
+    all_labels = all_labels[:, :max_len]
     if all_remove_input_ids[0] != None:
         all_remove_input_ids = all_remove_input_ids[:, :max_len]
     return all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_lens, all_remove_input_ids
@@ -580,7 +580,7 @@ def convert_examples_to_features(use_random, duplicate_train_data, english, mark
                     new_label = ([-100] * padding_length) + new_label
                 else:
                     input_ids += [pad_token] * padding_length
-                    removed_input_ids = ([pad_token] * padding_length) + removed_input_ids
+                    removed_input_ids += [pad_token] * padding_length
                     input_mask += [0 if mask_padding_with_zero else 1] * padding_length
                     segment_ids += [pad_token_segment_id] * padding_length
                     new_label += [-100] * padding_length
