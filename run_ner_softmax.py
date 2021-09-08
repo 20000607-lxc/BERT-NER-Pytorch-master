@@ -19,7 +19,7 @@ from models.bert_for_ner import BertSoftmaxForNer
 from models.transformers_master.models.gpt2.configuration_gpt2 import GPT2Config #new config
 from models.transformers_master.models.bert.configuration_bert import BertConfig #new config
 from models.gpt_for_ner import GPT2SoftmaxForNer_fix, BareGPT2, GPT2GenerateForNer
-from models.gpt_filling_entity import GPT2SoftmaxForNer_few_shot
+from models.gpt_filling_entity import GPT2SoftmaxForNer_filling_entity
 from models.gpt_LE_for_ner import GPT2SoftmaxForNer_LE, GPT2generateForNer_LE
 from models.gptLMHead_for_ner import GPT2LMSoftmaxForNer, BareChineseGPT2, GPT2LMGenerateForNer
 from models.albert_for_ner import AlbertSoftmaxForNer
@@ -44,7 +44,7 @@ MODEL_CLASSES = {
 
     'label_embedding': (GPT2Config, GPT2SoftmaxForNer_LE, CNerTokenizer),
 
-    "few_shot": (GPT2Config, GPT2SoftmaxForNer_few_shot, CNerTokenizer),
+    "filling_entity": (GPT2Config, GPT2SoftmaxForNer_filling_entity, CNerTokenizer),
 
     # 暂时不要尝试
     #'generate': (GPT2Config, GPT2GenerateForNer, CNerTokenizer),

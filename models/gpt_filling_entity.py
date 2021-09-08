@@ -3,18 +3,20 @@ import torch.nn as nn
 from torch.nn import CrossEntropyLoss
 from losses.focal_loss import FocalLoss
 from losses.label_smoothing import LabelSmoothingCrossEntropy
-from .transformers_master.models.gpt2.modeling_gpt2 import GPT2Model as New_GPT2
 from models.p_tuning.prompt_encoder import PromptEncoder
 from torch.nn.utils.rnn import pad_sequence
 from transformers import GPT2LMHeadModel
 
-class GPT2SoftmaxForNer_few_shot(torch.nn.Module):
+class GPT2SoftmaxForNer_filling_entity(torch.nn.Module):
     """
     输出input对应的hidden state
     tokenizer: bert-base-chinese or gpt2 tokenizer
     """
     def __init__(self, config, device, template, model_name=None):
         super().__init__()
+
+
+        self.only_filling_entity = True
         self.num_labels = config.num_labels
         if model_name == None:
             model_name = 'gpt2'
@@ -47,7 +49,7 @@ class GPT2SoftmaxForNer_few_shot(torch.nn.Module):
         print("***************** "+str(model_name) + " *********************")
         print("************** num_labels *** " + str(self.num_labels) + " *********************")
 
-    def get_query(self, input_id, prompt_tokens):
+    def get_query(self, input_id, prompt_tokens, removed_input_ids):
         input = []
         prompt1 = []
         prompt2 = []
@@ -61,7 +63,7 @@ class GPT2SoftmaxForNer_few_shot(torch.nn.Module):
             if input_id[i] != 0:
                 count += 1
                 input.append(input_id[i].item())
-        query = prompt1 + input + prompt2 + input
+        query = prompt1 + input + prompt2 + removed_input_ids
 
         return query, count
 
@@ -85,7 +87,8 @@ class GPT2SoftmaxForNer_few_shot(torch.nn.Module):
 
         return raw_embeds
 
-    def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, labels=None):
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None,
+                labels=None, removed_input_ids=None):
         """
         Args:
             input_ids: padded seuqence:[batch_size, max_length]
@@ -99,13 +102,14 @@ class GPT2SoftmaxForNer_few_shot(torch.nn.Module):
             outputs
 
         """
+
         bz = len(input_ids)#batch_size
         bx = len(input_ids[0])
         prompt_tokens = [self.pseudo_token_id]
         counts = []
         queries = []
         for i in range(bz):
-            query, count = self.get_query(input_ids[i], prompt_tokens)
+            query, count = self.get_query(input_ids[i], prompt_tokens, removed_input_ids[i])
             counts.append(count)
             queries.append(torch.LongTensor(query).squeeze(0))
 
@@ -157,9 +161,17 @@ class GPT2SoftmaxForNer_few_shot(torch.nn.Module):
                 active_labels = labels.contiguous().view(-1)[active_loss]
                 loss1 = loss_fct(active_logits, active_labels)
 
-                active_logits2 = word_logits.contiguous().view(-1, 50257)[active_loss]
-                active_inputs = input_ids.contiguous().view(-1)[active_loss]
-                loss2 = loss_fct(active_logits2, active_inputs)
+                if self.only_filling_entity:
+                    attention_mask_entity = input_ids != removed_input_ids
+                    # attention_mask_entity = attention_mask_entity.contiguous().view(-1) == 1
+                    active_logits2 = word_logits.contiguous().view(-1, 50257)[attention_mask_entity]
+                    active_inputs = input_ids.contiguous().view(-1)[attention_mask_entity]
+                    loss2 = loss_fct(active_logits2, active_inputs)
+
+                else:
+                    active_logits2 = word_logits.contiguous().view(-1, 50257)[active_loss]
+                    active_inputs = input_ids.contiguous().view(-1)[active_loss]
+                    loss2 = loss_fct(active_logits2, active_inputs)
 
                 loss = loss1 + loss2
             else:
