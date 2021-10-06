@@ -591,7 +591,7 @@ def convert_examples_to_features(dataset, use_random, duplicate_train_data, engl
             return features, count
 
 
-        elif "bert" in tokenizer_name or 'Bert' in tokenizer_name:
+        elif "bert" in tokenizer_name :
             dataset, percent = dataset
 
             all_random_samples = random.sample(range(0, len(examples)), math.ceil(len(examples)*int(percent)/100))

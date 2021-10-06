@@ -9,7 +9,7 @@ def get_argparse():
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003', "
                              "'ontonote', 'ontonote4'] ")
     parser.add_argument("--data_dir", default='datasets/conll_03_english', type=str, #required=True,
-                    help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll_03_english',
+                    help="The input data dir,", choices=['datasets/cluener', 'datasets/cner', 'datasets/conll_03_english',
                                                          'datasets/ontonote',  'datasets/ontonote4'] )
     parser.add_argument("--model_type", default='bert', type=str, #required=True,
                         help="Model type selected ",
@@ -17,11 +17,11 @@ def get_argparse():
                                  'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
                                  'chinese_generate', 'label_embedding',  'filling_entity'])
 
-    parser.add_argument("--train_limit", default=10, type=int,
+    parser.add_argument("--train_limit", default=100, type=int,
                         help="the total lines load from train.text(notice not the number of examples)")
-    parser.add_argument("--eval_limit", default=5, type=int,
+    parser.add_argument("--eval_limit", default=50, type=int,
                         help="the total lines load from dev.text(notice not the number of examples)")
-    parser.add_argument("--test_limit", default=5, type=int,
+    parser.add_argument("--test_limit", default=50, type=int,
                         help="the total lines load from test.text(notice not the number of examples)")
 
 
