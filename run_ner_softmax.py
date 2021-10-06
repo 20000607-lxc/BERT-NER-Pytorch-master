@@ -250,7 +250,7 @@ def evaluate(args, model, tokenizer, prefix):
     eval_output_dir = os.path.join(args.output_file_dir, prefix)
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
-    eval_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='dev', limit=args.eval_limit)
+    eval_dataset = load_and_cache_examples(args, args.processor_name, tokenizer, data_type='dev', limit=args.eval_limit)
     args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
     # Note that DistributedSampler samples randomly
     eval_sampler = SequentialSampler(eval_dataset) if args.local_rank == -1 else DistributedSampler(eval_dataset)
@@ -372,7 +372,7 @@ def predict(args, model, tokenizer, prefix):
     if not os.path.exists(pred_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(pred_output_dir)
 
-    test_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='test', limit=args.test_limit)
+    test_dataset = load_and_cache_examples(args, args.processor_name, tokenizer, data_type='test', limit=args.test_limit)
     # Note that DistributedSampler samples randomly
     test_sampler = SequentialSampler(test_dataset) if args.local_rank == -1 else DistributedSampler(test_dataset)
     test_dataloader = DataLoader(test_dataset, sampler=test_sampler, batch_size=1, collate_fn=collate_fn)

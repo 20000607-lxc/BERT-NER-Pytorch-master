@@ -17,13 +17,12 @@ def get_argparse():
                                  'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
                                  'chinese_generate', 'label_embedding',  'filling_entity'])
 
-    parser.add_argument("--train_limit", default=100, type=int,
+    parser.add_argument("--train_limit", default=100000, type=int,
                         help="the total lines load from train.text(notice not the number of examples)")
-    parser.add_argument("--eval_limit", default=50, type=int,
+    parser.add_argument("--eval_limit", default=100000, type=int,
                         help="the total lines load from dev.text(notice not the number of examples)")
-    parser.add_argument("--test_limit", default=50, type=int,
+    parser.add_argument("--test_limit", default=10000, type=int,
                         help="the total lines load from test.text(notice not the number of examples)")
-
 
     parser.add_argument("--logging_steps", type=int, default=2,
                         help="Log every X updates steps.")
@@ -140,9 +139,9 @@ def get_argparse():
                         help="Epsilon for adversarial.")
     parser.add_argument('--adv_name', default='word_embeddings', type=str,
                         help="name for adversarial layer.")
-    parser.add_argument("--per_gpu_train_batch_size", default=8, type=int,
+    parser.add_argument("--per_gpu_train_batch_size", default=16, type=int,
                         help="Batch size per GPU/CPU for training.")
-    parser.add_argument("--per_gpu_eval_batch_size", default=8, type=int,
+    parser.add_argument("--per_gpu_eval_batch_size", default=32, type=int,
                         help="Batch size per GPU/CPU for evaluation.")
     parser.add_argument("--gradient_accumulation_steps", type=int, default=1,
                         help="Number of updates steps to accumulate before performing a backward/update pass.", )

@@ -21,11 +21,9 @@ class BertSoftmaxForNer(BertPreTrainedModel):
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
         self.loss_type = 'ce'# config.loss_type
-
         self.init_weights()
 
-    def forward(self, input_ids, attention_mask=None, token_type_ids=None,
-                position_ids=None, head_mask=None, labels=None):
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, labels=None):
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask.to(self.device).half())# token_type_ids=token_type_ids 全都是0 不要他了
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
@@ -64,7 +62,7 @@ class BertPromptForNer(BertPreTrainedModel):
     验证prompt 是否对bert有效果
     """
     def __init__(self, config, device, template):
-        super(BertSoftmaxForNer, self).__init__(config)
+        super( BertPromptForNer, self).__init__(config)
         self.num_labels = config.num_labels
         self.bert = BertModel(config).to(device)
         self.embeddings = self.bert.get_input_embeddings().to(device)
