@@ -5,6 +5,7 @@ import os
 import copy
 import json
 import random
+import math
 from .utils_ner import DataProcessor
 logger = logging.getLogger(__name__)
 
@@ -121,7 +122,7 @@ def collate_fn(batch):
 # from transformers import AutoTokenizer
 # tokenizer = AutoTokenizer.from_pretrained("andi611/bert-base-cased-ner")
 
-def convert_examples_to_features(use_random, duplicate_train_data, english, markup, label_all_tokens, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
+def convert_examples_to_features(dataset, use_random, duplicate_train_data, english, markup, label_all_tokens, tokenizer_name, task_name, examples, label_list, max_seq_length, tokenizer,
                                  cls_token_at_end=False, cls_token="[CLS]", cls_token_segment_id=1,
                                  sep_token="[SEP]", pad_on_left=False, pad_token=0, pad_token_segment_id=0,
                                  sequence_a_segment_id=0, mask_padding_with_zero=True,):
@@ -145,13 +146,15 @@ def convert_examples_to_features(use_random, duplicate_train_data, english, mark
         tokenizer_name = 'gpt2'
 
 
-
-    tokenizer_name = 'for filling entity'
-
+    if task_name == 'train' or task_name == 'eval':
+        tokenizer_name = 'filling entity'
+    else:
+        tokenizer_name = 'gpt2'
 
 
 
     if english:
+        #  todo can also be [blank] (50257) use resize embedding
 
         replace_token = tokenizer.tokenize((' *'))
 
@@ -316,17 +319,6 @@ def convert_examples_to_features(use_random, duplicate_train_data, english, mark
                     tokens = tokens[: (max_seq_length - special_tokens_count)]
                     new_label = new_label[: (max_seq_length - special_tokens_count)]
                 segment_ids = [sequence_a_segment_id] * len(tokens)
-
-                # # todo 1 仿照bert在input的前面后面加上特殊的fix-token（不随continuous prompt变化）目前看结果没什么变化 那就去掉吧
-                # new_label += [label_map['O']]
-                # segment_ids += [0]
-                # if cls_token_at_end:
-                #     new_label += [label_map['O']]
-                #     segment_ids += [0]
-                # else:
-                #     new_label = [label_map['O']] + new_label
-                #     segment_ids = [0] + segment_ids
-                # gpt2 tokenizer 不添加cls和sep 且special_tokens_count=0
 
                 pad_token = 0
                 input_ids = tokenizer.convert_tokens_to_ids(tokens)
@@ -516,9 +508,7 @@ def convert_examples_to_features(use_random, duplicate_train_data, english, mark
             print("****************  average length of examples(not truncated): "+str(sum_length_of_example/ex_index) + ' ******************')
             return features, count
 
-
-
-        elif 'for filling entity' in tokenizer_name and task_name == 'train':
+        elif 'filling entity' in tokenizer_name and task_name in ['train', 'dev']:
             print("gpt2_english tokenizer for filling in the entities in sequences ")
             for (ex_index, example) in enumerate(examples):
                 if ex_index % 10000 == 0:
@@ -590,7 +580,6 @@ def convert_examples_to_features(use_random, duplicate_train_data, english, mark
                 assert len(input_mask) == max_seq_length
                 assert len(segment_ids) == max_seq_length
 
-
                 if j == len(label_ids):# 保证label ids中所有的id都已转换到new_label中
                     features.append(InputFeatures(input_ids=input_ids, input_mask=input_mask, input_len=input_len,
                                                   segment_ids=segment_ids, label_ids=new_label, removed_input_ids=removed_input_ids))# tokens = tokens
@@ -602,10 +591,19 @@ def convert_examples_to_features(use_random, duplicate_train_data, english, mark
             return features, count
 
 
+        elif "bert" in tokenizer_name or 'Bert' in tokenizer_name:
+            dataset, percent = dataset
 
-        elif "bert" or 'Bert' in tokenizer_name:
+            all_random_samples = random.sample(range(0, len(examples)), math.ceil(len(examples)*int(percent)/100))
+
             print('bert english tokenizer')
             for (ex_index, example) in enumerate(examples):
+                if task_name == 'train':
+                    if ex_index not in all_random_samples:
+                        continue
+
+
+
                 if ex_index % 10000 == 0:
                     logger.info("Writing example %d of %d", ex_index, len(examples))
 
@@ -900,7 +898,6 @@ class CluenerProcessor(DataProcessor):
     def get_test_examples(self, data_dir, limit):
         """See base class."""
         return self._create_examples(self._read_json(os.path.join(data_dir, "dev.json")), "test", limit)
-        # todo
 
     def get_labels(self, markup='biso'):
         """See base class."""
@@ -1210,6 +1207,6 @@ ner_processors = {
     "cner": CnerProcessor,
     'cluener': CluenerProcessor,
     'ontonote4': Ontonote4Processor,
-    'conll2003': Conll2003Processor,
+    'conll': Conll2003Processor,
     'ontonote': OntonoteProcessor
 }

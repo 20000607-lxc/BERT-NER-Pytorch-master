@@ -152,7 +152,10 @@ def train(args, train_dataset, model, tokenizer):
                 continue
             model.train()
             batch = tuple(t.to(args.device) for t in batch)
-            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3], "removed_input_ids":batch[-1]}
+            if args.model_type == 'filling_entity':
+                inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3], "removed_input_ids": batch[-1]}
+            else:
+                inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don't use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
@@ -271,7 +274,10 @@ def evaluate(args, model, tokenizer, prefix):
         batch = tuple(t.to(args.device) for t in batch)
         with torch.no_grad():
             input_lens = batch[4]
-            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3],  "removed_input_ids":batch[-1]}
+            if args.model_type == 'filling_entity':
+                inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3],  "removed_input_ids": batch[-1]}
+            else:
+                inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
@@ -386,7 +392,10 @@ def predict(args, model, tokenizer, prefix):
         batch = tuple(t.to(args.device) for t in batch)
         # todo note: predict batch_size = 1
         with torch.no_grad():
-            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "removed_input_ids": batch[-1]}
+            if args.model_type == 'filling_entity':
+                inputs = {"input_ids": batch[0], "attention_mask": batch[1], "removed_input_ids": batch[-1]}
+            else:
+                inputs = {"input_ids": batch[0], "attention_mask": batch[1]}
             if args.model_type != "distilbert":
                 # XLM and RoBERTa don"t use segment_ids
                 inputs["token_type_ids"] = (batch[2] if args.model_type in ["bert", "xlnet"] else None)
@@ -524,8 +533,11 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit=None
             ENGLISH = False
         else:
             ENGLISH = True
+
+        args.dataset = args.task_name.split('_')
+
         # gpt2tokenizer 没有sep_token  pad_token cls_token 因此都是None
-        features, count = convert_examples_to_features(use_random=args.use_random,
+        features, count = convert_examples_to_features(dataset=args.dataset, use_random=args.use_random,
                                                 duplicate_train_data=args.duplicate_train_data, english=ENGLISH, markup=args.markup,
                                                 label_all_tokens=args.label_all_tokens,
                                                 task_name=data_type,
@@ -562,17 +574,17 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train', limit=None
         all_removed_input_ids = torch.tensor([f.removed_input_ids for f in features], dtype=torch.long)
         dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids, all_removed_input_ids)
     else:
-        dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids)
+        dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_lens, all_label_ids, all_input_ids)
     return dataset
 
 def main():
     args = get_argparse().parse_args()
-    args.project = 'sequence_labeling_gpt2' + args.task_name
-    if args.model_type in  ["chinese_pretrained_gpt2", 'chinese_generate']:
+    args.project = 'bart' + args.task_name
+    if args.model_type in ["chinese_pretrained_gpt2", 'chinese_generate']:
         assert args.task_name in ['cluener', 'cner', 'ontonote4']
         assert args.markup == 'biso'# 中文一律采用biso
     if args.use_wandb:
-        wandb.init(config=args, project=args.project, entity='lxc')
+        wandb.init(config=args, project=args.task_name, entity='lxc')
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
     args.output_dir = args.output_dir + '{}'.format(args.model_type)
@@ -596,7 +608,7 @@ def main():
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda", args.cuda)
         # torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-        args.n_gpu = 1 #todo 目前只采用1个GPU训练
+        args.n_gpu = 1
         # torch.cuda.device_count()
     else:  # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         torch.cuda.set_device(args.local_rank)
@@ -611,9 +623,11 @@ def main():
     seed_everything(args.seed)
     # Prepare NER task
     args.task_name = args.task_name.lower()
-    if args.task_name not in processors:
-        raise ValueError("Task not found: %s" % (args.task_name))
-    processor = processors[args.task_name]()
+    args.processor_name = args.task_name.split('_')[0]
+
+    if args.processor_name not in processors:
+        raise ValueError("Task not found: %s" % (args.processor_name))
+    processor = processors[args.processor_name]()
 
     # 按照markup方式得到labels： bieso, biso, bio
     label_list = processor.get_labels(args.markup)
@@ -680,7 +694,7 @@ def main():
     logger.info("Training/evaluation parameters %s", args)
     # Training
     if args.do_train:
-        train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='train', limit=args.train_limit)
+        train_dataset = load_and_cache_examples(args, args.processor_name, tokenizer, data_type='train', limit=args.train_limit)
         global_step, tr_loss = train(args, train_dataset, model, tokenizer)
         logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
 

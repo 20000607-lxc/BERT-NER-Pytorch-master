@@ -3,6 +3,19 @@ import argparse
 def get_argparse():
     parser = argparse.ArgumentParser()
     # Required parameters
+    parser.add_argument("--use_wandb", action="store_true", default=False,
+                        help="Whether to run wandb.")
+    parser.add_argument("--task_name", default='conll_10', type=str, #required=True,
+                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003', "
+                             "'ontonote', 'ontonote4'] ")
+    parser.add_argument("--data_dir", default='datasets/conll_03_english', type=str, #required=True,
+                    help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll_03_english',
+                                                         'datasets/ontonote',  'datasets/ontonote4'] )
+    parser.add_argument("--model_type", default='bert', type=str, #required=True,
+                        help="Model type selected ",
+                        choices=['bert', 'albert', 'bare_gpt2', 'gpt2', 'generate',
+                                 'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
+                                 'chinese_generate', 'label_embedding',  'filling_entity'])
 
     parser.add_argument("--train_limit", default=10, type=int,
                         help="the total lines load from train.text(notice not the number of examples)")
@@ -10,21 +23,17 @@ def get_argparse():
                         help="the total lines load from dev.text(notice not the number of examples)")
     parser.add_argument("--test_limit", default=5, type=int,
                         help="the total lines load from test.text(notice not the number of examples)")
+
+
     parser.add_argument("--logging_steps", type=int, default=2,
                         help="Log every X updates steps.")
-
     parser.add_argument("--use_sweep", action="store_true", default=False,
                         help="Whether to run sweep .")
     parser.add_argument("--use_random", action="store_true", default=False,
                         help="Whether to randomly add ** around half of the entities in the trian dataset .")
     parser.add_argument("--duplicate_train_data", action="store_true", default=False,
                         help="Whether to duplicate the train data and add ** around all the entities in the trian dataset .")
-    parser.add_argument("--use_wandb", action="store_true", default=False,
-                        help="Whether to run with wandb  .")
-    parser.add_argument("--task_name", default='conll2003', type=str, #required=True,
-                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003', 'ontonote', 'ontonote4'] ")
-    parser.add_argument("--data_dir", default='datasets/conll_03_english', type=str, #required=True,
-                        help="The input data dir,", choices=['datasets/cluener','datasets/cner', 'datasets/conll_03_english', 'datasets/ontonote',  'datasets/ontonote4'] )
+
     parser.add_argument("--output_dir", default='outputs/conll2003_output/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written."
@@ -38,16 +47,11 @@ def get_argparse():
                                  'output_files/cner_output/', 'output_files/ontonote_output/', 'output_files/ontonote4_output/',
                                  'output_files/ontonote4_output/bert', ])
 
-    parser.add_argument("--model_type", default='filling_entity', type=str, #required=True,
-                        help="Model type selected ",
-                        choices=['bert', 'albert', 'bare_gpt2', 'gpt2', 'generate',
-                             'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
-                                 'chinese_generate', 'label_embedding','few_shot'])
     parser.add_argument("--note", default='', type=str,
                         help="the implementation details to remind")
     parser.add_argument("--save_model", default=False, action="store_true",
                         help="Whether to save the model checkpoints, currently, there is no need to save the checkpoints.")
-    parser.add_argument("--model_name_or_path", default='gpt2',
+    parser.add_argument("--model_name_or_path", default='bert-base-cased',
                         type=str, #required=True,
                         help="Path to pre-trained model or shortcut name. ",
                         choices=['gpt2', 'gpt2-large','gpt2-medium', 'bert-base-chinese', 'bert-base-cased'])
@@ -95,7 +99,7 @@ def get_argparse():
                         help="The initial learning rate for crf and linear layer.")
     parser.add_argument("--weight_decay", default=0.01, type=float,#bert default =  0.01
                         help="Weight decay if we apply some.")
-    parser.add_argument("--tokenizer_name", default='gpt2', type=str,
+    parser.add_argument("--tokenizer_name", default='bert-base-cased', type=str,
                         help="Pretrained tokenizer name or path if not the same as model_name", )
     # config name 和 tokenizer name 若为空则默认与 model_name_or_path一致,
     # I set the tokenizer for chinese as bert-base-chinese in run_ner_xxx.py and cannot be modified by --tokenizer_name.
@@ -116,7 +120,7 @@ def get_argparse():
                         help="The maximum total input sequence length after tokenization. Sequences longer "
                              "than this will be truncated, sequences shorter will be padded.", )
 
-    parser.add_argument('--cuda', type=int, default=3, help='Avaiable GPU ID')
+    parser.add_argument('--cuda', type=int, default=0, help='Avaiable GPU ID')
     parser.add_argument("--do_train", action="store_true", default=True,
                         help="Whether to run training.")
     parser.add_argument("--evaluate_and_test_during_training", action="store_true", default=True,
@@ -146,7 +150,7 @@ def get_argparse():
                         help="Epsilon for Adam optimizer.")
     parser.add_argument("--max_grad_norm", default=1.0, type=float,
                         help="Max gradient norm.")
-    parser.add_argument("--num_train_epochs", default=3.0, type=float,
+    parser.add_argument("--num_train_epochs", default=10, type=float,
                         help="Total number of training epochs to perform.")
     parser.add_argument("--max_steps", default=-1, type=int,
                         help="If > 0: set total number of training steps to perform. Override num_train_epochs.", )
