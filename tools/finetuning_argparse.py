@@ -9,7 +9,8 @@ def get_argparse():
                         help="The name of the task to train selected in the list: ['cluener','cner','conll2003', "
                              "'ontonote', 'ontonote4'] ")
     parser.add_argument("--data_dir", default='datasets/conll_03_english', type=str, #required=True,
-                    help="The input data dir,", choices=['datasets/cluener', 'datasets/cner', 'datasets/conll_03_english',
+                    help="The input data dir,", choices=['datasets/cluener', 'datasets/cner',
+                                                         'datasets/conll_03_english',
                                                          'datasets/ontonote',  'datasets/ontonote4'] )
     parser.add_argument("--model_type", default='bert', type=str, #required=True,
                         help="Model type selected ",
@@ -33,7 +34,7 @@ def get_argparse():
     parser.add_argument("--duplicate_train_data", action="store_true", default=False,
                         help="Whether to duplicate the train data and add ** around all the entities in the trian dataset .")
 
-    parser.add_argument("--output_dir", default='outputs/conll2003_output/gpt2', type=str, #required=True,
+    parser.add_argument("--output_dir", default='outputs/conll2003/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written."
                              " In my implementation, I mkdir the files listed in choices, you can mkdir your own output file",
