@@ -137,19 +137,19 @@ def convert_examples_to_features(dataset, use_random, duplicate_train_data, engl
     label_map = {label: i for i, label in enumerate(label_list)}
     features = []
     sum_length_of_example = 0
-    if task_name == 'train':
-        if use_random:
-            tokenizer_name = 'random add **'
-        elif duplicate_train_data:
-            tokenizer_name = 'duplicate train data and add **'
-    else:
-        tokenizer_name = 'gpt2'
+    # if task_name == 'train':
+    #     if use_random:
+    #         tokenizer_name = 'random add **'
+    #     elif duplicate_train_data:
+    #         tokenizer_name = 'duplicate train data and add **'
+    # else:
+    #     tokenizer_name = 'gpt2'
 
 
-    if task_name == 'train' or task_name == 'eval':
-        tokenizer_name = 'filling entity'
-    else:
-        tokenizer_name = 'gpt2'
+    # if task_name == 'train' or task_name == 'eval':
+    #     tokenizer_name = 'filling entity'
+    # else:
+    #     tokenizer_name = 'gpt2'
 
 
 
