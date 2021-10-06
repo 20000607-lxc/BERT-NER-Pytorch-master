@@ -116,3 +116,4 @@ evaluation:  acc: 0.85 - recall: 0.85 - f1: 0.85
 params: learning_rate=1e-4 weight_decay=0.01 template='1' model_type='gpt2'
 
 the other params are default values. # BERT-NER-Pytorch-master
+# BERT-NER-Pytorch-master
