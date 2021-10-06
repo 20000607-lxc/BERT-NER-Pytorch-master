@@ -18,12 +18,10 @@ class GPT2LMcrfForNer(torch.nn.Module):
         super().__init__()
         self.device = device
         self.num_labels = config.num_labels
-        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.to(self.device)# 21128 768 donnt use it anymore!!!
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").to(self.device)
-
+        self.gpt2 = self.LMgpt2.base_model.to(self.device)# 21128 768 donnt use it anymore!!!
         #self.gpt2 = New_GPT2.from_pretrained('gpt2') #50257 768  this model is much better !!!
-
-        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings().to(self.device)# 21128 768
+        self.embeddings = self.gpt2.get_input_embeddings().to(self.device)# 21128 768
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
 
@@ -162,12 +160,10 @@ class BareChineseGPT2(torch.nn.Module):
         super().__init__()
         self.device = device
         self.num_labels = config.num_labels
-        self.gpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.to(self.device)# 21128 768 donnt use it anymore!!!
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").to(self.device)
+        self.gpt2 = self.LMgpt2.base_model.to(self.device)
+        self.embeddings = self.gpt2.get_input_embeddings().to(self.device)
 
-        #self.gpt2 = New_GPT2.from_pretrained('gpt2') #50257 768  this model is much better !!!
-
-        self.embeddings = GPT2LMHeadModel.from_pretrained("uer/gpt2-chinese-cluecorpussmall").base_model.get_input_embeddings().to(self.device)# 21128 768
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
 

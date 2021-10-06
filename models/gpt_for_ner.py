@@ -19,9 +19,12 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
         if model_name == None:
             model_name = 'gpt2'
         self.device = device
-        self.gpt2 = New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name).to(self.device)
-        self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings().to(device)#embedding是GPT2LMHeadModel的embedding
+
+        self.gpt2 = self.LMgpt2.base_model# New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
+        self.embeddings = self.gpt2.get_input_embeddings().to(device)#embedding是GPT2LMHeadModel的embedding
+
+
         # self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False
@@ -122,7 +125,7 @@ class GPT2SoftmaxForNer_fix(torch.nn.Module):
 
         # decode the output ids to see if there is some strange patterns
         outputs2 = self.LMgpt2(inputs_embeds=inputs, attention_mask=attention_mask1.to(self.device).half())
-        # todo shift left 1
+
         example = torch.argsort(outputs2[0], dim=2, descending=True)[:, sum(self.template)+max(counts)-1:, 0].to(self.device)
 
         sequence_output = outputs[0]
@@ -177,9 +180,11 @@ class GPT2GenerateForNer(torch.nn.Module):
             model_name = 'gpt2'
         self.device = device
         self.num_labels = config.num_labels
-        self.gpt2 = New_GPT2.from_pretrained('gpt2').to(self.device)# 可以接受inputs_embeds和input_ids
-        self.embeddings = GPT2LMHeadModel.from_pretrained('gpt2').base_model.get_input_embeddings().to(self.device)#embedding是GPT2LMHeadModel的embedding
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name).to(self.device)
+
+        self.gpt2 = self.LMgpt2.base_model# New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
+        self.embeddings = self.gpt2.get_input_embeddings().to(device)#embedding是GPT2LMHeadModel的embedding
+
 
         # self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
@@ -342,9 +347,11 @@ class BareGPT2(torch.nn.Module):
         self.device = device
         if model_name == None:
             model_name = 'gpt2'
-        self.gpt2 = New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name).to(self.device)
-        self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings().to(self.device)#embedding是GPT2LMHeadModel的embedding
+
+        self.gpt2 = self.LMgpt2.base_model# New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
+        self.embeddings = self.gpt2.get_input_embeddings().to(device)#embedding是GPT2LMHeadModel的embedding
+
         #self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
         #     param.requires_grad = False

@@ -20,10 +20,10 @@ class GPT2SoftmaxForNer_LE(torch.nn.Module):
         self.num_labels = config.num_labels
         if model_name == None:# 用于load gpt2-large
             model_name = 'gpt2'
-        self.gpt2 = New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name).to(self.device)
 
-        self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings().to(self.device)#embedding是GPT2LMHeadModel的embedding
+        self.gpt2 = self.LMgpt2.base_model# New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
+        self.embeddings = self.gpt2.get_input_embeddings().to(device)#embedding是GPT2LMHeadModel的embedding
 
         # self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
@@ -273,9 +273,10 @@ class GPT2generateForNer_LE(torch.nn.Module):
         self.num_labels = config.num_labels
         if model_name == None:# 用于load gpt2-large
             model_name = 'gpt2'
-        self.gpt2 = New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
         self.LMgpt2 = GPT2LMHeadModel.from_pretrained(model_name).to(self.device)
-        self.embeddings = GPT2LMHeadModel.from_pretrained(model_name).base_model.get_input_embeddings().to(self.device)#embedding是GPT2LMHeadModel的embedding
+
+        self.gpt2 = self.LMgpt2.base_model# New_GPT2.from_pretrained(model_name).to(self.device)# 可以接受inputs_embeds和input_ids
+        self.embeddings = self.gpt2.get_input_embeddings().to(device)#embedding是GPT2LMHeadModel的embedding
 
         # self.embeddings.weight.requires_grad = False
         # for param in self.gpt2.parameters():
