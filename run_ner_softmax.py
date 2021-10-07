@@ -351,7 +351,7 @@ def evaluate(args, model, tokenizer, prefix):
         info = "-".join([f' {key}: {value:.4f} ' for key, value in results.items()])
         logger.info(info)
     if args.use_wandb:
-        wandb.log(results)
+        wandb.log({'eval loss': eval_loss.item()})
     return results
 
 def predict(args, model, tokenizer, prefix):
