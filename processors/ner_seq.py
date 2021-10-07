@@ -602,8 +602,6 @@ def convert_examples_to_features(dataset, use_random, duplicate_train_data, engl
                     if ex_index not in all_random_samples:
                         continue
 
-
-
                 if ex_index % 10000 == 0:
                     logger.info("Writing example %d of %d", ex_index, len(examples))
 
