@@ -6,12 +6,14 @@ def get_argparse():
     parser.add_argument("--use_wandb", action="store_true", default=False,
                         help="Whether to run wandb.")
     parser.add_argument("--task_name", default='conll_10', type=str, #required=True,
-                        help="The name of the task to train selected in the list: ['cluener','cner','conll2003', "
+                        help="The name of the task  "
                              "'ontonote', 'ontonote4'] ")
     parser.add_argument("--data_dir", default='datasets/conll_03_english', type=str, #required=True,
                     help="The input data dir,", choices=['datasets/cluener', 'datasets/cner',
                                                          'datasets/conll_03_english',
-                                                         'datasets/ontonote',  'datasets/ontonote4'] )
+                                                         'datasets/ontonote',  'datasets/ontonote4',
+                                                         'datasets/movie',
+                                                         'datasets/restaurant'] )
     parser.add_argument("--model_type", default='bert', type=str, #required=True,
                         help="Model type selected ",
                         choices=['bert', 'albert', 'bare_gpt2', 'gpt2', 'generate',

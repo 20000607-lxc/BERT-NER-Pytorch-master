@@ -100,6 +100,33 @@ class DataProcessor(object):
         return lines
 
     @classmethod
+    def _read_text3(self, input_file, task_name=None):
+        # 读取MIT movie and restaurant
+        lines = []
+        with open(input_file, 'r') as f:
+            words = []
+            labels = []
+            for line in f:
+                if line.startswith("-DOCSTART-") or line == "" or line == "\n":
+                    if words:
+                        lines.append({"words": words, "labels": labels})
+                        words = []
+                        labels = []
+                else:
+                    splits = line.split("\t")
+                    s = splits[1].replace("\n", "")
+                    words.append(s)
+                    if len(splits) > 1:
+                        labels.append(splits[0].replace("\n", ""))
+                    else:
+                        # Examples could have no label for mode = "test"
+                        labels.append("O")
+            if words:
+                lines.append({"words": words, "labels": labels})
+        return lines
+
+
+    @classmethod
     def _read_json(self, input_file):
         # 读取cluener
         lines = []

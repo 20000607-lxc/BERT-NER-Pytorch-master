@@ -593,9 +593,7 @@ def convert_examples_to_features(dataset, use_random, duplicate_train_data, engl
 
         elif "bert" in tokenizer_name:
             dataset, percent = dataset
-
             all_random_samples = random.sample(range(0, len(examples)), math.ceil(len(examples)*int(percent)/100))
-
             print('bert english tokenizer')
             for (ex_index, example) in enumerate(examples):
                 if task_name == 'train':
@@ -605,12 +603,7 @@ def convert_examples_to_features(dataset, use_random, duplicate_train_data, engl
                 if ex_index % 10000 == 0:
                     logger.info("Writing example %d of %d", ex_index, len(examples))
 
-                if type(example.text_a) == list:
-                    new_text = ' '.join(example.text_a)
-                else:
-                    raise(NotImplementedError)
                 label_ids = [label_map[x] for x in example.labels]
-
                 flag = 1
                 for i in label_ids:
                     if i != label_map['O']:
@@ -957,6 +950,115 @@ class CluenerProcessor(DataProcessor):
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
 
+class MovieProcessor(DataProcessor):
+    """Processor for an english ner data set."""
+
+    def get_train_examples(self, data_dir, limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text3(os.path.join(data_dir, "train")), "train", limit)
+
+    def get_dev_examples(self, data_dir, limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text3(os.path.join(data_dir, "train")), "dev", limit)
+
+    def get_test_examples(self, data_dir,limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text3(os.path.join(data_dir, "test")), "test", limit)
+
+    def get_labels(self):
+        """See base class."""
+        return ['B-GENRE', 'I-GENRE',
+                'B-YEAR', 'I-YEAR',
+                'B-TITLE', 'I-TITLE',
+                'B-SONG', 'I-SONG',
+                'B-ACTOR', 'I-ACTOR',
+                'B-CHARACTER', 'I-CHARACTER',
+                'B-RATING', 'I-RATING',
+                'B-PLOT', 'I-PLOT',
+                'B-REVIEW', 'I-REVIEW',
+                'B-DIRECTOR', 'I-DIRECTOR',
+                'B-RATINGS_AVERAGE', 'I-RATINGS_AVERAGE',
+                'B-TRAILER', "I-TRAILER",
+                'O']
+        # donot change the order!
+
+    def _create_examples(self, lines, set_type, limit=None):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            if limit != None:
+                if i > limit:
+                    break
+            guid = "%s-%s" % (set_type, i)
+            text_a = line['words']
+            # BIOS
+            labels = []
+            for x in line['labels']:
+                if 'M-' in x:
+                    labels.append(x.replace('M-', 'I-'))
+                elif 'E-' in x:
+                    labels.append(x.replace('E-', 'I-'))
+                else:
+                    labels.append(x)
+            examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
+        return examples
+
+class RestaurantProcessor(DataProcessor):
+    """Processor for an english ner data set."""
+
+    def get_train_examples(self, data_dir, limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text3(os.path.join(data_dir, "train")), "train", limit)
+
+    def get_dev_examples(self, data_dir, limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text3(os.path.join(data_dir, "train")), "dev", limit)
+
+    def get_test_examples(self, data_dir,limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text3(os.path.join(data_dir, "test")), "test", limit)
+
+    def get_labels(self):
+        """See base class."""
+        return ['B-Rating', 'I-Rating',
+                'B-Location', 'I-Location',
+                'B-Amenity', 'I-Amenity',
+                'B-Cuisine', 'I-Cuisine',
+                'B-Hours', 'I-Hours',
+                'B-Price', 'I-Price',
+                'B-Dish', 'I-Dish',
+                'B-Restaurant_Name', 'I-Restaurant_Name',
+                'O']
+        # donot change the order!
+
+    def _create_examples(self, lines, set_type, limit=None):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            if limit != None:
+                if i > limit:
+                    break
+            guid = "%s-%s" % (set_type, i)
+            text_a = line['words']
+            # BIOS
+            labels = []
+            for x in line['labels']:
+                if 'M-' in x:
+                    labels.append(x.replace('M-', 'I-'))
+                elif 'E-' in x:
+                    labels.append(x.replace('E-', 'I-'))
+                else:
+                    labels.append(x)
+            examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
+        return examples
+
+
+
+
 
 class Ontonote4Processor(DataProcessor):
     """Processor for the chinese ner data set."""
@@ -1206,5 +1308,8 @@ ner_processors = {
     'cluener': CluenerProcessor,
     'ontonote4': Ontonote4Processor,
     'conll': Conll2003Processor,
-    'ontonote': OntonoteProcessor
+    'ontonote': OntonoteProcessor,
+    'movie': MovieProcessor,
+    'restaurant': RestaurantProcessor
+
 }
