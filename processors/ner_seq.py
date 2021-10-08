@@ -599,7 +599,6 @@ def convert_examples_to_features(dataset, use_random, duplicate_train_data, engl
                 if task_name == 'train':
                     if ex_index not in all_random_samples:
                         continue
-
                 if ex_index % 10000 == 0:
                     logger.info("Writing example %d of %d", ex_index, len(examples))
 
@@ -612,7 +611,7 @@ def convert_examples_to_features(dataset, use_random, duplicate_train_data, engl
                 tokens = []
                 new_label = []
 
-                # align the label_ids with tokens (仿照别人发布的bert ner
+                # align the label_ids with tokens (仿照别人发布的bert-ner
                 # https://github.com/kyzhouhzau/BERT-NER/blob/master/BERT_NER.py 每个word单独tokenize之后拼接）
                 for i in range(len(example.text_a)):
                     token = tokenizer.tokenize(example.text_a[i])
@@ -623,7 +622,6 @@ def convert_examples_to_features(dataset, use_random, duplicate_train_data, engl
                         else:
                             new_label.append(-100)
                 assert len(tokens) == len(new_label)
-
                 # new_label = [0] * len(tokens)
                 # j = 0
                 # for i in range(len(tokens)):

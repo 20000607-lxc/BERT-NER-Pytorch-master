@@ -20,7 +20,7 @@ def get_argparse():
                                  'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
                                  'chinese_generate', 'label_embedding',  'filling_entity'])
 
-    parser.add_argument("--train_limit", default=100, type=int,
+    parser.add_argument("--train_limit", default=10000, type=int,
                         help="the total lines load from train.text(notice not the number of examples)")
     parser.add_argument("--eval_limit", default=100, type=int,
                         help="the total lines load from dev.text(notice not the number of examples)")
