@@ -5,10 +5,10 @@ def get_argparse():
     # Required parameters
     parser.add_argument("--use_wandb", action="store_true", default=False,
                         help="Whether to run wandb.")
-    parser.add_argument("--task_name", default='conll_10', type=str, #required=True,
+    parser.add_argument("--task_name", default='movie_10', type=str, #required=True,
                         help="The name of the task  "
                              "'ontonote', 'ontonote4'] ")
-    parser.add_argument("--data_dir", default='datasets/conll_03_english', type=str, #required=True,
+    parser.add_argument("--data_dir", default='datasets/movie', type=str, #required=True,
                     help="The input data dir,", choices=['datasets/cluener', 'datasets/cner',
                                                          'datasets/conll_03_english',
                                                          'datasets/ontonote',  'datasets/ontonote4',
@@ -20,11 +20,11 @@ def get_argparse():
                                  'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
                                  'chinese_generate', 'label_embedding',  'filling_entity'])
 
-    parser.add_argument("--train_limit", default=100000, type=int,
+    parser.add_argument("--train_limit", default=100, type=int,
                         help="the total lines load from train.text(notice not the number of examples)")
-    parser.add_argument("--eval_limit", default=100000, type=int,
+    parser.add_argument("--eval_limit", default=100, type=int,
                         help="the total lines load from dev.text(notice not the number of examples)")
-    parser.add_argument("--test_limit", default=10000, type=int,
+    parser.add_argument("--test_limit", default=100, type=int,
                         help="the total lines load from test.text(notice not the number of examples)")
 
     parser.add_argument("--logging_steps", type=int, default=2,
@@ -36,7 +36,7 @@ def get_argparse():
     parser.add_argument("--duplicate_train_data", action="store_true", default=False,
                         help="Whether to duplicate the train data and add ** around all the entities in the trian dataset .")
 
-    parser.add_argument("--output_dir", default='outputs/conll2003/gpt2', type=str, #required=True,
+    parser.add_argument("--output_dir", default='outputs/gpt2', type=str, #required=True,
                         help="The output directory where "
                              "the model predictions and checkpoints will be written."
                              " In my implementation, I mkdir the files listed in choices, you can mkdir your own output file",

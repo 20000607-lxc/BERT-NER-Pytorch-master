@@ -965,9 +965,10 @@ class MovieProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(self._read_text3(os.path.join(data_dir, "test")), "test", limit)
 
-    def get_labels(self):
+    def get_labels(self,  markup='bio'):
         """See base class."""
-        return ['B-GENRE', 'I-GENRE',
+        return ['O',
+                'B-GENRE', 'I-GENRE',
                 'B-YEAR', 'I-YEAR',
                 'B-TITLE', 'I-TITLE',
                 'B-SONG', 'I-SONG',
@@ -978,8 +979,8 @@ class MovieProcessor(DataProcessor):
                 'B-REVIEW', 'I-REVIEW',
                 'B-DIRECTOR', 'I-DIRECTOR',
                 'B-RATINGS_AVERAGE', 'I-RATINGS_AVERAGE',
-                'B-TRAILER', "I-TRAILER",
-                'O']
+                'B-TRAILER', "I-TRAILER"
+                ]
         # donot change the order!
 
     def _create_examples(self, lines, set_type, limit=None):
@@ -1020,17 +1021,18 @@ class RestaurantProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(self._read_text3(os.path.join(data_dir, "test")), "test", limit)
 
-    def get_labels(self):
+    def get_labels(self,  markup='bio'):
         """See base class."""
-        return ['B-Rating', 'I-Rating',
+        return ['O',
+                'B-Rating', 'I-Rating',
                 'B-Location', 'I-Location',
                 'B-Amenity', 'I-Amenity',
                 'B-Cuisine', 'I-Cuisine',
                 'B-Hours', 'I-Hours',
                 'B-Price', 'I-Price',
                 'B-Dish', 'I-Dish',
-                'B-Restaurant_Name', 'I-Restaurant_Name',
-                'O']
+                'B-Restaurant_Name', 'I-Restaurant_Name'
+                ]
         # donot change the order!
 
     def _create_examples(self, lines, set_type, limit=None):
