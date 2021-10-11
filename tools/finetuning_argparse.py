@@ -21,11 +21,11 @@ def get_argparse():
                                  'generate_label_embedding','chinese_generate',
                                  'label_embedding',  'filling_entity'])
 
-    parser.add_argument("--train_limit", default=10000, type=int,
+    parser.add_argument("--train_limit", default=100000, type=int,
                         help="the total lines load from train.text(notice not the number of examples)")
-    parser.add_argument("--eval_limit", default=100, type=int,
+    parser.add_argument("--eval_limit", default=1000, type=int,
                         help="the total lines load from dev.text(notice not the number of examples)")
-    parser.add_argument("--test_limit", default=100, type=int,
+    parser.add_argument("--test_limit", default=1000, type=int,
                         help="the total lines load from test.text(notice not the number of examples)")
 
     parser.add_argument("--logging_steps", type=int, default=2,

@@ -60,14 +60,12 @@ class DataProcessor(object):
                         labels = []
                 else:
                     if task_name in ['ontonote', 'wnut']:
-                        splits = line.split("\t")# ontonote wnut 数据集的分割符是\t
-                        # s = splits[1].split("-")
-                        s = splits[1] if task_name == 'ontonote' else splits[0]# ontonote 数据集的第一位是index 跳过index
+                        splits = line.split("\t")
+                        s = splits[1] if task_name == 'ontonote' else splits[0]
                     else:
                         splits = line.split(" ")
                         s = splits[0]
 
-                    # words.append(s[0])
                     words.append(s)
                     if len(splits) > 1:
                         label = splits[-1].replace("\n", "")
