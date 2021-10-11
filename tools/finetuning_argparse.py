@@ -5,10 +5,10 @@ def get_argparse():
     # Required parameters
     parser.add_argument("--use_wandb", action="store_true", default=False,
                         help="Whether to run wandb.")
-    parser.add_argument("--task_name", default='movie_10', type=str, #required=True,
+    parser.add_argument("--task_name", default='wnut_10', type=str, #required=True,
                         help="The name of the task  "
                              "'ontonote', 'ontonote4'] ")
-    parser.add_argument("--data_dir", default='datasets/movie', type=str, #required=True,
+    parser.add_argument("--data_dir", default='datasets/wnut', type=str, #required=True,
                     help="The input data dir,", choices=['datasets/cluener', 'datasets/cner',
                                                          'datasets/conll_03_english',
                                                          'datasets/ontonote',  'datasets/ontonote4',
@@ -17,8 +17,9 @@ def get_argparse():
     parser.add_argument("--model_type", default='bert', type=str, #required=True,
                         help="Model type selected ",
                         choices=['bert', 'albert', 'bare_gpt2', 'gpt2', 'generate',
-                                 'chinese_pretrained_gpt2', 'bare_chinese_gpt2', 'generate_label_embedding',
-                                 'chinese_generate', 'label_embedding',  'filling_entity'])
+                                 'chinese_pretrained_gpt2', 'bare_chinese_gpt2',
+                                 'generate_label_embedding','chinese_generate',
+                                 'label_embedding',  'filling_entity'])
 
     parser.add_argument("--train_limit", default=10000, type=int,
                         help="the total lines load from train.text(notice not the number of examples)")

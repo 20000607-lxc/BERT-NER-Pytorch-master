@@ -1303,6 +1303,115 @@ class OntonoteProcessor(DataProcessor):
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
 
+class MovieTProcessor(DataProcessor):
+    """Processor for an english ner data set."""
+
+    def get_train_examples(self, data_dir, limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text3(os.path.join(data_dir, "train")), "train", limit)
+
+    def get_dev_examples(self, data_dir, limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text3(os.path.join(data_dir, "train")), "dev", limit)
+
+    def get_test_examples(self, data_dir,limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text3(os.path.join(data_dir, "test")), "test", limit)
+
+    def get_labels(self,markup=None):
+        """See base class."""
+        return ['O',
+                'B-Actor', 'I-Actor',
+                'B-Character_Name', 'I-Character_Name',
+                'B-Director', 'I-Director',
+                'B-Genre', 'I-Genre',
+                'B-Plot', 'I-Plot',
+                'B-Year', 'I-Year',
+                'B-Soundtrack', 'I-Soundtrack',
+                'B-Opinion', 'I-Opinion',
+                'B-Award', 'I-Award',
+                'B-Origin', 'I-Origin',
+                'B-Quote', 'I-Quote',
+                'B-Relationship', "I-Relationship",
+                ]
+        # donot change the order!
+
+    def _create_examples(self, lines, set_type, limit=None):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            if limit != None:
+                if i > limit:
+                    break
+            guid = "%s-%s" % (set_type, i)
+            text_a = line['words']
+            # BIOS
+            labels = []
+            for x in line['labels']:
+                if 'M-' in x:
+                    labels.append(x.replace('M-', 'I-'))
+                elif 'E-' in x:
+                    labels.append(x.replace('E-', 'I-'))
+                else:
+                    labels.append(x)
+            examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
+        return examples
+
+
+class WnutProcessor(DataProcessor):
+    """Processor for an english ner data set."""
+
+    def get_train_examples(self, data_dir, limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text(os.path.join(data_dir, "train.conll"), 'wnut'), "train", limit)
+
+    def get_dev_examples(self, data_dir, limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text(os.path.join(data_dir, "dev.conll"), 'wnut'), "dev", limit)
+
+    def get_test_examples(self, data_dir,limit=None):
+        """See base class."""
+        return self._create_examples(self._read_text(os.path.join(data_dir, "test.conll"), 'wnut'), "test", limit)
+
+    def get_labels(self, markup=None):
+        """See base class."""
+        return ['O',
+                'B-person', 'I-person',
+                'B-location', 'I-location',
+                'B-group', 'I-group',
+                'B-corporation', 'I-corporation',
+                'B-product', 'I-product',
+                'B-creative_work', 'I-creative_work',
+                ]
+        # donot change the order!
+
+    def _create_examples(self, lines, set_type, limit=None):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            if limit != None:
+                if i > limit:
+                    break
+            guid = "%s-%s" % (set_type, i)
+            text_a = line['words']
+            # BIOS
+            labels = []
+            for x in line['labels']:
+                if 'M-' in x:
+                    labels.append(x.replace('M-', 'I-'))
+                elif 'E-' in x:
+                    labels.append(x.replace('E-', 'I-'))
+                else:
+                    labels.append(x)
+            examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
+        return examples
+
+
+
 ner_processors = {
     "cner": CnerProcessor,
     'cluener': CluenerProcessor,
@@ -1310,6 +1419,8 @@ ner_processors = {
     'conll': Conll2003Processor,
     'ontonote': OntonoteProcessor,
     'movie': MovieProcessor,
-    'restaurant': RestaurantProcessor
+    'restaurant': RestaurantProcessor,
+    'movie-t': MovieTProcessor,
+    'wnut': WnutProcessor
 
 }

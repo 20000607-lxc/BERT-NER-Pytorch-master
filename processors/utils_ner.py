@@ -48,7 +48,6 @@ class DataProcessor(object):
 
     @classmethod
     def _read_text(self, input_file, task_name=None):
-        # 读取cner与英文数据集
         lines = []
         with open(input_file, 'r') as f:
             words = []
@@ -60,19 +59,21 @@ class DataProcessor(object):
                         words = []
                         labels = []
                 else:
-                    if task_name == 'ontonote':
-                        splits = line.split("\t")# ontonote 数据集的分割符是\t
-                        s = splits[1].split("-")# ontonote 数据集的第一位是index 跳过index
+                    if task_name in ['ontonote', 'wnut']:
+                        splits = line.split("\t")# ontonote wnut 数据集的分割符是\t
+                        # s = splits[1].split("-")
+                        s = splits[1] if task_name == 'ontonote' else splits[0]# ontonote 数据集的第一位是index 跳过index
                     else:
                         splits = line.split(" ")
-                        s = splits[0].split("-")
+                        s = splits[0]
 
-                    words.append(s[0])# todo 对于1988-03-06 只取1988
-                    #words.append(splits[0])
-
-                    if len(splits) > 1: #有label
-                        labels.append(splits[-1].replace("\n", ""))
-
+                    # words.append(s[0])
+                    words.append(s)
+                    if len(splits) > 1:
+                        label = splits[-1].replace("\n", "")
+                        label = label.replace("creative-work", "creative_work")
+                        # wnut有一个label是 creative-work, 中间有-， 会影响后续label process的过程，因此换为creative_work
+                        labels.append(label)
                     else:
                         # Examples could have no label for mode = "test"
                         labels.append("O")
