@@ -621,6 +621,8 @@ def convert_examples_to_features(dataset, use_random, duplicate_train_data, engl
                             new_label.append(label_ids[i])
                         else:
                             new_label.append(-100)
+                            # todo 目前是label off
+
                 assert len(tokens) == len(new_label)
                 # new_label = [0] * len(tokens)
                 # j = 0

@@ -12,7 +12,7 @@ def get_argparse():
                     help="The input data dir,", choices=['datasets/cluener', 'datasets/cner',
                                                          'datasets/conll_03_english',
                                                          'datasets/ontonote',  'datasets/ontonote4',
-                                                         'datasets/movie',
+                                                         'datasets/movie','datasets/movie-t','datasets/wnut',
                                                          'datasets/restaurant'] )
     parser.add_argument("--model_type", default='bert', type=str, #required=True,
                         help="Model type selected ",
