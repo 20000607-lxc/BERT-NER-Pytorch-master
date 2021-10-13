@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=30_bert
+#SBATCH --job-name=10_bert
 #SBATCH -n 1
 #SBATCH -N 1
 #SBATCH -t 0-8:00
@@ -16,8 +16,8 @@ cd /scratch/zt2080/shizhe/eres/BERT-NER-Pytorch-master
 python run_ner_softmax.py --model_type=bert\
     --model_name_or_path=bert-base-cased\
     --learning_rate=5e-5\
-    --num_train_epochs=10.0\
-    --task_name=wnut_30\
+    --num_train_epochs=50.0\
+    --task_name=wnut_10\
     --data_dir=datasets/wnut\
     --per_gpu_train_batch_size=12\
     --per_gpu_eval_batch_size=32\
