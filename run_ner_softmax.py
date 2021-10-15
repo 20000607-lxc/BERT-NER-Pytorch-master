@@ -583,7 +583,11 @@ def main():
         assert args.task_name in ['cluener', 'cner', 'ontonote4']
         assert args.markup == 'biso'# 中文一律采用biso
     if args.use_wandb:
-        wandb.init(config=args, project=args.task_name, entity='lxc')
+
+        if args.no_fine_tune:
+            wandb.init(config=args, project="fix" + args.task_name, entity='lxc')
+        else:
+            wandb.init(config=args, project=args.task_name, entity='lxc')
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
     args.output_dir = args.output_dir + '{}'.format(args.model_type)
@@ -684,6 +688,7 @@ def main():
         # for bert or albert, load the model in the from_pretrained way!
         model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool(".ckpt" in args.model_name_or_path),
                                             config=config, device=args.device, template=TEMPLATE,
+                                            no_fine_tune=args.no_fine_tune,
                                             cache_dir=args.cache_dir if args.cache_dir else None,)
 
     if args.local_rank == 0:

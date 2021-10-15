@@ -3,6 +3,8 @@ import argparse
 def get_argparse():
     parser = argparse.ArgumentParser()
     # Required parameters
+    parser.add_argument("--no_fine_tune", default=False, action="store_true",
+                        help="not do finetune! ")
     parser.add_argument("--use_wandb", action="store_true", default=False,
                         help="Whether to run wandb.")
     parser.add_argument("--task_name", default='wnut_10', type=str, #required=True,

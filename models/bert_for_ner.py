@@ -13,10 +13,15 @@ from torch.nn.utils.rnn import pad_sequence
 
 class BertSoftmaxForNer(BertPreTrainedModel):
 
-    def __init__(self, config, device, template):
+    def __init__(self, config, device, template, no_fine_tune):
         super(BertSoftmaxForNer, self).__init__(config)
         self.num_labels = config.num_labels
         self.bert = BertModel(config)
+        if no_fine_tune:
+            for param in self.bert.parameters():
+                param.requires_grad = False
+            print("do not fine tune! ")
+
         self.LMBert = BertLMHeadModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
