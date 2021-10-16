@@ -7,7 +7,7 @@ def get_argparse():
                         help="not do finetune! ")
     parser.add_argument("--use_wandb", action="store_true", default=False,
                         help="Whether to run wandb.")
-    parser.add_argument("--task_name", default='conll-mrc_10', type=str, #required=True,
+    parser.add_argument("--task_name", default='conll-mrc_20', type=str, #required=True,
                         help="The name of the task  "
                              "'ontonote', 'ontonote4'] ")
     parser.add_argument("--data_dir", default='datasets/conll03_mrc', type=str, #required=True,
