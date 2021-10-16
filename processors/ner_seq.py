@@ -1486,6 +1486,6 @@ ner_processors = {
     'restaurant': RestaurantProcessor,
     'movie-t': MovieTProcessor,
     'wnut': WnutProcessor,
-    'conll_mrc': Conll2003MRCProcessor
+    'conll-mrc': Conll2003MRCProcessor
 
 }
