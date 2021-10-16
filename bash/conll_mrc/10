@@ -18,7 +18,7 @@ python run_ner_softmax.py --model_type=bert\
     --learning_rate=5e-5\
     --num_train_epochs=10.0\
     --task_name=conll-mrc_10\
-    --data_dir=datasets/conll_mrc\
+    --data_dir=datasets/conll03_mrc\
     --per_gpu_train_batch_size=12\
     --per_gpu_eval_batch_size=32\
     --use_wandb\
