@@ -7,13 +7,14 @@ def get_argparse():
                         help="not do finetune! ")
     parser.add_argument("--use_wandb", action="store_true", default=False,
                         help="Whether to run wandb.")
-    parser.add_argument("--task_name", default='wnut_10', type=str, #required=True,
+    parser.add_argument("--task_name", default='conll-mrc_10', type=str, #required=True,
                         help="The name of the task  "
                              "'ontonote', 'ontonote4'] ")
     parser.add_argument("--data_dir", default='datasets/wnut', type=str, #required=True,
                     help="The input data dir,", choices=['datasets/cluener', 'datasets/cner',
                                                          'datasets/conll_03_english',
-                                                         'datasets/ontonote',  'datasets/ontonote4',
+                                                         'datasets/ontonote','datasets/conll03_mrc',
+                                                         'datasets/ontonote4',
                                                          'datasets/movie','datasets/movie-t','datasets/wnut',
                                                          'datasets/restaurant'] )
     parser.add_argument("--model_type", default='bert', type=str, #required=True,

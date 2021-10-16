@@ -1412,6 +1412,68 @@ class WnutProcessor(DataProcessor):
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
 
+class Conll2003MRCProcessor(DataProcessor):
+    """Processor for an english ner data set."""
+
+    def get_train_examples(self, data_dir, limit=None):
+        """See base class."""
+        all_data = self._read_json(os.path.join(data_dir, "mrc-ner.train"))
+        labels = self._read_text(os.path.join('datasets/conll_03_english', "train.txt"))
+        lines = []
+        for i in range(len(labels)):
+            words = all_data[4*i]['context'].split(' ')
+            lines.append({"words": words, "labels": labels[i]['labels']})
+        return self._create_examples(lines, "train", limit)
+
+    def get_dev_examples(self, data_dir, limit=None):
+        """See base class."""
+        all_data = self._read_json(os.path.join(data_dir, "mrc-ner.dev"))
+        labels = self._read_text(os.path.join('datasets/conll_03_english', "testa.txt"))
+        lines = []
+        for i in range(len(labels)):
+            words = all_data[4*i]['context'].split(' ')
+            lines.append({"words": words, "labels": labels[i]['labels']})
+        return self._create_examples(lines, "dev", limit)
+
+    def get_test_examples(self, data_dir, limit=None):
+        """See base class."""
+        all_data = self._read_json(os.path.join(data_dir, "mrc-ner.test"))
+        labels = self._read_text(os.path.join('datasets/conll_03_english', "testb.txt"))
+        lines = []
+        for i in range(len(labels)):
+            words = all_data[4*i]['context'].split(' ')
+            lines.append({"words": words, "labels": labels[i]['labels']})
+        return self._create_examples(lines, "test", limit)
+
+
+    def get_labels(self):
+        """See base class."""
+        return ['B-PER', 'I-PER', 'B-LOC',  'I-LOC', 'B-MISC', 'I-MISC', 'B-ORG', 'I-ORG', 'O']# "X", "[START]", "[END]"
+        # donot change the order!
+
+    def _create_examples(self, lines, set_type, limit=None):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            if limit != None:
+                if i > limit:
+                    break
+            guid = "%s-%s" % (set_type, i)
+            text_a = line['words']
+            # BIOS
+            labels = []
+            for x in line['labels']:
+                if 'M-' in x:
+                    labels.append(x.replace('M-', 'I-'))
+                elif 'E-' in x:
+                    labels.append(x.replace('E-', 'I-'))
+                else:
+                    labels.append(x)
+            examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
+        return examples
+
 
 
 ner_processors = {
@@ -1423,6 +1485,7 @@ ner_processors = {
     'movie': MovieProcessor,
     'restaurant': RestaurantProcessor,
     'movie-t': MovieTProcessor,
-    'wnut': WnutProcessor
+    'wnut': WnutProcessor,
+    'conll_mrc': Conll2003MRCProcessor
 
 }
