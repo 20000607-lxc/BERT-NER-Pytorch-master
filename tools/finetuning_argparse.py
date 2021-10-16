@@ -10,7 +10,7 @@ def get_argparse():
     parser.add_argument("--task_name", default='conll-mrc_10', type=str, #required=True,
                         help="The name of the task  "
                              "'ontonote', 'ontonote4'] ")
-    parser.add_argument("--data_dir", default='datasets/wnut', type=str, #required=True,
+    parser.add_argument("--data_dir", default='datasets/conll03_mrc', type=str, #required=True,
                     help="The input data dir,", choices=['datasets/cluener', 'datasets/cner',
                                                          'datasets/conll_03_english',
                                                          'datasets/ontonote','datasets/conll03_mrc',

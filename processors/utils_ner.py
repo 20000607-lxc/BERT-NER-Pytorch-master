@@ -150,6 +150,12 @@ class DataProcessor(object):
         return lines
 
 
+    @classmethod
+    def _read_json3(self, input_file):
+        all_data = json.load(open(input_file, encoding="utf-8"))
+        return all_data
+
+
 def get_entity_biso(seq, id2label):
     """Gets entities from sequence.
     note: BIOS

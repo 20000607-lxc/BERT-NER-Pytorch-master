@@ -620,8 +620,9 @@ def convert_examples_to_features(dataset, use_random, duplicate_train_data, engl
                         if j == 0:
                             new_label.append(label_ids[i])
                         else:
-                            new_label.append(-100)
-                            # todo 目前是label off
+                            new_label.append(label_ids[i])
+                            # new_label.append(-100)
+                            # todo 5e-5 时是label off， 1e-4时是label on
 
                 assert len(tokens) == len(new_label)
                 # new_label = [0] * len(tokens)
@@ -1417,7 +1418,7 @@ class Conll2003MRCProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir, limit=None):
         """See base class."""
-        all_data = self._read_json(os.path.join(data_dir, "mrc-ner.train"))
+        all_data = self._read_json3(os.path.join(data_dir, "mrc-ner.train"))
         labels = self._read_text(os.path.join('datasets/conll_03_english', "train.txt"))
         lines = []
         for i in range(len(labels)):
@@ -1427,7 +1428,7 @@ class Conll2003MRCProcessor(DataProcessor):
 
     def get_dev_examples(self, data_dir, limit=None):
         """See base class."""
-        all_data = self._read_json(os.path.join(data_dir, "mrc-ner.dev"))
+        all_data = self._read_json3(os.path.join(data_dir, "mrc-ner.dev"))
         labels = self._read_text(os.path.join('datasets/conll_03_english', "testa.txt"))
         lines = []
         for i in range(len(labels)):
@@ -1437,7 +1438,7 @@ class Conll2003MRCProcessor(DataProcessor):
 
     def get_test_examples(self, data_dir, limit=None):
         """See base class."""
-        all_data = self._read_json(os.path.join(data_dir, "mrc-ner.test"))
+        all_data = self._read_json3(os.path.join(data_dir, "mrc-ner.test"))
         labels = self._read_text(os.path.join('datasets/conll_03_english', "testb.txt"))
         lines = []
         for i in range(len(labels)):
@@ -1446,9 +1447,9 @@ class Conll2003MRCProcessor(DataProcessor):
         return self._create_examples(lines, "test", limit)
 
 
-    def get_labels(self):
+    def get_labels(self, markup=None):
         """See base class."""
-        return ['B-PER', 'I-PER', 'B-LOC',  'I-LOC', 'B-MISC', 'I-MISC', 'B-ORG', 'I-ORG', 'O']# "X", "[START]", "[END]"
+        return ['O','B-PER', 'I-PER', 'B-LOC',  'I-LOC', 'B-MISC', 'I-MISC', 'B-ORG', 'I-ORG']# "X", "[START]", "[END]"
         # donot change the order!
 
     def _create_examples(self, lines, set_type, limit=None):
